@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-6438589564081662648
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fd2d30276fe30740819ced7823b50cb, type: 3}
+  m_Name: Pit
+  m_EditorClassIdentifier: 
+  connectionName: Pit
+  connectedScene: {fileID: 11400000, guid: 870f8bbb8a9dbfa4cbe67f59673c0220, type: 2}
+  passage:
+    list:
+    - Ceiling
+    - RightDoor
+    value: Ceiling
+    hideLabel: 0
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d35c7abf8749314497ff450cb307836, type: 3}
+  m_Name: SampleSceneA_Handle
+  m_EditorClassIdentifier: 
+  currentScene:
+    asset: {fileID: 0}
+    guid: 00000000000000000000000000000000
+  connections:
+  - {fileID: -6438589564081662648}
+  - {fileID: 4516843144355321581}
+--- !u!114 &4516843144355321581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fd2d30276fe30740819ced7823b50cb, type: 3}
+  m_Name: LeftDoor
+  m_EditorClassIdentifier: 
+  connectionName: LeftDoor
+  connectedScene: {fileID: 11400000, guid: 870f8bbb8a9dbfa4cbe67f59673c0220, type: 2}
+  passage:
+    list:
+    - Ceiling
+    - RightDoor
+    value: RightDoor
+    hideLabel: 0

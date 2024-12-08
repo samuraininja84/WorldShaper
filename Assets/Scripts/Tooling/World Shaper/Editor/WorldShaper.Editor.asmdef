@@ -1,0 +1,19 @@
+{
+    "name": "WorldShaper.Editor",
+    "rootNamespace": "WorldShaper",
+    "references": [
+        "GUID:8f53c8c02acef5e42bd74f953fb349e8",
+        "GUID:caca889fed6088d40b22c2d7e2909c31"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
