@@ -1,4 +1,4 @@
-# World Shaper - A Tooling For Linking Scenes When Creating Worlds
+# World Shaper - A Tooling For Linking Scenes Together
 - External Dependencies: Demigiant: DoTween (Included in Plugins) & Eflatun.SceneReference: git+https://github.com/starikcetin/Eflatun.SceneReference.git#4.1.1
 
 - Editor Set-Up:
