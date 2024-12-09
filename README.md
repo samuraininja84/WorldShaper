@@ -1,6 +1,6 @@
 # World Shaper
 - A tool that allows you to create and edit passages for a player to travel through.
-- Dependencies: Demigiant: DoTween & Eflatun.SceneReference: git+https://github.com/starikcetin/Eflatun.SceneReference.git#4.1.1
+- External Dependencies: Demigiant: DoTween (Included in Plugins) & Eflatun.SceneReference: git+https://github.com/starikcetin/Eflatun.SceneReference.git#4.1.1
 
 - Editor Set-Up:
 	- To use World Shaper, you must first create an area handle. 
