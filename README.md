@@ -28,7 +28,6 @@
 		- There is a prefab for passages that you can find in the World Shaper / Resources / Prefabs folder.
 	- Drag the prefab into the scene and position it where you want the player to exit when they enter the area.
 	- Assign the connected area handle to the passage and set the end passage to the passage you want the player to come out of after then exit the area.
-
 - Notes:
 	- The World Shaper system is designed to be as flexible as possible.
 		- You can create as many areas and connections as you want.
