@@ -16,6 +16,7 @@ namespace WorldShaper
         [Header("Passage Info")]
         public string startPassage;
         public string endPassage;
+        public List<Passage> passages;
 
         [Header("Areas")]
         public AreaHandle currentArea;
@@ -316,58 +317,57 @@ namespace WorldShaper
 
         private string FindPassage(AreaHandle areaHandle, string passageName)
         {
-            // Create the connected passage string
-            string connectedPassageName = string.Empty;
+            // Create the linked passage string
+            string linkedPassageName = string.Empty;
 
             // Get the connection with the matching passage name from the area handle
             if (areaHandle.ConnectionExists(passageName))
             {
                 // Get the connection with the matching passage name from the area handle
                 Connection connection = areaHandle.GetConnection(passageName);
-                string connectionName = connection.passage.value;
+                string linkedPassageValue = connection.passage.value;
 
                 // Get the matching passage from the area handle
-                Passage passage = null;
-                List<Passage> passages = GetAllPassages();
+                passages = GetAllPassages();
                 if (passages.Count > 1)
                 {
                     // If there are multiple passages, find the connected passage with the matching name
-                    foreach (Passage iteration in passages)
+                    foreach (Passage passage in passages)
                     {
-                        if (connectionName == iteration.passage.value)
+                        if (linkedPassageValue == passage.Value)
                         {
-                            passage = iteration;
-                            connectedPassageName = passage.name;
+                            linkedPassageName = passage.Value;
                         }
                     }
                 }
                 else
                 {
                     // If there is only one passage, set the connected passage name as the first passage name
-                    connectedPassageName = passages[0].name;
+                    linkedPassageName = passages[0].Value;
                 }
             }
 
             // Invoke the passage changed event
-            OnEndPassageChanged?.Invoke(connectedPassageName);
+            OnEndPassageChanged?.Invoke(linkedPassageName);
 
             // Return the passage name
-            return connectedPassageName;
+            return linkedPassageName;
         }
 
-        private Vector3 FindSpawnPointByValue(string passageName)
+        private Vector3 FindSpawnPointByValue(string value)
         {
             // Initialize the spawn point
-            GameObject spawnPoint = null;
+            Transform spawnPoint = null;
 
             // Get the spawn point from the passage name
-            spawnPoint = GetPassageByValue(passageName).gameObject;
+            Passage passage = GetPassageByValue(value);
+            spawnPoint = passage.gameObject.transform;
 
             // Get the spawn location
             Vector3 spawnLocation = player.transform.position;
             if (spawnPoint != null)
             {
-                spawnLocation = spawnPoint.transform.position;
+                spawnLocation = spawnPoint.position;
                 Collider2D collider = player.GetComponent<Collider2D>();
                 spawnLocation.y -= collider.offset.y;
             }
@@ -376,12 +376,15 @@ namespace WorldShaper
             return spawnLocation;
         }
 
-        private Passage GetPassageByValue(string passageName)
+        private Passage GetPassageByValue(string value)
         {
-            List<Passage> passages = GetAllPassages();
+            // Get all the passages in the scene, then find the passage with the matching value
             foreach (Passage passage in passages)
             {
-                if (passage.passage.value == passageName) return passage;
+                if (passage.Value == value)
+                {
+                    return passage;
+                }
             }
 
             return null;
@@ -390,8 +393,9 @@ namespace WorldShaper
         private List<Passage> GetAllPassages()
         {
             List<Passage> passages = new List<Passage>();
-            foreach (var passage in GameObject.FindObjectsOfType<Passage>())
+            foreach (Passage passage in FindObjectsOfType<Passage>())
             {
+                Debug.Log(passage.Value);
                 passages.Add(passage);
             }
             return passages;
@@ -403,10 +407,9 @@ namespace WorldShaper
             List<string> values = new List<string>();
 
             // Get all the passages in the scene
-            List<Passage> passages = GetAllPassages();
             foreach (Passage passage in passages)
             {
-                values.Add(passage.passage.value);
+                values.Add(passage.Value);
             }
 
             // Return the list of passage values

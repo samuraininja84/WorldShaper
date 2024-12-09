@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Eflatun.SceneReference;
+using InputReader;
 
 namespace WorldShaper
 {
@@ -8,7 +9,11 @@ namespace WorldShaper
     {
         public AreaHandle area;
         public ExtendableEnum passage;
+        public InputMiddleware enterInteraction;
+        public InputMiddleware exitInteraction;
         public bool canInteract = true;
+
+        public string Value => passage.value;
 
         private void OnValidate()
         {
@@ -65,7 +70,7 @@ namespace WorldShaper
             {
                 foreach (var connection in area.connections)
                 {
-                    if (connection.connectionName == passage.value)
+                    if (connection.connectionName == Value)
                     {
                         return connection.connectedScene.currentScene;
                     }
@@ -74,19 +79,48 @@ namespace WorldShaper
             }
         }
 
+        public InputMiddleware GetInteraction()
+        {
+            // Create the interaction and set it to null
+            InputMiddleware interaction = null;
+
+            // Check if the player can interact before setting the appropriate interaction
+            if (canInteract && enterInteraction != null)
+            {
+                if (exitInteraction != null) interaction = exitInteraction;
+            }
+            else if (enterInteraction != null)
+            {
+                interaction = enterInteraction;
+            }
+
+            // Return the interaction
+            return interaction;
+        }
+
         private void OnTriggerEnter2D(Collider2D collision)
         {
-            if (collision.CompareTag("Player"))
+            if (collision.CompareTag("Player") && !ListenerActive())
             {
-                // Load the area
-                if (canInteract) LoadArea();
+                // Add the appropriate listener, if it is not null
+                if (GetInteraction() != null)
+                {
+                    // Add the listener
+                    GetInteraction().AddListener();
+
+                    // Load the area
+                    if (canInteract) LoadArea();
+                }
             }
         }
 
         private void OnTriggerExit2D(Collider2D collision)
         {
-            if (collision.CompareTag("Player"))
+            if (collision.CompareTag("Player") && ListenerActive())
             {
+                // Remove the active listener, if it is not null
+                if (ListenerActive()) GetInteraction().RemoveListener();
+
                 // Set the player to be able to interact if it is not already
                 if (!canInteract) canInteract = true;
             }
@@ -107,11 +141,30 @@ namespace WorldShaper
                 string areaName = scene.Name;
 
                 // Set the passage name
-                string passageName = passage.value;
+                string passageName = Value;
 
                 // Load the scene
                 Transistor.Instance.ChangeArea(area, areaName, passageName, "CrossFade");
             }
+        }
+
+        private bool ListenerActive()
+        {
+            if (GetInteraction() != null) return GetInteraction().ListenerActive();
+            return false;
+        }
+
+        private void OnDrawGizmos()
+        {
+            // Check if the exit interaction is null or if the move direction is zero
+            if (exitInteraction == null || exitInteraction.inputState.moveDirection == Vector2.zero) return;
+
+            // Get the position of the passage and the direction of the passage
+            Vector3 pos = transform.position;
+            Vector3 direction = exitInteraction.inputState.moveDirection;
+
+            // Draw the arrow
+            DrawArrow.ForGizmo2D(pos, direction, Color.green);
         }
     }
 }
