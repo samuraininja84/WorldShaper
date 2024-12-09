@@ -4,7 +4,7 @@
 
 - Editor Set-Up:
 	- To use World Shaper, you must first create an area handle. 
-		- This scriptable-object contains all the information about the area you are creating.
+		- This scriptable object contains all the information about the area you are creating.
 	- You can create an area handle by right-clicking in the project window and selecting Create > World Shaper > New Area Handle.
 		- Currently, for the system to work, you must have at least two area handles in the project, and all area handles must have "_Handle" at the end of their names.
 		- This is a temporary limitation that will be removed in the future.
@@ -18,13 +18,13 @@
 		- This is the area the player will be taken to when traveling through the connection.
 	- Next, you must choose the passage where the player will exit when they enter the area from the passage dropdown.
 		- The connected area handle must have at least one connection for the dropdown to be populated.
-	- After you've done that for all of the areas you want to connect, we can proceed to the next step.
+	- After you've done that for all the areas you want to connect, we can proceed to the next step.
 - Scene Set-Up:
 	- World Shaper is dependent on the Transistor script.
 		- Transistor is a script that handles the loading and unloading of scenes.
 		- You can find a prefab for Transistor in the World Shaper / Resources / Prefabs folder.
 		- You must have the Transistor script in your scene for the World Shaper system to work.
-	- Each scene to which you want a passage to connect must have game objects with the Passage script attached.
+	- For each scene you want a passage to connect, you must have game objects with the Passage script attached.
 		- The Passage script is a component that contains information about the connection between two areas.
 		- There is a prefab for passages that you can find in the World Shaper / Resources / Prefabs folder.
 	- Drag the prefab into the scene and position it where you want the player to exit when they enter the area.
@@ -35,11 +35,11 @@
 		- You can create as many areas and connections as you want.
 		- You can create as many passages as you want in each scene.
 		- You can create as many connections as you want between areas.
-	- If you wish to load a scene via code, there is a ChangeArea method in Transistor that you can use.
+	- If you wish to load a scene via code, use the ChangeArea method in Transistor.
 		- This method takes in the name of the area you want to load (and the passage you want the player to come out of, if you wish).
-	- If you wish to reload a scene via code, there is a ReloadCurrentArea method in Transistor that you can use.
-	- The can interact bool on Passages is used to determine if the player can interact with the passage.
-		- If true, the player will be able to interact with the passage and travel to the connected area.
+	- If you wish to reload a scene via code, use the ReloadCurrentArea method in Transistor.
+	- The can interact bool on Passages determines if the player can interact with the passage.
+		- If true, the player can interact with the passage and travel to the connected area.
 		- If false, the player will not be able to interact with the passage.
-		- This could be used for creating one-way passages with some retooling but is not currently supported.
+		- This could be used to create one-way passages with some retooling, but it is not currently supported.
 		- Instead, it is used a way to prevent the player from interacting with the immediately after they load into the scene.
