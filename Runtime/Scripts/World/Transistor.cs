@@ -59,6 +59,7 @@ namespace WorldShaper
             if (CanMovePlayer())
             {
                 if (endPassage == string.Empty) endPassage = FindPassage(currentArea, startPassage);
+                else if (endPassage != string.Empty) passages = GetAllPassages();
                 player.transform.position = FindSpawnPointByValue(endPassage);
                 GetPassageByValue(endPassage).canInteract = false;
             }
@@ -77,7 +78,7 @@ namespace WorldShaper
                 {
                     // Return true if the area handle has no connections
                     if (!areaHandle.HasConnections()) return true;
-                    Debug.Log("Scene is not ignored: " + scene.name);
+                    Debug.Log("Scene is ignored: " + scene.name);
                     break;
                 }
             }
@@ -395,9 +396,9 @@ namespace WorldShaper
             List<Passage> passages = new List<Passage>();
             foreach (Passage passage in FindObjectsOfType<Passage>())
             {
-                Debug.Log(passage.Value);
                 passages.Add(passage);
             }
+
             return passages;
         }
 
