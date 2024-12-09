@@ -5,7 +5,8 @@
   "description": "World Shaper is a tool that allows you to create and edit passages for a player to travel through.",
   "unity": "2022.3",
   "dependencies": {
-    "com.unity.textmeshpro": "2.0.0"
+    "com.unity.textmeshpro": "2.0.0",
+    "com.eflatun.scenereference": "git+https://github.com/starikcetin/Eflatun.SceneReference.git#4.1.1"
  },
  "keywords": [
     "keyword1",
