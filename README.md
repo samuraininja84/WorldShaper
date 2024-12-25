@@ -1,7 +1,10 @@
-# World Shaper - A Tooling For Linking Scenes Together
+# World Shaper - A Tool For Linking Scenes Together
+
 - External Dependencies: 
 	- Demigiant: DoTween (Included in Plugins)
  	- Eflatun.SceneReference: `https://github.com/starikcetin/Eflatun.SceneReference.git#4.1.1`
+- Internal Dependencies: 
+ 	- Puppeteer: `https://github.com/samuraininja84/Puppeteer`
 
 # Editor Set-Up:
 - To use World Shaper, you must first create an area handle. 
@@ -20,6 +23,7 @@
 - Next, you must choose the passage where the player will exit when they enter the area from the passage dropdown.
 	- The connected area handle must have at least one connection for the dropdown to be populated.
 - After you've done that for all the areas you want to connect, we can proceed to the next step.
+  
 # Scene Set-Up:
 - World Shaper is dependent on the Transistor script.
 	- Transistor is a script that handles the loading and unloading of scenes.
@@ -30,16 +34,17 @@
 	- There is a prefab for passages that you can find in the World Shaper / Resources / Prefabs folder.
 - Drag the prefab into the scene and position it where you want the player to exit when they enter the area.
 - Assign the connected area handle to the passage and set the end passage to the passage you want the player to come out of after then exit the area.
+  
 # Notes:
 - The World Shaper system is designed to be as flexible as possible.
 	- You can create as many areas and connections as you want.
 	- You can create as many passages as you want in each scene.
 	- You can create as many connections as you want between areas.
 - If you wish to load a scene via code, use the ChangeArea method in Transistor.
-	- This method takes in the name of the area you want to load (and the passage you want the player to come out of, if you wish).
+	- This method takes in the name of the area you want to load (and if you wish, the passage you want the player to exit).
 - If you wish to reload a scene via code, use the ReloadCurrentArea method in Transistor.
-- The can interact bool on Passages determines if the player can interact with the passage.
+- The Can Interact bool on Passages determines if the player can interact with the passage.
 	- If true, the player can interact with the passage and travel to the connected area.
 	- If false, the player will not be able to interact with the passage.
-	- This could be used to create one-way passages with some retooling, but it is not currently supported.
-	- Instead, it is used a way to prevent the player from interacting with the immediately after they load into the scene.
+	- It prevents the player from interacting with the passage immediately after loading into the scene.
+- If you wish to have one-way passages, you can type enum on a Passage to Closed; that way, you can only enter an area through that Passage but not leave the area from it.
