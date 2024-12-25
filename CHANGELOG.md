@@ -1,4 +1,4 @@
-## [1.0.0] - 2024-12-08
-### First Release
-- Additive Scene Loading and Player Intialization To Specific Positions known as Connectables
+## [1.0.0] - 2024-24-08
+### Added
+- Additive Scene Loading and Player Initialization To Specific Positions known as Connectables
 - Custom Connectables Scripting
