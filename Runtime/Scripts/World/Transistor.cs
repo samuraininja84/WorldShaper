@@ -14,9 +14,9 @@ namespace WorldShaper
         public GameObject player;
 
         [Header("Passage Info")]
-        public string startPassage;
-        public string endPassage;
-        public List<Passage> passages;
+        public string startPoint;
+        public string endPoint;
+        public List<Connectable> connectables;
 
         [Header("Areas")]
         public AreaHandle currentArea;
@@ -58,10 +58,14 @@ namespace WorldShaper
             // Move the player to the spawn point
             if (CanMovePlayer())
             {
-                if (endPassage == string.Empty) endPassage = FindPassage(currentArea, startPassage);
-                else if (endPassage != string.Empty) passages = GetAllPassages();
-                player.transform.position = FindSpawnPointByValue(endPassage);
-                GetPassageByValue(endPassage).canInteract = false;
+                // Get the end point from the current area connections
+                if (endPoint == string.Empty) endPoint = FindConnectable(currentArea, startPoint);
+                else if (endPoint != string.Empty) connectables = GetAllConnectables();
+                player.transform.position = FindSpawnPointByValue(endPoint);
+                GetConnectableByValue(endPoint).SetCanInteract(false);
+
+                // Invoke the passage changed event
+                OnEndPassageChanged?.Invoke(endPoint);
             }
 
             // Invoke the transition completed event
@@ -92,112 +96,123 @@ namespace WorldShaper
         public void ReloadCurrentArea()
         {
             // Clear the start passage
-            startPassage = string.Empty;
+            startPoint = string.Empty;
+
+            // Get the current scene name
+            Scene scene = SceneManager.GetActiveScene();
+
+            // Get the area name from the area handle
+            string areaName = scene.name;
 
             // If the current area is null, get the current area from the scene name
-            if (currentArea == null)
+            if (currentArea == null || currentArea.currentScene.Name != areaName)
             {
-                // Get the current scene name
-                Scene scene = SceneManager.GetActiveScene();
+                // Intialize the area handle as null
+                AreaHandle areaHandle = null;
 
-                // Get the area name from the area handle
-                string areaName = scene.name + "_Handle";
-
-                // Get the area handle from the areas array by name
-                AreaHandle areaHandle = areaHandles.First(a => a.name == areaName);
+                // Find the area handle by the scene with the matching name
+                foreach (AreaHandle handle in areaHandles)
+                {
+                    if (handle.currentScene.Name == areaName)
+                    {
+                        areaHandle = handle;
+                        break;
+                    }
+                }
 
                 // Set the current area as the area handle
                 currentArea = areaHandle;
             }
 
             // Get the end passage name from the current area connections as the first connection
-            if (endPassage == string.Empty && currentArea.HasConnections())
+            if (endPoint == string.Empty && currentArea.HasConnections())
             {
-                startPassage = currentArea.connections[1].passage.value;
-                endPassage = currentArea.connections[1].connectionName;
+                startPoint = currentArea.connections[0].passage.value;
+                endPoint = currentArea.connections[0].connectionName;
             }
-            else if (endPassage != string.Empty && currentArea.HasConnections())
+            else if (endPoint != string.Empty && currentArea.HasConnections())
             {
-                startPassage = currentArea.GetConnection(endPassage).passage.value;
+                startPoint = currentArea.GetConnection(endPoint).passage.value;
             }
 
             // Change the scene with the current area name
-            StartCoroutine(ChangeArea(currentArea.currentScene.Name, "CrossFade"));
+            StartCoroutine(ExecuteAreaTransition(currentArea.currentScene.Name, "CrossFade"));
         }
 
         public void ChangeArea(AreaHandle areaHandle, string areaName, string passageName, string transitionName)
         {
-            SetPassageData(areaHandle, passageName);
-            StartCoroutine(ChangeArea(areaName, transitionName));
+            ConfigurePassageData(areaHandle, passageName);
+            StartCoroutine(ExecuteAreaTransition(areaName, transitionName));
         }
 
-        public void ChangeArea(string areaHandleName, int passageIndex = 0, string transitionName = "CrossFade")
+        public void ChangeArea(string areaName, int endPointIndex = 0, string transitionName = "CrossFade")
         {
-            // Create the handle name
-            string handleName = areaHandleName;
+            // Intialize the area handle as null
+            AreaHandle areaHandle = null;
 
-            // Add the _Handle to the area handle name if it does not contain it
-            if (!areaHandleName.Contains("_Handle")) handleName = areaHandleName + "_Handle";
+            // Find the area handle by the scene with the matching name
+            foreach (AreaHandle handle in areaHandles)
+            {
+                if (handle.currentScene.Name == areaName)
+                {
+                    areaHandle = handle;
+                    break;
+                }
+            }
 
-            // Get the area handle from the areas array by name         
-            AreaHandle areaHandle = areaHandles.First(a => a.name == handleName);
-
-            // Get the area name from the area handle
-            string areaName = areaHandle.currentScene.Name;
-
-            // Get the passage name from the area handle connections based on the passage index
+            // Get the start and end point names from the area handle connections based on the end point index
             if (areaHandle.HasConnections())
             {
-                string startPassageName = areaHandle.connections[passageIndex].passage.value;
-                string endPassageName = areaHandle.connections[passageIndex].connectionName;
-                SetPassageData(areaHandle, startPassageName, endPassageName);
+                string startPointName = areaHandle.connections[endPointIndex].passage.value;
+                string endPointName = areaHandle.connections[endPointIndex].connectionName;
+                ConfigurePassageData(areaHandle, startPointName, endPointName);
             }
 
             // Change the scene
-            StartCoroutine(ChangeArea(areaName, transitionName));
+            StartCoroutine(ExecuteAreaTransition(areaName, transitionName));
         }
 
-        public void ChangeArea(string areaHandleName, string endPassageName = null, string transitionName = "CrossFade")
+        public void ChangeArea(string areaName, string endPointName = null, string transitionName = "CrossFade")
         {
-            // Create the handle name
-            string handleName = areaHandleName;
+            // Intialize the area handle as null
+            AreaHandle areaHandle = null;
 
-            // Add the _Handle to the area handle name if it does not contain it
-            if (!areaHandleName.Contains("_Handle")) handleName = areaHandleName + "_Handle";
+            // Find the area handle by the scene with the matching name
+            foreach (AreaHandle handle in areaHandles)
+            {
+                if (handle.currentScene.Name == areaName)
+                {
+                    areaHandle = handle;
+                    break;
+                }
+            }
 
-            // Get the area handle from the areas array by name
-            AreaHandle areaHandle = areaHandles.First(a => a.name == handleName);
-
-            // Get the area name from the area handle
-            string areaName = areaHandle.currentScene.Name;
-
-            // If the passage name is null, get the first connection from the area handle
+            // If the end point name is null, use the first connection from the area handle to set the start and end points, otherwise use the end point name to get the start point name
             if (areaHandle.HasConnections())
             {
-                // Set the start passage name
-                string startPassageName = string.Empty;
-
-                if (endPassageName == null)
+                // Intialize the start point name as an empty string
+                string startPointName = string.Empty;
+                if (endPointName == null)
                 {
-                    startPassageName = areaHandle.connections[0].passage.value;
-                    endPassageName = areaHandle.connections[0].connectionName;
+                    startPointName = areaHandle.connections[0].passage.value;
+                    endPointName = areaHandle.connections[0].connectionName;
                 }
-                else if (endPassageName != null && areaHandle.HasConnections())
+                else if (endPointName != null && areaHandle.HasConnections())
                 {
-                    Connection connection = areaHandle.GetConnection(endPassageName);
-                    startPassageName = connection.passage.value;
-                    endPassageName = connection.connectionName;
+                    Connection connection = areaHandle.GetConnection(endPointName);
+                    startPointName = connection.passage.value;
+                    endPointName = connection.connectionName;
                 }
 
                 // Set the passage data
-                SetPassageData(areaHandle, startPassageName, endPassageName);
+                ConfigurePassageData(areaHandle, startPointName, endPointName);
             }
 
             // Change the scene
-            StartCoroutine(ChangeArea(areaName, transitionName));
+            StartCoroutine(ExecuteAreaTransition(areaName, transitionName));
         }
 
-        public void ChangeArea(int areaIndex, string endPassageName = null, string transitionName = "CrossFade")
+        public void ChangeArea(int areaIndex, int endPointIndex = 0, string transitionName = "CrossFade")
         {
             // Get the area handle from the areas array by index
             AreaHandle areaHandle = areaHandles[areaIndex];
@@ -205,33 +220,19 @@ namespace WorldShaper
             // Get the area name from the area handle
             string areaName = areaHandle.currentScene.Name;
 
-            // If the passage name is null, get the first connection from the area handle
+            // Get the start and end point names from the area handle connections based on the end point index
             if (areaHandle.HasConnections())
             {
-                // Set the start passage name
-                string startPassageName = string.Empty;
-
-                if (endPassageName == null)
-                {
-                    startPassageName = areaHandle.connections[0].passage.value;
-                    endPassageName = areaHandle.connections[0].connectionName;
-                }
-                else if (endPassageName != null && areaHandle.HasConnections())
-                {
-                    Connection connection = areaHandle.GetConnection(endPassageName);
-                    startPassageName = connection.passage.value;
-                    endPassageName = connection.connectionName;
-                }
-
-                // Set the passage data
-                SetPassageData(areaHandle, startPassageName, endPassageName);
+                string startPointName = areaHandle.connections[endPointIndex].passage.value;
+                string endPointName = areaHandle.connections[endPointIndex].connectionName;
+                ConfigurePassageData(areaHandle, startPointName, endPointName);
             }
 
             // Change the scene
-            StartCoroutine(ChangeArea(areaName, transitionName));
+            StartCoroutine(ExecuteAreaTransition(areaName, transitionName));
         }
 
-        public void ChangeArea(int areaIndex, int passageIndex = 0, string transitionName = "CrossFade")
+        public void ChangeArea(int areaIndex, string endPointName = null, string transitionName = "CrossFade")
         {
             // Get the area handle from the areas array by index
             AreaHandle areaHandle = areaHandles[areaIndex];
@@ -239,20 +240,35 @@ namespace WorldShaper
             // Get the area name from the area handle
             string areaName = areaHandle.currentScene.Name;
 
-            // Get the passage name from the area handle connections based on the passage index
+            // If the end point name is null, use the first connection from the area handle to set the start and end points, otherwise use the end point name to get the start point name
             if (areaHandle.HasConnections())
             {
-                string startPassageName = areaHandle.connections[passageIndex].passage.value;
-                string endPassageName = areaHandle.connections[passageIndex].connectionName;
-                SetPassageData(areaHandle, startPassageName, endPassageName);
+                // Intialize the start point name as an empty string
+                string startPointName = string.Empty;
+
+                if (endPointName == null)
+                {
+                    startPointName = areaHandle.connections[0].passage.value;
+                    endPointName = areaHandle.connections[0].connectionName;
+                }
+                else if (endPointName != null && areaHandle.HasConnections())
+                {
+                    Connection connection = areaHandle.GetConnection(endPointName);
+                    startPointName = connection.passage.value;
+                    endPointName = connection.connectionName;
+                }
+
+                // Set the passage data
+                ConfigurePassageData(areaHandle, startPointName, endPointName);
             }
 
             // Change the scene
-            StartCoroutine(ChangeArea(areaName, transitionName));
+            StartCoroutine(ExecuteAreaTransition(areaName, transitionName));
         }
 
-        private IEnumerator ChangeArea(string areaName, string transitionName)
+        private IEnumerator ExecuteAreaTransition(string areaName, string transitionName)
         {
+            // If the scene is already loading, return
             if (scene != null) yield break;
 
             // Invoke the transition started event
@@ -261,18 +277,15 @@ namespace WorldShaper
             // Get the transition animation from the transitions array by name
             TransitionAnimation transition = transitions.First(t => t.name == transitionName);
 
+            // Delay the rest of the method until the transition has finished animating in
+            yield return transition.AnimateTransitionIn();
+
             // Get the scene async operation and set it to not allow scene activation
             scene = SceneManager.LoadSceneAsync(areaName);
             scene.allowSceneActivation = false;
 
-            // Animate the transition in
-            yield return transition.AnimateTransitionIn();
-
             // Show the progress bar if it is enabled
-            if (showProgressBar)
-            {
-                progressBar.gameObject.SetActive(true);
-            }
+            if (showProgressBar) progressBar.gameObject.SetActive(true);
 
             // While the scene progress is less than 0.9, update the progress bar
             do
@@ -292,15 +305,12 @@ namespace WorldShaper
             scene.allowSceneActivation = true;
 
             // Hide the progress bar if it is enabled
-            if (showProgressBar)
-            {
-                progressBar.gameObject.SetActive(false);
-            }
+            if (showProgressBar) progressBar.gameObject.SetActive(false);
 
             // Set the async operation to null
             scene = null;
 
-            // Animate the transition out
+            // Animate the transition out and wait for it to finish
             yield return transition.AnimateTransitionOut();
         }
 
@@ -308,51 +318,48 @@ namespace WorldShaper
 
         #region Passage Methods
 
-        private void SetPassageData(AreaHandle areaHandle, string startPassageName, string endPassageName = null)
+        private void ConfigurePassageData(AreaHandle areaHandle, string startPassageName, string endPassageName = null)
         {
             currentArea = areaHandle;
-            startPassage = startPassageName;
-            if (endPassageName == null) endPassage = string.Empty;
-            else endPassage = endPassageName;
+            startPoint = startPassageName;
+            if (endPassageName == null) endPoint = string.Empty;
+            else endPoint = endPassageName;
         }
 
-        private string FindPassage(AreaHandle areaHandle, string passageName)
+        private string FindConnectable(AreaHandle areaHandle, string passageName)
         {
-            // Create the linked passage string
-            string linkedPassageName = string.Empty;
+            // Create the linked connectable string
+            string linkedConnectable = string.Empty;
 
             // Get the connection with the matching passage name from the area handle
             if (areaHandle.ConnectionExists(passageName))
             {
                 // Get the connection with the matching passage name from the area handle
                 Connection connection = areaHandle.GetConnection(passageName);
-                string linkedPassageValue = connection.passage.value;
+                string endPointName = connection.passage.value;
 
-                // Get the matching passage from the area handle
-                passages = GetAllPassages();
-                if (passages.Count > 1)
+                // Get the matching connectable from the area handle
+                connectables = GetAllConnectables();
+                if (connectables.Count > 1)
                 {
-                    // If there are multiple passages, find the connected passage with the matching name
-                    foreach (Passage passage in passages)
+                    // If there are multiple connectables, find the linked connectable with the matching value
+                    foreach (Connectable connectable in connectables)
                     {
-                        if (linkedPassageValue == passage.Value)
+                        if (endPointName == connectable.GetValue())
                         {
-                            linkedPassageName = passage.Value;
+                            linkedConnectable = connectable.GetValue();
                         }
                     }
                 }
                 else
                 {
-                    // If there is only one passage, set the connected passage name as the first passage name
-                    linkedPassageName = passages[0].Value;
+                    // If there is only one connectable, set the linked connectable as the first connectable value
+                    linkedConnectable = connectables[0].GetValue();
                 }
             }
 
-            // Invoke the passage changed event
-            OnEndPassageChanged?.Invoke(linkedPassageName);
-
-            // Return the passage name
-            return linkedPassageName;
+            // Return the linked connectable
+            return linkedConnectable;
         }
 
         private Vector3 FindSpawnPointByValue(string value)
@@ -360,8 +367,8 @@ namespace WorldShaper
             // Initialize the spawn point
             Transform spawnPoint = null;
 
-            // Get the spawn point from the passage name
-            Passage passage = GetPassageByValue(value);
+            // Get the spawn point from the connectable with the matching value
+            Connectable passage = GetConnectableByValue(value);
             spawnPoint = passage.gameObject.transform;
 
             // Get the spawn location
@@ -377,43 +384,42 @@ namespace WorldShaper
             return spawnLocation;
         }
 
-        private Passage GetPassageByValue(string value)
+        private Connectable GetConnectableByValue(string value)
         {
-            // Get all the passages in the scene, then find the passage with the matching value
-            foreach (Passage passage in passages)
+            // Get all the connectables in the scene, then find the connectable with the matching value
+            foreach (Connectable connectable in connectables)
             {
-                if (passage.Value == value)
+                if (connectable.GetValue() == value)
                 {
-                    return passage;
+                    return connectable;
                 }
             }
 
             return null;
         }
 
-        private List<Passage> GetAllPassages()
+        private List<Connectable> GetAllConnectables()
         {
-            List<Passage> passages = new List<Passage>();
-            foreach (Passage passage in FindObjectsOfType<Passage>())
+            List<Connectable> connectables = new List<Connectable>();
+            foreach (Connectable connectable in FindObjectsOfType<Connectable>())
             {
-                passages.Add(passage);
+                connectables.Add(connectable);
             }
-
-            return passages;
+            return connectables;
         }
 
-        private List<string> GetAllPassageValues()
+        private List<string> GetAllConnectableValues()
         {
-            // Create the list of passage values
+            // Create the list of connectable values
             List<string> values = new List<string>();
 
-            // Get all the passages in the scene
-            foreach (Passage passage in passages)
+            // Get all the connectables in the scene
+            foreach (Connectable connectable in connectables)
             {
-                values.Add(passage.Value);
+                values.Add(connectable.GetValue());
             }
 
-            // Return the list of passage values
+            // Return the list of connectable values
             return values;
         }
 
@@ -478,7 +484,7 @@ namespace WorldShaper
 
         private bool CanMovePlayer()
         {
-            return player != null && startPassage != string.Empty && currentArea != null;
+            return player != null && startPoint != string.Empty && currentArea != null;
         }
 
         #endregion

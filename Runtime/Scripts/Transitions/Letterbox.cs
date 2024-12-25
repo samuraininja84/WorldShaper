@@ -1,14 +1,16 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
 using DG.Tweening;
 
 namespace WorldShaper
 {
-    public class ScreenWipe : TransitionAnimation
+    public class Letterbox : TransitionAnimation
     {
         [Header("UI Elements")]
-        public Image image;
+        public RectTransform top;
+        public RectTransform bottom;
+        public float initialHeight = 1080f;
+        [Range(0f, .5f)] public float targetRatio = 0.25f;
         public float duration = 1f;
 
         public override IEnumerator AnimateTransitionIn(bool realTime = false)
@@ -19,27 +21,28 @@ namespace WorldShaper
             // Set the animating in flag to true
             animatingIn = true;
 
-            // Enable the image
-            image.enabled = true;
-
-            // Get the width of the image for the start position
-            float width = image.rectTransform.rect.width;
+            // Enable the images
+            top.gameObject.SetActive(true);
+            bottom.gameObject.SetActive(true);
 
             // Set the anchored position to the start position
-            image.rectTransform.anchoredPosition = new Vector2(-width, 0f);
+            top.anchoredPosition = new Vector2(0f, initialHeight);
+            bottom.anchoredPosition = new Vector2(0f, -initialHeight);
 
             // Slide the image towards the end position
             if (realTime)
             {
                 // Update the position in real time, regardless of the time scale
-                var tweener = image.rectTransform.DOAnchorPosX(0f, duration).SetUpdate(true);
-                yield return new WaitForSecondsRealtime(tweener.Duration());
+                var topTweener = top.DOAnchorPosY(GetTargetHeight(), duration).SetUpdate(true);
+                var bottomTweener = bottom.DOAnchorPosY(-GetTargetHeight(), duration).SetUpdate(true);
+                yield return new WaitForSecondsRealtime(topTweener.Duration());
             }
             else
             {
                 // Update the position in game time, respecting the time scale
-                var tweener = image.rectTransform.DOAnchorPosX(0f, duration);
-                yield return tweener.WaitForCompletion();
+                var topTweener = top.DOAnchorPosY(GetTargetHeight(), duration);
+                var bottomTweener = bottom.DOAnchorPosY(-GetTargetHeight(), duration);
+                yield return topTweener.WaitForCompletion();
             }
 
             // Set the animating in flag to false
@@ -57,25 +60,25 @@ namespace WorldShaper
             // Set the animating out flag to true
             animatingOut = true;
 
-            // Get the width of the image for the end position
-            float width = image.rectTransform.rect.width;
-
             // Slide the image towards the start position
             if (realTime)
             {
                 // Update the position in real time, regardless of the time scale
-                var tweener = image.rectTransform.DOAnchorPosX(width, duration).SetUpdate(true);
-                yield return new WaitForSecondsRealtime(tweener.Duration());
+                var topTweener = top.DOAnchorPosY(initialHeight, duration).SetUpdate(true);
+                var bottomTweener = bottom.DOAnchorPosY(-initialHeight, duration).SetUpdate(true);
+                yield return new WaitForSecondsRealtime(topTweener.Duration());
             }
             else
             {
                 // Update the position in game time, respecting the time scale
-                var tweener = image.rectTransform.DOAnchorPosX(width, duration);
-                yield return tweener.WaitForCompletion();
+                var topTweener = top.DOAnchorPosY(initialHeight, duration);
+                var bottomTweener = bottom.DOAnchorPosY(-initialHeight, duration);
+                yield return topTweener.WaitForCompletion();
             }
 
-            // Disable the image
-            image.enabled = false;
+            // Disable the images
+            top.gameObject.SetActive(false);
+            bottom.gameObject.SetActive(false);
 
             // Set the animating out flag to false
             animatingOut = false;
@@ -87,6 +90,11 @@ namespace WorldShaper
         public override float GetDuration()
         {
             return duration;
+        }
+
+        public float GetTargetHeight()
+        {
+            return initialHeight * (1 - targetRatio);
         }
     }
 }

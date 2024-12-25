@@ -74,5 +74,10 @@ namespace WorldShaper
             // Invoke the transition out event
             OnTransitionOut?.Invoke();
         }
+
+        public override float GetDuration()
+        {
+            return duration;
+        }
     }
 }

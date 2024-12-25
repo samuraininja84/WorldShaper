@@ -597,12 +597,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   UnparentOnAwake: 1
   player: {fileID: 0}
-  startPassage: 
-  endPassage: 
+  startPoint: 
+  endPoint: 
+  connectables: []
   currentArea: {fileID: 0}
   areaHandles:
-  - {fileID: 11400000, guid: 30998bb135da7004a95fc6de238a36cf, type: 2}
-  - {fileID: 11400000, guid: 870f8bbb8a9dbfa4cbe67f59673c0220, type: 2}
+  - {fileID: 11400000, guid: eb432d48de002be4a837948c00916e89, type: 2}
   transitions:
   - {fileID: 520068466808047486}
   - {fileID: 2076776398441901736}

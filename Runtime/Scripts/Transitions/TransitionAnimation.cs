@@ -14,6 +14,9 @@ namespace WorldShaper
         [HideInInspector] public bool animatingOut;
 
         public abstract IEnumerator AnimateTransitionIn(bool realTime = false);
+
         public abstract IEnumerator AnimateTransitionOut(bool realTime = false);
+
+        public abstract float GetDuration();
     }
 }
