@@ -1,4 +1,4 @@
-# World Shaper - A Tool For Linking Scenes Together
+# World Shaper - A Tool For Shaping Larger Worlds
 
 - External Dependencies: 
 	- Demigiant: DoTween (Included in Plugins)
