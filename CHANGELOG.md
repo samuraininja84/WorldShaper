@@ -1,4 +1,4 @@
 ## [1.0.0] - 2024-12-08
-### First Releaser
-- Trimmed Version Of Original World Shaper Package
-- Includes Transistor ans Passage Functionality
+### First Release
+- Additive Scene Loading and Player Intialization To Specific Positions known as Connectables
+- Custom Connectables Scripting
