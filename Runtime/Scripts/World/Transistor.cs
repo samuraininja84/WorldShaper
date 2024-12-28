@@ -78,12 +78,14 @@ namespace WorldShaper
             foreach (AreaHandle areaHandle in areaHandles)
             {
                 // Check if the area handle scene path matches the loaded scene name
-                if (areaHandle.currentScene.Path == scene.name)
+                if (areaHandle.currentScene.Name == scene.name)
                 {
                     // Return true if the area handle has no connections
-                    if (!areaHandle.HasConnections()) return true;
-                    Debug.Log("Scene is ignored: " + scene.name);
-                    break;
+                    if (!areaHandle.HasConnections())
+                    {
+                        Debug.Log("Scene is ignored: " + scene.name);
+                        return true;
+                    }
                 }
             }
 
