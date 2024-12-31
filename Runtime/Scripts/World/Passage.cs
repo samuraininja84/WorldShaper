@@ -152,38 +152,6 @@ namespace WorldShaper
             }
         }
 
-        private void OnTriggerEnter2D(Collider2D collision)
-        {
-            if (collision.CompareTag("Player") && !ThreadActive())
-            {
-                // Add the appropriate listener, if it is not null
-                if (CanUsePassage())
-                {
-                    // Add the listener
-                    GetInteraction().AddListener();
-
-                    // Load the area
-                    if (canInteract) LoadArea();
-                }
-                else if (!CanUsePassage())
-                {
-                    GetInteraction().AddListener();
-                }
-            }
-        }
-
-        private void OnTriggerExit2D(Collider2D collision)
-        {
-            if (collision.CompareTag("Player") && ThreadActive())
-            {
-                // Remove the active listener, if it is not null
-                GetInteraction().RemoveListener();
-
-                // Set the player to be able to interact if it is not already
-                if (!canInteract) canInteract = true;
-            }
-        }
-
         private void OnDrawGizmos()
         {
             // Check if the enter interaction is null or if the move direction is zero

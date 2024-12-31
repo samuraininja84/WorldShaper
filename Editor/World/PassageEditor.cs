@@ -17,7 +17,6 @@ namespace WorldShaper.Editor
         public SerializedProperty enterInteractionProperty;
         public SerializedProperty exitInteractionProperty;
         public SerializedProperty canInteractProperty;
-        private string areaHandlePath = "Assets/Scripts/Tooling/World Shaper/Resources/Connections";
 
         private void OnEnable()
         {
@@ -117,7 +116,7 @@ namespace WorldShaper.Editor
             string sceneName = ActiveSceneName();
 
             // Look for the area handle that matches the passage
-            areaHandles = GetAllAreaHandlesFromPath(areaHandlePath);
+            areaHandles = GetAllAreaHandles();
 
             // Find the area handle with the matching the scene reference, prioritizing connections over scenes
             foreach (AreaHandle areaHandle in areaHandles)
@@ -133,10 +132,10 @@ namespace WorldShaper.Editor
             return area;
         }
 
-        private AreaHandle[] GetAllAreaHandlesFromPath(string filePath)
+        private AreaHandle[] GetAllAreaHandles()
         {
             // Get all area handles from the path
-            return AssetDatabase.FindAssets("t:AreaHandle", new[] { filePath })
+            return AssetDatabase.FindAssets("t:AreaHandle", null)
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Select(AssetDatabase.LoadAssetAtPath<AreaHandle>)
                 .ToArray();
