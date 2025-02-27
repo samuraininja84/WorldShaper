@@ -120,6 +120,14 @@ namespace WorldShaper
             return passage.Value;
         }
 
+        private Vector3 GetArrowDirection(Vector3 direction, bool orthographic = true)
+        {
+            Vector3 arrowDirection = Vector3.zero;
+            if (orthographic) arrowDirection = direction;
+            else arrowDirection = new Vector3(direction.x, 0, direction.y);
+            return arrowDirection;
+        }
+
         private void OnTriggerEnter(Collider collision)
         {
             if (collision.CompareTag("Player") && !ThreadActive())
@@ -152,6 +160,38 @@ namespace WorldShaper
             }
         }
 
+        private void OnTriggerEnter2D(Collider2D collision)
+        {
+            if (collision.CompareTag("Player") && !ThreadActive())
+            {
+                // Add the appropriate listener, if it is not null
+                if (CanUsePassage())
+                {
+                    // Add the listener
+                    GetInteraction().AddListener();
+
+                    // Load the area
+                    if (canInteract) LoadArea();
+                }
+                else if (!CanUsePassage())
+                {
+                    GetInteraction().AddListener();
+                }
+            }
+        }
+
+        private void OnTriggerExit2D(Collider2D collision)
+        {
+            if (collision.CompareTag("Player") && ThreadActive())
+            {
+                // Remove the active listener, if it is not null
+                GetInteraction().RemoveListener();
+
+                // Set the player to be able to interact if it is not already
+                if (!canInteract) canInteract = true;
+            }
+        }
+
         private void OnDrawGizmos()
         {
             // Check if the enter interaction is null or if the move direction is zero
@@ -159,10 +199,10 @@ namespace WorldShaper
             {
                 // Get the position of the passage and the direction of the enter interaction
                 Vector3 pos = transform.position;
-                Vector3 direction = enterInteraction.GetMoveDirection();
+                Vector3 direction = GetArrowDirection(enterInteraction.GetMoveDirection(), Camera.main.orthographic);
 
                 // Draw the arrow
-                DrawArrow.ForGizmo(pos, direction, Color.blue);
+                DrawArrow.ForGizmo(pos, direction, Color.green);
             }
 
             // Check if the exit interaction is null or if the move direction is zero
@@ -170,10 +210,10 @@ namespace WorldShaper
             {
                 // Get the position of the passage and the direction of the exit interaction
                 Vector3 pos = transform.position;
-                Vector3 direction = exitInteraction.GetMoveDirection();
+                Vector3 direction = GetArrowDirection(exitInteraction.GetMoveDirection(), Camera.main.orthographic);
 
                 // Draw the arrow
-                DrawArrow.ForGizmo(pos, direction, Color.green);
+                DrawArrow.ForGizmo(pos, direction, Color.blue);
             }
         }
     }
