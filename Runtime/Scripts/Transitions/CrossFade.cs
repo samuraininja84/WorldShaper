@@ -8,7 +8,7 @@ namespace WorldShaper
     public class CrossFade : TransitionAnimation
     {
         [Header("UI Elements")]
-        public CanvasGroup crossFade;
+        public CanvasGroup transitionCanvasGroup;
         public float duration = 1f;
 
         public override IEnumerator AnimateTransitionIn(bool realTime = false)
@@ -20,19 +20,19 @@ namespace WorldShaper
             animatingIn = true;
 
             // Set the alpha to 0
-            crossFade.alpha = 0f;
+            transitionCanvasGroup.alpha = 0f;
 
             // Fade the image towards 1
             if (realTime)
             {
                 // Update the alpha in real time, regardless of the time scale
-                var tweener = crossFade.DOFade(1f, duration).SetUpdate(true);
+                var tweener = transitionCanvasGroup.DOFade(1f, duration).SetUpdate(true);
                 yield return new WaitForSecondsRealtime(tweener.Duration());
             }
             else
             {
                 // Update the alpha in game time, respecting the time scale
-                var tweener = crossFade.DOFade(1f, duration);
+                var tweener = transitionCanvasGroup.DOFade(1f, duration);
                 yield return tweener.WaitForCompletion();
             }
 
@@ -52,19 +52,19 @@ namespace WorldShaper
             animatingOut = true;
 
             // Set the alpha to 1
-            crossFade.alpha = 1f;
+            transitionCanvasGroup.alpha = 1f;
 
             // Fade the image towards 0
             if (realTime)
             {
                 // Update the alpha in real time, regardless of the time scale
-                var tweener = crossFade.DOFade(0f, duration).SetUpdate(true);
+                var tweener = transitionCanvasGroup.DOFade(0f, duration).SetUpdate(true);
                 yield return new WaitForSecondsRealtime(tweener.Duration());
             }
             else
             {
                 // Update the alpha in game time, respecting the time scale
-                var tweener = crossFade.DOFade(0f, duration);
+                var tweener = transitionCanvasGroup.DOFade(0f, duration);
                 yield return tweener.WaitForCompletion();
             }
 
