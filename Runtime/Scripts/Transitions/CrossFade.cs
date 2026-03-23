@@ -1,4 +1,4 @@
-using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 using DG.Tweening;
 
@@ -11,10 +11,10 @@ namespace WorldShaper
         public CanvasGroup transitionCanvasGroup;
         public float duration = 1f;
 
-        public override IEnumerator AnimateTransitionIn(bool realTime = false)
+        public override async Task AnimateTransitionIn(bool realTime = false)
         {
             // If the animation is already running, exit early
-            if (animatingIn) yield break;
+            if (animatingIn) return;
 
             // Set the animating in flag to true
             animatingIn = true;
@@ -27,13 +27,17 @@ namespace WorldShaper
             {
                 // Update the alpha in real time, regardless of the time scale
                 var tweener = transitionCanvasGroup.DOFade(1f, duration).SetUpdate(true);
-                yield return new WaitForSecondsRealtime(tweener.Duration());
+
+                // Await the completion of the tween
+                await tweener.AsyncWaitForCompletion();
             }
             else
             {
                 // Update the alpha in game time, respecting the time scale
                 var tweener = transitionCanvasGroup.DOFade(1f, duration);
-                yield return tweener.WaitForCompletion();
+
+                // Await the completion of the tween
+                await tweener.AsyncWaitForCompletion();
             }
 
             // Set the animating in flag to false
@@ -41,12 +45,15 @@ namespace WorldShaper
 
             // Invoke the transition in event
             OnTransitionIn?.Invoke();
+
+            // Return a completed task
+            await Task.CompletedTask;
         }
 
-        public override IEnumerator AnimateTransitionOut(bool realTime = false)
+        public override async Task AnimateTransitionOut(bool realTime = false)
         {
             // If the animation is already running, exit early
-            if (animatingOut) yield break;
+            if (animatingOut) return;
 
             // Set the animating out flag to true
             animatingOut = true;
@@ -59,13 +66,17 @@ namespace WorldShaper
             {
                 // Update the alpha in real time, regardless of the time scale
                 var tweener = transitionCanvasGroup.DOFade(0f, duration).SetUpdate(true);
-                yield return new WaitForSecondsRealtime(tweener.Duration());
+
+                // Await the completion of the tween
+                await tweener.AsyncWaitForCompletion();
             }
             else
             {
                 // Update the alpha in game time, respecting the time scale
                 var tweener = transitionCanvasGroup.DOFade(0f, duration);
-                yield return tweener.WaitForCompletion();
+
+                // Await the completion of the tween
+                await tweener.AsyncWaitForCompletion();
             }
 
             // Set the animating out flag to false
@@ -75,9 +86,8 @@ namespace WorldShaper
             OnTransitionOut?.Invoke();
         }
 
-        public override float GetDuration()
-        {
-            return duration;
-        }
+        public override void SetTransitionState(bool status) => transitionCanvasGroup.alpha = status ? 1f : 0f;
+
+        public override float GetDuration() => duration;
     }
 }

@@ -1,0 +1,6 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Plugins/Artisan/World%20Shaper/Editor/Windows/WorldGraphWindow.uss?fileID=7433441132597879392&amp;guid=9959ce4e850062f4aae8de45253aef1c&amp;type=3#WorldGraphWindow" />
+    <ui:VisualElement name="Container" focusable="true" style="flex-grow: 1; flex-direction: row; background-color: rgb(36, 36, 36); width: auto; height: 1080px;">
+        <ui:VisualElement name="Content" data-source-type="Artisan.Utility.Editor.IconThumbnailEditor, Artisan.Utility.Editor" picking-mode="Ignore" focusable="true" style="flex-grow: 1; background-color: rgb(38, 38, 38); min-width: 0;" />
+    </ui:VisualElement>
+</ui:UXML>

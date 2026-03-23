@@ -3,6 +3,7 @@
     "rootNamespace": "WorldShaper",
     "references": [
         "GUID:8f53c8c02acef5e42bd74f953fb349e8",
+        "GUID:7fcdd177d1efcf645831b647daf22b4c",
         "GUID:caca889fed6088d40b22c2d7e2909c31"
     ],
     "includePlatforms": [

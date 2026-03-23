@@ -1,4 +1,4 @@
-using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
@@ -11,10 +11,10 @@ namespace WorldShaper
         public Image image;
         public float duration = 1f;
 
-        public override IEnumerator AnimateTransitionIn(bool realTime = false)
+        public override async Task AnimateTransitionIn(bool realTime = false)
         {
             // If the animation is already running, exit early
-            if (animatingIn) yield break;
+            if (animatingIn) return;
 
             // Set the animating in flag to true
             animatingIn = true;
@@ -33,13 +33,17 @@ namespace WorldShaper
             {
                 // Update the position in real time, regardless of the time scale
                 var tweener = image.rectTransform.DOAnchorPosX(0f, duration).SetUpdate(true);
-                yield return new WaitForSecondsRealtime(tweener.Duration());
+
+                // Await the completion of the tween
+                await tweener.AsyncWaitForCompletion();
             }
             else
             {
                 // Update the position in game time, respecting the time scale
                 var tweener = image.rectTransform.DOAnchorPosX(0f, duration);
-                yield return tweener.WaitForCompletion();
+
+                // Await the completion of the tween
+                await tweener.AsyncWaitForCompletion();
             }
 
             // Set the animating in flag to false
@@ -49,13 +53,19 @@ namespace WorldShaper
             OnTransitionIn?.Invoke();
         }
 
-        public override IEnumerator AnimateTransitionOut(bool realTime = false)
+        public override async Task AnimateTransitionOut(bool realTime = false)
         {
             // If the animation is already running, exit early
-            if (animatingOut) yield break;
+            if (animatingOut) return;
 
             // Set the animating out flag to true
             animatingOut = true;
+
+            // Enable the image
+            image.enabled = true;
+
+            // Put the image in the start position
+            image.rectTransform.anchoredPosition = Vector2.zero;
 
             // Get the width of the image for the end position
             float width = image.rectTransform.rect.width;
@@ -65,13 +75,17 @@ namespace WorldShaper
             {
                 // Update the position in real time, regardless of the time scale
                 var tweener = image.rectTransform.DOAnchorPosX(width, duration).SetUpdate(true);
-                yield return new WaitForSecondsRealtime(tweener.Duration());
+
+                // Await the completion of the tween
+                await tweener.AsyncWaitForCompletion();
             }
             else
             {
                 // Update the position in game time, respecting the time scale
                 var tweener = image.rectTransform.DOAnchorPosX(width, duration);
-                yield return tweener.WaitForCompletion();
+
+                // Await the completion of the tween
+                await tweener.AsyncWaitForCompletion();
             }
 
             // Disable the image
@@ -84,9 +98,8 @@ namespace WorldShaper
             OnTransitionOut?.Invoke();
         }
 
-        public override float GetDuration()
-        {
-            return duration;
-        }
+        public override void SetTransitionState(bool status) => image.rectTransform.anchoredPosition = status ? Vector2.zero : new Vector2(-image.rectTransform.rect.width, 0f);
+
+        public override float GetDuration() => duration;
     }
 }

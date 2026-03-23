@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14b3ea605b9169c489337d4dbeeadff8, type: 3}
+  m_Name: Blink
+  m_EditorClassIdentifier: WorldShaper::WorldShaper.TransitionIdentifier
+  transitionID:
+    Part1: 2947134123
+    Part2: 1100913742
+    Part3: 280454043
+    Part4: 1295749136

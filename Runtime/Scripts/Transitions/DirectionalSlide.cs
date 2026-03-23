@@ -1,4 +1,4 @@
-using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 using DG.Tweening;
 
@@ -14,11 +14,18 @@ namespace WorldShaper
         public Vector2 startPosition;
         public Vector2 endPosition;
         public float duration = 1f;
+        public bool adjust = false;
 
-        public override IEnumerator AnimateTransitionIn(bool realTime = false)
+        private void OnValidate()
+        {
+            // Adjust the anchored position to the start position if needed
+            if (rect != null && adjust) rect.anchoredPosition = startPosition;
+        }
+
+        public override async Task AnimateTransitionIn(bool realTime = false)
         {
             // If the animation is already running, exit early
-            if (animatingIn) yield break;
+            if (animatingIn) return;
 
             // Set the animating in flag to true
             animatingIn = true;
@@ -31,13 +38,17 @@ namespace WorldShaper
             {
                 // Update the position in real time, regardless of the time scale
                 var tweener = rect.DOAnchorPos(endPosition, duration).SetUpdate(true);
-                yield return new WaitForSecondsRealtime(tweener.Duration());
+
+                // Await the completion of the tween
+                await tweener.AsyncWaitForCompletion();
             }
             else
             {
                 // Update the position in game time, respecting the time scale
                 var tweener = rect.DOAnchorPos(endPosition, duration);
-                yield return tweener.WaitForCompletion();
+
+                // Await the completion of the tween
+                await tweener.AsyncWaitForCompletion();
             }
 
             // Set the animating in flag to false
@@ -47,15 +58,15 @@ namespace WorldShaper
             OnTransitionIn?.Invoke();
         }
 
-        public override IEnumerator AnimateTransitionOut(bool realTime = false)
+        public override async Task AnimateTransitionOut(bool realTime = false)
         {
             // If the animation is already running, exit early
-            if (animatingOut) yield break;
+            if (animatingOut) return;
 
             // Set the animating out flag to true
             animatingOut = true;
 
-            // Set the anchored position to the end position, if it's not already there
+            // Ensure the rect is at the end position before starting the slide out
             rect.anchoredPosition = endPosition;
 
             // Slide the image towards the start position
@@ -63,13 +74,17 @@ namespace WorldShaper
             {
                 // Update the position in real time, regardless of the time scale
                 var tweener = rect.DOAnchorPos(startPosition, duration).SetUpdate(true);
-                yield return new WaitForSecondsRealtime(tweener.Duration());
+
+                // Await the completion of the tween
+                await tweener.AsyncWaitForCompletion();
             }
             else
             {
                 // Update the position in game time, respecting the time scale
                 var tweener = rect.DOAnchorPos(startPosition, duration);
-                yield return tweener.WaitForCompletion();
+
+                // Await the completion of the tween
+                await tweener.AsyncWaitForCompletion();
             }
 
             // Set the animating out flag to false
@@ -79,9 +94,8 @@ namespace WorldShaper
             OnTransitionOut?.Invoke();
         }
 
-        public override float GetDuration()
-        {
-            return duration;
-        }
+        public override void SetTransitionState(bool status) => rect.anchoredPosition = status ? endPosition : startPosition;
+
+        public override float GetDuration() => duration;
     }
 }
