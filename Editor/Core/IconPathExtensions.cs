@@ -8,7 +8,7 @@ namespace WorldShaper.Editor
         /// <summary>
         /// The path to the icons used in the World Shaper editor.
         /// </summary>
-        public const string IconsPath = "Assets/Plugins/Artisan/World Shaper/Editor/EditorResources/Icons/";
+        public const string IconsPath = "Assets/Plugins/World Shaper/Editor/EditorResources/Icons/";
 
         /// <summary>
         /// Generates the full file path for an image by combining the specified icon name, file extension, and directory path.
