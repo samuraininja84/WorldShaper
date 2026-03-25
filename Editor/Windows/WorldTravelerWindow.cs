@@ -743,8 +743,12 @@ namespace WorldShaper.Editor
                 // Get the button content for the check for missing passages button
                 GUIContent checkContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Check")), $"Check for missing passages in the current scene for the {handleName} area");
 
-                // Add a button to check for missing passages
-                if (GUILayout.Button(checkContent, buttonStyle)) CheckForMissing();
+                // If the active scene isn't the same as the area handle's active scene, hide the button
+                if (handle.activeScene.LoadedScene.IsValid())
+                {
+                    // Add a button to check for missing passages
+                    if (GUILayout.Button(checkContent, buttonStyle)) CheckForMissing(handle);
+                }
             }
 
             // End the horizontal layout for the action buttons
@@ -1107,20 +1111,20 @@ namespace WorldShaper.Editor
                 // Load the area for the area handle using the EditorAreaHandleDispatcher
                 await EditorLoad(handle, true);
 
-                // Find the IConnectable with the connection name
-                IConnectable[] connectable = IConnectableExtensions.GetAllConnectables().ToArray();
-                IConnectable target = connectable.FirstOrDefault(c => c.GetEndpoint() == connection.connectionName);
+                // Find the location with the connection name
+                ILocationPointer[] pointer = ILocationPointerExtensions.GetAllConnectables().ToArray();
+                ILocationPointer target = pointer.FirstOrDefault(c => c.GetEndpoint() == connection.connectionName);
 
-                // Move the camera to the target connectable if found
+                // Move the camera to the target pointer if found
                 if (target != null)
                 {
-                    // Set the camera position to the target connectable's position
+                    // Set the camera position to the target location's position
                     SceneView.lastActiveSceneView.pivot = target.GetPosition();
                     SceneView.lastActiveSceneView.Repaint();
                 }
                 else
                 {
-                    // Log a warning if no connectable is found with the specified connection name
+                    // Log a warning if no location is found with the specified connection name
                     Debug.LogWarning($"No connectable found with name '{connection.connectionName}' in the loaded area.");
                 }
             }
@@ -1149,20 +1153,20 @@ namespace WorldShaper.Editor
                 // Load the area for the destination area handle using the EditorAreaHandleDispatcher
                 await EditorLoad(connection.destinationArea, true);
 
-                // Find the IConnectable with the connection name
-                IConnectable[] connectable = IConnectableExtensions.GetAllConnectables().ToArray();
-                IConnectable target = connectable.FirstOrDefault(c => c.GetEndpoint() == connection.Endpoint);
+                // Find the location with the connection name
+                ILocationPointer[] pointer = ILocationPointerExtensions.GetAllConnectables().ToArray();
+                ILocationPointer target = pointer.FirstOrDefault(c => c.GetEndpoint() == connection.Endpoint);
 
-                // Move the camera to the target connectable if found
+                // Move the camera to the target pointer if found
                 if (target != null)
                 {
-                    // Set the camera position to the target connectable's position
+                    // Set the camera position to the target location's position
                     SceneView.lastActiveSceneView.pivot = target.GetPosition();
                     SceneView.lastActiveSceneView.Repaint();
                 }
                 else
                 {
-                    // Log a warning if no connectable is found with the specified connection name
+                    // Log a warning if no location is found with the specified connection name
                     Debug.LogWarning($"No connectable found with name '{connection.Endpoint}' in {connection.Destination.Name}.");
                 }
             }
@@ -1344,54 +1348,64 @@ namespace WorldShaper.Editor
             }
         }
 
-        private AreaHandle MatchingScene(string scene)
+        private void CheckForMissing(AreaHandle handle)
         {
-            // Check if WorldMap is null or empty
-            if (WorldMap == null || WorldMap.Empty) return null;
-
-            // Find the AreaHandle that matches the current scene
-            return AreaHandles.FirstOrDefault(handle => handle.activeScene.Name.Equals(scene, System.StringComparison.OrdinalIgnoreCase));
-        }
-
-        private void CheckForMissing()
-        {
-            // Check the current scene for missing passages
-            if (WorldMap == null) return;
-
-            // Get the current active scene name
-            string currentScene = SceneManager.GetActiveScene().name;
-
-            // Find the AreaHandle that matches the current scene
-            AreaHandle matchingAreaHandle = MatchingScene(currentScene);
-
-            // If we are not in the scene of the desired area handle, log a warning and return early since we cannot check for the correct passages
-            if (matchingAreaHandle == null)
+            // Check if the handle is null, if so, log an error and return early since we cannot perform any checks without a valid handle
+            if (handle == null)
             {
-                // Log a warning that we are not in the scene of the desired area handle, and that we cannot check for missing passages
-                Debug.LogWarning($"Current scene '{currentScene}' does not match any AreaHandle active scenes, unable to check for missing passages.");
+                // Log an error if the area handle is null, since we cannot perform any checks without a valid handle
+                Debug.LogError("Area Handle is null, cannot check for missing locations or connections, returning early.");
 
-                // Return early since we cannot check for the correct passages
+                // Return early since the handle is null and we cannot perform any checks
                 return;
             }
 
-            // Get each connactable in the scene
-            List<BaseConnectable> connectables = FindObjectsByType<BaseConnectable>(FindObjectsSortMode.None).ToList();
+            // Check if the handle is valid, if not, log an error and return early since we cannot perform any checks with an invalid handle
+            if (!handle.IsValid)
+            {
+                // Log an error if the area handle is invalid, since we cannot perform any checks with an invalid handle
+                Debug.LogError($"Area Handle '{handle.Name}' is invalid, cannot check for missing locations or connections, returning early.");
 
-            // If there are connectables, check if they match the connections in the AreaHandle
-            if (matchingAreaHandle.HasConnections() && connectables.Count > 0)
+                // Return early since the handle is invalid and we cannot perform any checks
+                return;
+            }
+
+            // Check if the handle has connections, if not, log a warning and return early since we cannot check for missing locations if there are no connections defined in the handle
+            if (!handle.HasConnections())
+            {
+                // Log a warning if the area handle has no connections, since we cannot check for missing locations if there are no connections defined in the handle
+                Debug.LogWarning($"Area Handle '{handle.Name}' has no connections defined, cannot check for missing locations, returning early.");
+
+                // Return early since there are no connections to check for missing locations
+                return;
+            }
+
+            // Get the area name from the active scene for logging purposes, replacing any underscores with spaces for better readability
+            string areaName = handle.activeScene.Name.Replace("_", " ");
+
+            // Get the root objects of the scene to search for location pointers
+            var rootObjects = handle.activeScene.LoadedScene.GetRootGameObjects();
+
+            // Get all location pointers in the scene by searching through the root objects and their children, since location pointers can be on any game object in the scene
+            ILocationPointer[] locations = rootObjects.SelectMany(ro => ro.GetComponentsInChildren<ILocationPointer>()).ToArray();
+
+            // If there are locations, check if they match the connections in the AreaHandle
+            if (locations.Length > 0)
             {
                 // Log a warning if the connection count does not match
-                if (matchingAreaHandle.GetConnectionCount() != connectables.Count)
+                if (handle.GetConnectionCount() != locations.Length)
                 {
-                    // Log a warning if the connection count does not match the connectables count
-                    Debug.LogWarning($"Connection count mismatch in scene '{currentScene}'. Expected: {matchingAreaHandle.GetConnectionCount()}, Found: {connectables.Count}");
+                    // Log a warning if the location count does not match the locations count
+                    Debug.LogWarning($"Location count mismatch in scene '{areaName}'. Expected: {handle.GetConnectionCount()}, Found: {locations.Length}");
 
-                    // List the missing connectables
-                    foreach (Connection connection in matchingAreaHandle.connections)
+                    // List the missing locations
+                    foreach (Connection connection in handle.connections)
                     {
-                        if (!connectables.Any(c => c.GetEndpoint() == connection.connectionName))
+                        // Check if there is a location with the connection name, if not, log an error for the missing location
+                        if (!locations.Any(c => c.GetEndpoint() == connection.connectionName))
                         {
-                            Debug.LogError($"Missing connectable for connection '{connection.connectionName}' in scene '{currentScene}'.");
+                            // Log an error for each missing location
+                            Debug.LogError($"Missing location for connection '{connection.connectionName}' in scene '{areaName}'.");
                         }
                     }
 
@@ -1399,41 +1413,37 @@ namespace WorldShaper.Editor
                     return;
                 }
 
-                // Loop through the connectables values and check if they match the connections in the AreaHandle
-                foreach (BaseConnectable connectable in connectables)
+                // Loop through the location values and check if they match the connections in the AreaHandle
+                foreach (ILocationPointer location in locations)
                 {
-                    // Log a warning if the connectables value is null or empty
-                    if (string.IsNullOrEmpty(connectable.GetEndpoint()))
+                    // Log a warning if the location's value is null or empty
+                    if (string.IsNullOrEmpty(location.GetEndpoint()))
                     {
-                        Debug.LogWarning($"Connectable '{connectable.name}' in scene '{currentScene}' has no value set.");
+                        // Log a warning if the location's value is null or empty, since it cannot match any connection without a valid endpoint value
+                        Debug.LogWarning($"Location '{location.Name}' in scene '{areaName}' has no value set.", location as Object);
+
+                        // Continue to the next location since this one has no value
                         continue;
                     }
 
-                    // Check if the connectable's passage data matches the connection data
-                    if (!matchingAreaHandle.ConnectionExists(connectable.GetEndpoint()))
+                    // Check if the location's passage data matches the connection data
+                    if (!handle.ConnectionExists(location.GetEndpoint()))
                     {
-                        Debug.LogWarning($"Connectable '{connectable.name}' in scene '{currentScene}' does not match any connections in the AreaHandle.");
+                        // Log a warning if the location's passage data does not match any connection data in the AreaHandle
+                        Debug.LogWarning($"Location '{location.Name}' in scene '{areaName}' does not match any connections in the AreaHandle.");
+
+                        // Break the loop since we found a mismatch and we don't need to check the rest of the locations
                         continue;
                     }
                 }
 
-                // If all connectables match the connections, log a success message
-                Debug.Log($"All connectables in scene '{currentScene}' match the connections in the AreaHandle.");
+                // If all locations match the connections, log a success message
+                Debug.Log($"All locations in scene '{areaName}' match the connections in the AreaHandle.");
             }
             else
             {
-                // If the handle has no connections, return early
-                if (!matchingAreaHandle.HasConnections()) return;
-
-                // Log a warning if no connectables are found in the scene
-                Debug.LogWarning($"No connectables found in scene '{currentScene}'.");
-
-                // Loop through the connections in the AreaHandle and log missing connectables
-                foreach (Connection connection in matchingAreaHandle.connections)
-                {
-                    // Log an error for each missing connectable
-                    Debug.LogError($"Missing connectable for connection '{connection.connectionName}' in scene '{currentScene}'.");
-                }
+                // Log a warning if no locations are found in the scene
+                Debug.LogWarning($"No locations found in scene '{areaName}'.");
             }
         }
 

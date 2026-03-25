@@ -4,7 +4,7 @@ using Puppeteer;
 
 namespace WorldShaper
 {
-    public class Passage : BaseConnectable
+    public class Passage : BaseLocationPointer
     {
         public ConnectionReference passage;
         public PassageType type;

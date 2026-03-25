@@ -22,7 +22,7 @@ namespace WorldShaper
 
         [Header("Connection Status")]
         public AreaHandle currentArea;
-        public InterfaceReference<IConnectable> currentConnectable;
+        public InterfaceReference<ILocationPointer> currentLocation;
         public ConnectionState connection = ConnectionState.Empty;
         public Progress transitionProgress = Progress.Empty;
 
@@ -32,7 +32,7 @@ namespace WorldShaper
         private List<SceneReference> persistentScenes = new();
 
         [Header("Connectables")]
-        public List<InterfaceReference<IConnectable>> connectables;
+        public List<InterfaceReference<ILocationPointer>> connectables;
 
         /// <summary>
         /// Action invoked when a transition is started.
@@ -265,18 +265,18 @@ namespace WorldShaper
         #region Connectable Methods
 
         /// <summary>
-        /// Registers an <see cref="IConnectable"/> instance for tracking and management.
+        /// Registers an <see cref="ILocationPointer"/> instance for tracking and management.
         /// </summary>
         /// <remarks>If the specified <paramref name="connectable"/> is already registered, it will not be added again.</remarks>
-        /// <param name="connectable">The <see cref="IConnectable"/> instance to register. Cannot be null.</param>
-        public void Register(IConnectable connectable) => connectables.Add(new InterfaceReference<IConnectable>(connectable));
+        /// <param name="connectable">The <see cref="ILocationPointer"/> instance to register. Cannot be null.</param>
+        public void Register(ILocationPointer connectable) => connectables.Add(new InterfaceReference<ILocationPointer>(connectable));
 
         /// <summary>
         /// Removes the specified connectable object from the collection of registered objects.
         /// </summary>
         /// <remarks>This method removes all references to the specified object from the collection. If the object is not found, no action is taken.</remarks>
         /// <param name="connectable">The connectable object to deregister. Cannot be <see langword="null"/>.</param>
-        public void Unregister(IConnectable connectable) => connectables.RemoveAll(reference => reference.Value == connectable);
+        public void Unregister(ILocationPointer connectable) => connectables.RemoveAll(reference => reference.Value == connectable);
 
         /// <summary>
         /// Tries to retrieve a connectable object by its endpoint.
@@ -284,10 +284,10 @@ namespace WorldShaper
         /// <param name="endPoint">The endpoint string to search for.</param>
         /// <param name="connectable">The output parameter that will hold the found connectable object if successful; otherwise, null.</param>
         /// <returns>A boolean value indicating whether a matching connectable object was found.</returns>
-        private bool TryGetConnectable(string endPoint, out IConnectable connectable)
+        private bool TryGetConnectable(string endPoint, out ILocationPointer connectable)
         {
             // Try to get the connectable from the collection, if successful set the out parameter and return true
-            if (connectables.TryGetConnectable(endPoint, out IConnectable reference))
+            if (connectables.TryGetConnectable(endPoint, out ILocationPointer reference))
             {
                 // Get the connectable from the reference
                 connectable = reference;
@@ -308,7 +308,7 @@ namespace WorldShaper
         /// </summary>
         /// <returns>A list of <see cref="InterfaceReference{IConnectable}"/> objects representing all connectable objects found
         /// in the scene. The list will be empty if no connectable objects are present.</returns>
-        private List<InterfaceReference<IConnectable>> GetAllConnectables() => IConnectableExtensions.GetConnectableReferences();
+        private List<InterfaceReference<ILocationPointer>> GetAllConnectables() => ILocationPointerExtensions.GetConnectableReferences();
 
         #endregion
 
@@ -543,10 +543,10 @@ namespace WorldShaper
             if (!handle.HasConnections()) return;
 
             // Find the connection in the area handle that matches the end point and disable interaction
-            if (TryGetConnectable(EndPoint, out IConnectable connectable)) currentConnectable.Set(connectable);
+            if (TryGetConnectable(EndPoint, out ILocationPointer connectable)) currentLocation.Set(connectable);
 
             // Check if the connectable is not null
-            if (currentConnectable.HasValue)
+            if (currentLocation.HasValue)
             {
                 // Disable the connectable to prevent interaction
                 connectable.SetActive(false);
@@ -576,10 +576,10 @@ namespace WorldShaper
             if (!handle.HasConnections()) return;
 
             // Find the connection in the area handle that matches the end point and disable interaction
-            if (TryGetConnectable(EndPoint, out IConnectable connectable)) currentConnectable.Set(connectable);
+            if (TryGetConnectable(EndPoint, out ILocationPointer connectable)) currentLocation.Set(connectable);
 
             // Check if the connectable is not null
-            if (currentConnectable.HasValue)
+            if (currentLocation.HasValue)
             {
                 // Await the OnEntry task for the matching connectable
                 await connectable.Enter();

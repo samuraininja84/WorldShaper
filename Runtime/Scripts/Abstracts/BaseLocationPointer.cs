@@ -3,8 +3,10 @@ using UnityEngine;
 
 namespace WorldShaper
 {
-    public abstract class BaseConnectable : MonoBehaviour, IConnectable
+    public abstract class BaseLocationPointer : MonoBehaviour, ILocationPointer
     {
+        public virtual string Name => gameObject.name;
+
         public virtual async Task Initialize() => await Task.CompletedTask;
 
         public virtual async Task Activate() => await Task.CompletedTask;

@@ -94,7 +94,7 @@ namespace WorldShaper
             }
 
             // Create the load button content
-            GUIContent loadContent = new GUIContent(EditorGUIUtility.FindTexture("Assets/Plugins/Artisan/World Shaper/Editor/EditorResources/Icons/LoadDestination.png"));
+            GUIContent loadContent = new GUIContent(EditorGUIUtility.FindTexture("Assets/Plugins/World Shaper/Editor/EditorResources/Icons/LoadDestination.png"));
             loadContent.tooltip = "Load the destination area for this connection";
 
             // Get the area handle from the area property
@@ -144,20 +144,20 @@ namespace WorldShaper
                 // If not, open the scene first using the Editor SceneManager
                 if (!isLoaded) EditorSceneManager.OpenScene(connection.Destination.Path);
 
-                // Find the IConnectable with the connection name
-                IConnectable[] connectable = IConnectableExtensions.GetAllConnectables().ToArray();
-                IConnectable target = connectable.FirstOrDefault(c => c.GetEndpoint() == connection.Endpoint);
+                // Find the location with the connection name
+                ILocationPointer[] pointer = ILocationPointerExtensions.GetAllConnectables().ToArray();
+                ILocationPointer target = pointer.FirstOrDefault(c => c.GetEndpoint() == connection.Endpoint);
 
-                // Move the camera to the target connectable if found
+                // Move the camera to the target pointer if found
                 if (target != null)
                 {
-                    // Set the camera position to the target connectable's position
+                    // Set the camera position to the target pointer's position
                     SceneView.lastActiveSceneView.pivot = target.GetPosition();
                     SceneView.lastActiveSceneView.Repaint();
                 }
                 else
                 {
-                    // Log a warning if no connectable is found with the specified connection name
+                    // Log a warning if no pointer is found with the specified connection name
                     Debug.LogWarning($"No connectable found with name '{connection.Endpoint}' in {connection.Destination.Name}.");
                 }
             }
