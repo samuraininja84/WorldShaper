@@ -20,7 +20,7 @@ namespace WorldShaper
         /// <param name="name">The value used to locate the associated connection.</param>
         /// <returns>A string representing the value of the <see cref="ILocationPointer"/> linked to the specified passage name. 
         /// Returns an empty string if no matching connection or <see cref="ILocationPointer"/> is found.</returns>
-        public static string FindEndpoint(this AreaHandle handle, string name) => handle.ConnectionExists(name) ? handle.GetConnection(name).Endpoint : string.Empty;
+        public static string FindDestinationName(this AreaHandle handle, string name) => handle.ConnectionExists(name) ? handle.GetConnection(name).Endpoint : string.Empty;
 
         /// <summary>
         /// Retrieves the first <see cref="ILocationPointer"/> object whose value matches the specified string.
@@ -29,7 +29,7 @@ namespace WorldShaper
         /// <param name="locationPointer"> The list of <see cref="ILocationPointer"/> objects to search through.</param>
         /// <param name="endpoint">The endpoint value to match against the <see cref="ILocationPointer"/> objects.</param>
         /// <returns>An <see cref="InterfaceReference{T}"/> of type <see cref="ILocationPointer"/> representing the first matching <see cref="ILocationPointer"/> object,  or <see langword="null"/> if no match is found.</returns>
-        public static InterfaceReference<ILocationPointer> GetConnectable(this List<InterfaceReference<ILocationPointer>> locationPointer, string endpoint) => locationPointer.Find(c => c.Value.GetEndpoint() == endpoint);
+        public static InterfaceReference<ILocationPointer> GetLocation(this List<InterfaceReference<ILocationPointer>> locationPointer, string endpoint) => locationPointer.Find(c => c.Value.GetEndpoint() == endpoint);
 
         /// <summary>
         /// Attempts to retrieve a <see cref="ILocationPointer"/> object whose value matches the specified string.
@@ -38,13 +38,13 @@ namespace WorldShaper
         /// <param name="endpoint">The endpoint value to match against the <see cref="ILocationPointer"/> objects.</param>
         /// <param name="<see cref="ILocationPointer"/>">The output parameter that will hold the found <see cref="ILocationPointer"/> object if successful; otherwise, it will be <see langword="default"/>.</param>
         /// <returns>A boolean value indicating whether a matching <see cref="ILocationPointer"/> object was found.</returns>
-        public static bool TryGetConnectable(this List<InterfaceReference<ILocationPointer>> connectables, string endpoint, out ILocationPointer location)
+        public static bool TryGetLocation(this List<InterfaceReference<ILocationPointer>> connectables, string endpoint, out ILocationPointer location)
         {
             // Attempt to get the location
             if (connectables.Exists(c => c.Value.GetEndpoint() == endpoint))
             {
                 // Set the output parameter to the found location
-                location = connectables.GetConnectable(endpoint).Value;
+                location = connectables.GetLocation(endpoint).Value;
 
                 // Return true to indicate the location was found
                 return true;
@@ -69,7 +69,7 @@ namespace WorldShaper
         public static bool TryGetLocation(this List<InterfaceReference<ILocationPointer>> connectables, string value, out Vector3 location)
         {
             // Get the location with the matching value
-            InterfaceReference<ILocationPointer> connectable = connectables.GetConnectable(value);
+            InterfaceReference<ILocationPointer> connectable = connectables.GetLocation(value);
 
             // Set the spawn location to the location position if it exists
             if (connectable.HasValue)
@@ -96,16 +96,16 @@ namespace WorldShaper
         /// </summary>
         /// <returns>A list of <see cref="InterfaceReference{IConnectable}"/> objects representing all <see cref="ILocationPointer"/> objects found
         /// in the scene. The list will be empty if no location objects are present.</returns>
-        public static List<InterfaceReference<ILocationPointer>> GetConnectableReferences()
+        public static List<InterfaceReference<ILocationPointer>> GetLocationPointers()
         {
             // Create the list of locationPointer
             List<InterfaceReference<ILocationPointer>> connectables = new();
 
             // Get all the locationPointer in the scene
-            foreach (ILocationPointer connectable in GetAllConnectables())
+            foreach (ILocationPointer locations in GetAllLocations())
             {
                 // Add the location to the list
-                connectables.Add(new InterfaceReference<ILocationPointer>(connectable));
+                connectables.Add(new InterfaceReference<ILocationPointer>(locations));
             }
 
             // Return the list of locationPointer
@@ -118,6 +118,6 @@ namespace WorldShaper
         /// <remarks>This method searches the scene for all <see cref="MonoBehaviour"/> instances and
         /// filters them to include only those that implement the <see cref="ILocationPointer"/> interface.</remarks>
         /// <returns>An enumerable collection of objects that implement the <see cref="ILocationPointer"/> interface. If no such objects are found, the collection will be empty.</returns>
-        public static IEnumerable<ILocationPointer> GetAllConnectables() => GameObject.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<ILocationPointer>();
+        public static IEnumerable<ILocationPointer> GetAllLocations() => GameObject.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None).OfType<ILocationPointer>();
     }
 }

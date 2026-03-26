@@ -31,8 +31,8 @@ namespace WorldShaper
         public List<AreaHandle> registeredAreas = new();
         private List<SceneReference> persistentScenes = new();
 
-        [Header("Connectables")]
-        public List<InterfaceReference<ILocationPointer>> connectables;
+        [Header("Locations")]
+        public List<InterfaceReference<ILocationPointer>> locations;
 
         /// <summary>
         /// Action invoked when a transition is started.
@@ -267,48 +267,48 @@ namespace WorldShaper
         /// <summary>
         /// Registers an <see cref="ILocationPointer"/> instance for tracking and management.
         /// </summary>
-        /// <remarks>If the specified <paramref name="connectable"/> is already registered, it will not be added again.</remarks>
-        /// <param name="connectable">The <see cref="ILocationPointer"/> instance to register. Cannot be null.</param>
-        public void Register(ILocationPointer connectable) => connectables.Add(new InterfaceReference<ILocationPointer>(connectable));
+        /// <remarks>If the specified <paramref name="location"/> is already registered, it will not be added again.</remarks>
+        /// <param name="location">The <see cref="ILocationPointer"/> instance to register. Cannot be null.</param>
+        public void Register(ILocationPointer location) => locations.Add(new InterfaceReference<ILocationPointer>(location));
 
         /// <summary>
-        /// Removes the specified connectable object from the collection of registered objects.
+        /// Removes the specified location object from the collection of registered objects.
         /// </summary>
         /// <remarks>This method removes all references to the specified object from the collection. If the object is not found, no action is taken.</remarks>
-        /// <param name="connectable">The connectable object to deregister. Cannot be <see langword="null"/>.</param>
-        public void Unregister(ILocationPointer connectable) => connectables.RemoveAll(reference => reference.Value == connectable);
+        /// <param name="location">The location object to deregister. Cannot be <see langword="null"/>.</param>
+        public void Unregister(ILocationPointer location) => locations.RemoveAll(reference => reference.Value == location);
 
         /// <summary>
-        /// Tries to retrieve a connectable object by its endpoint.
+        /// Tries to retrieve a location object by its endpoint.
         /// </summary>
         /// <param name="endPoint">The endpoint string to search for.</param>
-        /// <param name="connectable">The output parameter that will hold the found connectable object if successful; otherwise, null.</param>
-        /// <returns>A boolean value indicating whether a matching connectable object was found.</returns>
-        private bool TryGetConnectable(string endPoint, out ILocationPointer connectable)
+        /// <param name="location">The output parameter that will hold the found location object if successful; otherwise, null.</param>
+        /// <returns>A boolean value indicating whether a matching location object was found.</returns>
+        private bool TryGetLocation(string endPoint, out ILocationPointer location)
         {
-            // Try to get the connectable from the collection, if successful set the out parameter and return true
-            if (connectables.TryGetConnectable(endPoint, out ILocationPointer reference))
+            // Try to get the location from the collection, if successful set the out parameter and return true
+            if (locations.TryGetLocation(endPoint, out ILocationPointer reference))
             {
-                // Get the connectable from the reference
-                connectable = reference;
+                // Get the location from the reference
+                location = reference;
 
-                // Return true if a matching connectable is found
+                // Return true if a matching location is found
                 return true;
             }
 
-            // Set the out parameter to null if no matching connectable is found
-            connectable = default;
+            // Set the out parameter to null if no matching location is found
+            location = default;
 
-            // Returns false if no matching connectable is found
+            // Returns false if no matching location is found
             return false;
         }
 
         /// <summary>
-        /// Retrieves all connectable objects in the scene and returns them as a list of interface references.
+        /// Retrieves all location objects in the scene and returns them as a list of interface references.
         /// </summary>
-        /// <returns>A list of <see cref="InterfaceReference{IConnectable}"/> objects representing all connectable objects found
-        /// in the scene. The list will be empty if no connectable objects are present.</returns>
-        private List<InterfaceReference<ILocationPointer>> GetAllConnectables() => ILocationPointerExtensions.GetConnectableReferences();
+        /// <returns>A list of <see cref="InterfaceReference{IConnectable}"/> objects representing all location objects found
+        /// in the scene. The list will be empty if no location objects are present.</returns>
+        private List<InterfaceReference<ILocationPointer>> GetAllConnectables() => ILocationPointerExtensions.GetLocationPointers();
 
         #endregion
 
@@ -483,7 +483,7 @@ namespace WorldShaper
             // Load the new area using the AreaHandleDispatcher
             await AreaHandleDispatcher.LoadAreas(handle, transitionProgress, reloadActiveScene, reloadAdditiveScenes, unloadUnusedAssets);
 
-            // Initialize connectables for the loaded area
+            // Initialize locations for the loaded area
             await Intialize(handle);
 
             // Invoke the OnActivate method to handle activation logic
@@ -494,9 +494,9 @@ namespace WorldShaper
         }
 
         /// <summary>
-        /// Initializes all connectable objects in the specified area and prepares them for interaction.
+        /// Initializes all location objects in the specified area and prepares them for interaction.
         /// </summary>
-        /// <remarks>This method retrieves all connectable objects in the scene associated with the specified area handle and initializes them asynchronously. 
+        /// <remarks>This method retrieves all location objects in the scene associated with the specified area handle and initializes them asynchronously. 
         /// If the area handle has no connections, the method logs a debug message and exits without performing any initialization. 
         /// The connection matching the end point is disabled for interaction during this process.
         /// </remarks>
@@ -517,14 +517,14 @@ namespace WorldShaper
             // Set the current area to the loaded handle
             currentArea = handle;
 
-            // Clear the existing connectables list
-            connectables.Clear();
+            // Clear the existing locations list
+            locations.Clear();
 
-            // Get all connectables in the scene if not already set
-            connectables = GetAllConnectables();
+            // Get all locations in the scene if not already set
+            locations = GetAllConnectables();
 
-            // Convert the connectables to a list of initialization tasks
-            var operations = connectables.Select(connectable => connectable.Value.Initialize());
+            // Convert the locations to a list of initialization tasks
+            var operations = locations.Select(connectable => connectable.Value.Initialize());
 
             // Await the completion of all initialization tasks
             await operations.Combine();
@@ -534,7 +534,7 @@ namespace WorldShaper
         /// Activates the connection associated with the specified endpoint, disabling interaction during the activation
         /// process.
         /// </summary>
-        /// <remarks>This method retrieves the connectable object corresponding to the endpoint, disables its interaction, and then performs the activation asynchronously.</remarks>
+        /// <remarks>This method retrieves the location object corresponding to the endpoint, disables its interaction, and then performs the activation asynchronously.</remarks>
         /// <param name="handle">The <see cref="AreaHandle"/> representing the area being entered. Must contain valid connections.</param>
         /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
         public async Task OnActivate(AreaHandle handle)
@@ -543,20 +543,20 @@ namespace WorldShaper
             if (!handle.HasConnections()) return;
 
             // Find the connection in the area handle that matches the end point and disable interaction
-            if (TryGetConnectable(EndPoint, out ILocationPointer connectable)) currentLocation.Set(connectable);
+            if (TryGetLocation(EndPoint, out ILocationPointer connectable)) currentLocation.Set(connectable);
 
-            // Check if the connectable is not null
+            // Check if the location is not null
             if (currentLocation.HasValue)
             {
-                // Disable the connectable to prevent interaction
+                // Disable the location to prevent interaction
                 connectable.SetActive(false);
 
-                // Add the activation task for the matching connectable
+                // Add the activation task for the matching location
                 await connectable.Activate();
             }
             else
             {
-                // Return a completed task if no matching connectable is found
+                // Return a completed task if no matching location is found
                 await Task.CompletedTask;
             }
         }
@@ -565,8 +565,8 @@ namespace WorldShaper
         /// Handles the logic for entering a connection point in the current area.
         /// </summary>
         /// <remarks>
-        /// This method locates the connectable object associated with the specified endpoint and triggers its entry logic asynchronously. 
-        /// If no matching connectable is found, the method completes without performing any action.
+        /// This method locates the location object associated with the specified endpoint and triggers its entry logic asynchronously. 
+        /// If no matching location is found, the method completes without performing any action.
         /// </remarks>
         /// <param name="handle">The <see cref="AreaHandle"/> representing the area being entered. Must contain valid connections.</param>
         /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
@@ -576,17 +576,17 @@ namespace WorldShaper
             if (!handle.HasConnections()) return;
 
             // Find the connection in the area handle that matches the end point and disable interaction
-            if (TryGetConnectable(EndPoint, out ILocationPointer connectable)) currentLocation.Set(connectable);
+            if (TryGetLocation(EndPoint, out ILocationPointer connectable)) currentLocation.Set(connectable);
 
-            // Check if the connectable is not null
+            // Check if the location is not null
             if (currentLocation.HasValue)
             {
-                // Await the OnEntry task for the matching connectable
+                // Await the OnEntry task for the matching location
                 await connectable.Enter();
             }
             else
             {
-                // Return a completed task if no matching connectable is found
+                // Return a completed task if no matching location is found
                 await Task.CompletedTask;
             }
         }

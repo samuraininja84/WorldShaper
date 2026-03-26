@@ -1112,7 +1112,7 @@ namespace WorldShaper.Editor
                 await EditorLoad(handle, true);
 
                 // Find the location with the connection name
-                ILocationPointer[] pointer = ILocationPointerExtensions.GetAllConnectables().ToArray();
+                ILocationPointer[] pointer = ILocationPointerExtensions.GetAllLocations().ToArray();
                 ILocationPointer target = pointer.FirstOrDefault(c => c.GetEndpoint() == connection.connectionName);
 
                 // Move the camera to the target pointer if found
@@ -1154,7 +1154,7 @@ namespace WorldShaper.Editor
                 await EditorLoad(connection.destinationArea, true);
 
                 // Find the location with the connection name
-                ILocationPointer[] pointer = ILocationPointerExtensions.GetAllConnectables().ToArray();
+                ILocationPointer[] pointer = ILocationPointerExtensions.GetAllLocations().ToArray();
                 ILocationPointer target = pointer.FirstOrDefault(c => c.GetEndpoint() == connection.Endpoint);
 
                 // Move the camera to the target pointer if found
