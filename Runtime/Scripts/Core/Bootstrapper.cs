@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -14,46 +13,9 @@ namespace WorldShaper
     public static class Bootstrapper
     {
         /// <summary>
-        /// Represents the current instance of the world map used in the application.
-        /// </summary>
-        /// <remarks>
-        /// This static field provides access to the global world map. 
-        /// It can be used to retrieve or modify the state of the map shared across the application.
-        /// Ensure thread safety when accessing this field in a multithreaded environment.
-        /// </remarks>
-        private static WorldMap worldMap;
-
-        /// <summary>
         /// Gets the singleton instance of the <see cref="WorldMap"/> class.
         /// </summary>
-        /// <remarks>This property ensures that only one instance of the <see cref="WorldMap"/> class is created and shared across the application. The instance is lazily initialized when first accessed.</remarks>
-        public static WorldMap Instance => worldMap != null ? worldMap : worldMap = GetWorldMap();
-
-        /// <summary>
-        /// Retrieves the first <see cref="WorldMap"/> instance found in the application's resources.
-        /// </summary>
-        /// <remarks>
-        /// This method searches for all objects of type <see cref="WorldMap"/> in the application's resources and returns the first instance found. 
-        /// If no <see cref="WorldMap"/> is present, a warning is logged, and the method returns <see langword="null"/>.</remarks>
-        /// <returns>The first <see cref="WorldMap"/> instance found in the resources, or <see langword="null"/> if no instance is found.</returns>
-        public static WorldMap GetWorldMap()
-        {
-            // Find the world map in the resources
-            var worldMap = Resources.FindObjectsOfTypeAll<WorldMap>().FirstOrDefault();
-
-            // If no world map is found, log a warning and return
-            if (worldMap == null)
-            {
-                // Log a warning indicating that no WorldMap was found
-                Debug.LogWarning("No WorldMap found in resources. Ensure a WorldMap asset is present.");
-
-                // Return early since we cannot proceed without a WorldMap
-                return null;
-            }
-
-            // Return the found world map
-            return worldMap;
-        }
+        public static WorldMap Instance => WorldMap.Instance;
 
         /// <summary>
         /// Initializes the application by loading all persistent scenes defined in the world map.
