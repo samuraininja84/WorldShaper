@@ -12,7 +12,6 @@ namespace WorldShaper.Editor
 {
     public class WorldTravelerWindow : EditorWindow
     {
-        private WorldMap WorldMap = null;
         private List<AreaHandle> AreaHandles = new();
         private List<Connection> Connections = new();
         private List<bool> foldouts = new();
@@ -43,6 +42,8 @@ namespace WorldShaper.Editor
         // Scroll positions
         private Vector2 handleScrollPosition = Vector2.zero;
         private Vector2 connectionScrollPosition = Vector2.zero;
+
+        private WorldMap WorldMap => WorldMap.Instance;
 
         private static Color InvalidColor => Color.red;
 
@@ -1449,9 +1450,6 @@ namespace WorldShaper.Editor
 
         private void Refresh()
         {
-            // Find the WorldMap in the Resources folder
-            WorldMap = Resources.FindObjectsOfTypeAll<WorldMap>().FirstOrDefault();
-
             // Get all AreaHandles from the WorldMap
             AreaHandles = WorldMap.RetrieveAll();
 
@@ -1477,7 +1475,6 @@ namespace WorldShaper.Editor
         private void Clear()
         {
             // Clear the WorldMap and AreaHandles
-            WorldMap = null;
             AreaHandles = null;
 
             // Clear the connections and foldouts

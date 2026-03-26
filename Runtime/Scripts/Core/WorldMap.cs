@@ -120,6 +120,10 @@ namespace WorldShaper
         /// </summary>
         public string EndPoint { get => connection.endPoint; set => connection.SetEnd(value); }
 
+        /// <summary>
+        /// Caches the instance of the WorldMap when enabled, ensuring that only one instance exists and is accessible throughout the application. 
+        /// If an instance already exists, it does not overwrite it, which keeps the first assigned instance as the singleton reference. 
+        /// </summary>
         private void OnEnable()
         {
             if (!HasInstance) instance = this;
