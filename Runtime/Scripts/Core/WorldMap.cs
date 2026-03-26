@@ -34,6 +34,41 @@ namespace WorldShaper
         [Header("Locations")]
         public List<InterfaceReference<ILocationPointer>> locations;
 
+        protected static WorldMap instance;
+
+        /// <summary>
+        /// The singleton instance of the <see cref="WorldMap"/>. 
+        /// </summary>
+        /// <remarks>
+        /// This property provides access to the single instance of the WorldMap class, ensuring that only one instance exists throughout the application. 
+        /// If an instance does not already exist, it attempts to find and load one from the project's assets. 
+        /// If no instance is found, it will return null until an instance is created or assigned.
+        /// </remarks>
+        public static WorldMap Instance
+        {
+            get
+            {
+#if UNITY_EDITOR
+                // Only look for an instance if there isn't one already assigned, to avoid unnecessary searches
+                if (!HasInstance)
+                {
+                    // Search the project for assets of type WorldMap and get their GUIDs
+                    var guids = UnityEditor.AssetDatabase.FindAssets("t:" + nameof(WorldMap));
+
+                    // If at least one WorldMap asset is found, load the first one
+                    if (guids.Length > 0) instance = (WorldMap)UnityEditor.AssetDatabase.LoadMainAssetAtPath(UnityEditor.AssetDatabase.GUIDToAssetPath(guids[0]));
+                }
+#endif
+                // Return the instance
+                return instance;
+            }
+        }
+
+        /// <summary>
+        /// A boolean property that indicates whether an instance of the <see cref="WorldMap"/> exists.
+        /// </summary>
+        public static bool HasInstance => instance != null;
+
         /// <summary>
         /// Action invoked when a transition is started.
         /// </summary>
@@ -84,6 +119,11 @@ namespace WorldShaper
         /// The name of the end point for the current connection.
         /// </summary>
         public string EndPoint { get => connection.endPoint; set => connection.SetEnd(value); }
+
+        private void OnEnable()
+        {
+            if (!HasInstance) instance = this;
+        }
 
         #region Area Methods
 
@@ -262,7 +302,7 @@ namespace WorldShaper
 
         #endregion
 
-        #region Connectable Methods
+        #region Location Methods
 
         /// <summary>
         /// Registers an <see cref="ILocationPointer"/> instance for tracking and management.
