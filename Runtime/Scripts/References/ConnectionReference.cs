@@ -10,6 +10,7 @@ namespace WorldShaper
     public struct ConnectionReference
     {
         public AreaHandle Area;
+        public SerializableGuid ID;
         public string Value;
         public int Index;
 
@@ -21,6 +22,7 @@ namespace WorldShaper
         public ConnectionReference(AreaHandle area)
         {
             Area = area;
+            ID = SerializableGuid.NewGuid();
             Value = "";
             Index = 0;
         }
@@ -28,13 +30,15 @@ namespace WorldShaper
         public ConnectionReference(AreaHandle area, string value)
         {
             Area = area;
+            ID = area.GetConnection(value)?.connectionId ?? SerializableGuid.NewGuid();
             Value = value;
-            Index = area.GetAllConnectionNames().IndexOf(value);
+            Index = area.GetConnectionIndex(value);
         }
 
         public ConnectionReference(AreaHandle area, int index)
         {
             Area = area;
+            ID = area.GetConnection(index)?.connectionId ?? SerializableGuid.NewGuid();
             Value = area.GetAllConnectionNames()[index];
             Index = index;
         }
@@ -80,33 +84,34 @@ namespace WorldShaper
         public void Set(AreaHandle area, int index) => new ConnectionReference(area, index);
 
         /// <summary>
-        /// Retrieves the destination connection associated with the current value.
+        /// Retrieves the connection associated with the current value.
         /// </summary>
-        /// <returns>A <see cref="Connection"/> object representing the destination connection. Returns <see langword="null"/> if no connection is found.</returns>
-        public Connection GetDestination() => Area.GetConnection(Value);
+        /// <returns>A <see cref="WorldShaper.Connection"/> object representing the connection. Returns <see langword="null"/> if no connection is found.</returns>
+        public Connection GetCurrent() => Area.GetConnection(Value);
 
         /// <summary>
         /// Load the area associated with this connection.
         /// </summary>
-        public void LoadArea() => GetDestination().LoadArea();
+        public void LoadArea() => GetCurrent().LoadArea();
 
         /// <summary>
         /// Loads the destination area associated with this connection.
         /// </summary>
-        public void LoadDestination() => GetDestination().LoadDestination();
+        public void LoadDestination() => GetCurrent().LoadDestination();
 
         /// <summary>
         /// Determines whether the current object is in a valid state.
         /// </summary>
-        /// <returns><see langword="true"/> if the <see cref="Area"/> property is not null and the <see cref="Value"/> property
-        /// is not null or empty;  otherwise, <see langword="false"/>.</returns>
+        /// <returns><see langword="true"/> if the <see cref="Area"/> property is not null and the <see cref="Value"/> property is not null or empty;  otherwise, <see langword="false"/>.</returns>
         public bool IsValid() => Area != null && !string.IsNullOrEmpty(Value);
 
         /// <summary>
         /// Returns a string representation of the object, including the current scene name and value.
         /// </summary>
-        /// <returns>A string in the format "<c>SceneName - Value</c>", where <c>SceneName</c> is the name of the current scene
-        /// and <c>Value</c> is the associated value. If the current scene is null, the scene name is omitted.</returns>
+        /// <returns>
+        /// A string in the format "<c>SceneName - Value</c>", where <c>SceneName</c> is the name of the current scene and <c>Value</c> is the associated value. 
+        /// If the current scene is null, the scene name is omitted.
+        /// </returns>
         public override string ToString() => $"{Area?.activeScene.Name} - {Value}";
 
         /// <summary>
@@ -141,9 +146,7 @@ namespace WorldShaper
         /// <remarks>
         /// The hash code is computed using the hash codes of the <see cref="Area"/>, <see cref="Value"/>, and <see cref="Index"/> properties. 
         /// If <see cref="Area"/> or <see cref="Value"/> is null, their contribution to the hash code is treated as 0.
-        /// </remarks>
-        /// <returns>An integer representing the hash code of the current object.
-        /// </returns>
+        /// </remarks><returns>An integer representing the hash code of the current object.</returns>
         public override int GetHashCode() => (Area?.GetHashCode() ?? 0) ^ (Value?.GetHashCode() ?? 0) ^ Index.GetHashCode();
 
         // Implicit conversion from ConnectionReference to string

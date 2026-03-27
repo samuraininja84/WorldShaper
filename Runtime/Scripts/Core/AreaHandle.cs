@@ -177,8 +177,7 @@ namespace WorldShaper
         /// Retrieves a connection by its unique identifier.
         /// </summary>
         /// <param name="id">The unique identifier of the connection to retrieve.</param>
-        /// <returns>The <see cref="Connection"/> object associated with the specified identifier,  or <see langword="null"/> if
-        /// no matching connection is found.</returns>
+        /// <returns>The <see cref="Connection"/> object associated with the specified identifier,  or <see langword="null"/> if no matching connection is found.</returns>
         public Connection GetConnection(SerializableGuid id) => connections.FirstOrDefault(c => c.connectionId == id);
 
         /// <summary>
@@ -186,20 +185,39 @@ namespace WorldShaper
         /// </summary>
         /// <param name="name">The name of the connection to retrieve. 
         /// This value cannot be null or empty.</param>
-        /// <returns>
-        /// The <see cref="Connection"/> object with the specified name, or <see langword="null"/> if no connection with the given name exists.
-        /// </returns>
-        public Connection GetConnection(string name) => connections.Find(c => c.connectionName == name);
+        /// <returns>The <see cref="Connection"/> object with the specified name, or <see langword="null"/> if no connection with the given name exists.</returns>
+        public Connection GetConnection(string name) => connections.FirstOrDefault(c => c.connectionName == name);
 
         /// <summary>
         /// Retrieves a connection from the collection at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index of the connection to retrieve. 
         /// If the index is out of range, it will be clamped to the valid range of indices.</param>
-        /// <returns>
-        /// The <see cref="Connection"/> object at the specified index, or the nearest valid connection if the index is out of range.
-        /// </returns>
+        /// <returns>The <see cref="Connection"/> object at the specified index, or the nearest valid connection if the index is out of range.</returns>
         public Connection GetConnection(int index) => connections[Mathf.Clamp(index, 0, connections.Count - 1)];
+
+        /// <summary>
+        /// Retrieves the name and index of a connection based on its unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the connection to retrieve.</param>
+        /// <returns>The name and index assiciatied with the specified <see cref="Connection"/></returns>
+        public (string name, int index) GetConnectionInfo(SerializableGuid id)
+        {
+            // Attempt to retrieve the connection with the specified ID
+            var connection = GetConnection(id);
+
+            // If the connection is null, log an error and return null and -1
+            if (connection == null)
+            {
+                // Log an error message indicating that the connection with the specified ID was not found in this Area Handle
+                Debug.LogError($"Connection with ID {id} not found in Area Handle {Name}.");
+
+                // Return null and -1 to indicate that the connection was not found
+                return (null, -1);
+            }
+
+            return (connection.connectionName, GetConnectionIndex(connection));
+        }
 
         /// <summary>
         /// Retrieves the index of the specified connection in the collection.
@@ -211,9 +229,9 @@ namespace WorldShaper
         /// <summary>
         /// Retrieves the index of a connection by its name.
         /// </summary>
-        /// <param name="connectionName">The name of the connection whose index is to be found.</param>
+        /// <param name="name">The name of the connection whose index is to be found.</param>
         /// <returns>The zero-based index of the connection if found; otherwise, -1.</returns>
-        public int GetConnectionIndex(string connectionName) => connections.FindIndex(c => c.connectionName == connectionName);
+        public int GetConnectionIndex(string name) => connections.FindIndex(c => c.connectionName == name);
 
         /// <summary>
         /// Get all connection names in the list.
@@ -236,10 +254,16 @@ namespace WorldShaper
         #region Validation Methods
 
         /// <summary>
+        /// Determines whether a connection exists at the specified id.
+        /// </summary>
+        /// <param name="id">The id of the connection to check.</param>
+        /// <returns><see langword="true"/> if a connection exists at the specified id; otherwise, <see langword="false"/>.</returns>
+        public bool ConnectionExists(SerializableGuid id) => connections.Any(c => c.connectionId == id);
+
+        /// <summary>
         /// Determines whether a connection with the specified name exists.
         /// </summary>
-        /// <remarks>This method checks the collection of connections to determine if any connection
-        /// matches the specified name.</remarks>
+        /// <remarks>This method checks the collection of connections to determine if any connection matches the specified name.</remarks>
         /// <param name="name">The name of the connection to search for. Cannot be <see langword="null"/> or empty.</param>
         /// <returns><see langword="true"/> if a connection with the specified name exists; otherwise, <see langword="false"/>.</returns>
         public bool ConnectionExists(string name) => connections.Any(c => c.connectionName == name);

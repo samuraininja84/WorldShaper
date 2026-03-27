@@ -31,6 +31,22 @@ namespace WorldShaper
         public List<AreaHandle> registeredAreas = new();
         private List<SceneReference> persistentScenes = new();
 
+        /// <summary>
+        /// Gets the list of persistent scenes associated with the persistent areas.
+        /// </summary>
+        public List<SceneReference> PersistentScenes
+        {
+            // Try to get the persistent scenes from the persistent areas
+            get
+            {
+                // Get the persistent scenes from the persistent areas
+                if (persistentAreas.Count != 0 && persistentScenes.Count == 0) persistentScenes = persistentAreas.Select(area => area.activeScene).ToList();
+
+                // Return the persistent scenes
+                return persistentScenes;
+            }
+        }
+
         [Header("Locations")]
         public List<InterfaceReference<ILocationPointer>> locations;
 
@@ -90,22 +106,6 @@ namespace WorldShaper
         public static Action<string> OnEndPointChanged = delegate { };
 
         /// <summary>
-        /// Gets the list of persistent scenes associated with the persistent areas.
-        /// </summary>
-        public List<SceneReference> PersistentScenes
-        {
-            // Try to get the persistent scenes from the persistent areas
-            get
-            {
-                // Get the persistent scenes from the persistent areas
-                if (persistentAreas.Count != 0 && persistentScenes.Count == 0) persistentScenes = persistentAreas.Select(area => area.activeScene).ToList();
-
-                // Return the persistent scenes
-                return persistentScenes;
-            }
-        }
-
-        /// <summary>
         /// Gets the name of the world, which is either the specified world name or the name of the scriptable object if the world name is not set.
         /// </summary>
         public string Name => worldName != string.Empty ? worldName : name;
@@ -127,6 +127,13 @@ namespace WorldShaper
         private void OnEnable()
         {
             if (!HasInstance) instance = this;
+        }
+
+        public Dictionary<AreaHandle, List<Connection>> CreateWorldLookup()
+        {
+            var worldLookup = new Dictionary<AreaHandle, List<Connection>>();
+            foreach (var area in registeredAreas) worldLookup.Add(area,  area.connections);
+            return worldLookup;
         }
 
         #region Area Methods
@@ -303,6 +310,16 @@ namespace WorldShaper
             // Clear the registered areas list.
             registeredAreas.Clear();
         }
+
+        #endregion
+
+        #region Connection Methods
+
+        public Connection GetConnection(string connectionName) => registeredAreas.Find(area => area.ConnectionExists(connectionName)).GetConnection(connectionName);
+
+        public Connection GetConnection(SerializableGuid id) => registeredAreas.Find(area => area.ConnectionExists(id)).GetConnection(id);
+
+        public (string name, int index) GetConnectionInfo(SerializableGuid id) => registeredAreas.Find(area => area.ConnectionExists(id)).GetConnectionInfo(id);
 
         #endregion
 
