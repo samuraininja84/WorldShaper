@@ -120,20 +120,10 @@ namespace WorldShaper
         /// </summary>
         public string EndPoint { get => connection.endPoint; set => connection.SetEnd(value); }
 
-        /// <summary>
-        /// Caches the instance of the WorldMap when enabled, ensuring that only one instance exists and is accessible throughout the application. 
-        /// If an instance already exists, it does not overwrite it, which keeps the first assigned instance as the singleton reference. 
-        /// </summary>
         private void OnEnable()
         {
+            // If there is no existing instance, assign this instance to the static instance variable.
             if (!HasInstance) instance = this;
-        }
-
-        public Dictionary<AreaHandle, List<Connection>> CreateWorldLookup()
-        {
-            var worldLookup = new Dictionary<AreaHandle, List<Connection>>();
-            foreach (var area in registeredAreas) worldLookup.Add(area,  area.connections);
-            return worldLookup;
         }
 
         #region Area Methods
@@ -154,6 +144,17 @@ namespace WorldShaper
         /// <param name="index">The zero-based index of the <see cref="AreaHandle"/> to retrieve.</param>
         /// <returns>The <see cref="AreaHandle"/> at the specified index.</returns>
         public AreaHandle this[int index] => GetArea(index);
+
+        /// <summary>
+        /// Creates a lookup dictionary that maps each registered area to its list of connections.
+        /// </summary>
+        /// <returns>A dictionary where the keys are <see cref="AreaHandle"/> instances and the values are lists of <see cref="Connection"/> objects associated with each area.</returns>
+        public Dictionary<AreaHandle, List<Connection>> CreateWorldLookup()
+        {
+            var worldLookup = new Dictionary<AreaHandle, List<Connection>>();
+            foreach (var area in registeredAreas) worldLookup.Add(area,  area.connections);
+            return worldLookup;
+        }
 
         /// <summary>
         /// Gets the area associated with a specific connection.
