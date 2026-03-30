@@ -7,8 +7,6 @@ namespace WorldShaper.Editor
 {
     public class DatabaseTreeView : TreeView
     {
-        private static readonly Texture2D _tableIcon = Resources.Load<Texture2D>("Textures/Table");
-
         private readonly Connection _currentEntry;
         private readonly Action<Connection> _selectionHandler;
         private int _selectedId = -1;
