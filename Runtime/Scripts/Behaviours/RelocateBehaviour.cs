@@ -8,6 +8,7 @@ namespace WorldShaper
         [Header("Intialization")]
         public ObjectLocator target = ObjectLocator.Default;
         public Vector3 positionOffset;
+        public float sphereRadius = 0.1f;
 
         public Vector3 Position => transform.position + positionOffset;
 
@@ -27,7 +28,7 @@ namespace WorldShaper
         {
             // Draw the position 
             Gizmos.color = Color.cyan;
-            Gizmos.DrawWireSphere(Position, 0.1f);
+            Gizmos.DrawWireSphere(Position, sphereRadius);
         }
     }
 }

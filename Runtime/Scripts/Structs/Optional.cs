@@ -81,6 +81,53 @@ namespace WorldShaper
         public T GetValueOr(T defaultValue) => HasValue ? Value : defaultValue;
 
         /// <summary>
+        /// Attempts to retrieve the value of the current instance.
+        /// </summary>
+        /// <param name="result">When this method returns, contains the value if one is present; otherwise, the default value for the type parameter T.</param>
+        /// <returns>true if a value is present and was assigned to result; otherwise, false.</returns>
+        public bool TryGetValue(out T result)
+        {
+            // If there is a value, set result to the value and return true
+            if (HasValue)
+            {
+                // If there is a value, set result to the value and return true
+                result = value;
+
+                // If there is a value, set result to the value and return true
+                return true;
+            }
+
+            // If there is a value, set result to the value and return true
+            result = default;
+
+            // If there is no value, return false and set result to default
+            return false;
+        }
+
+        /// <summary>
+        /// Sets the value of the current instance to the specified value.
+        /// </summary>
+        /// <param name="newValue">The new value to assign to the instance.</param>
+        public void SetValue(T newValue) => value = newValue;
+
+        /// <summary>
+        /// Enables or disables the associated feature or component.
+        /// </summary>
+        /// <param name="isEnabled">A value indicating whether the feature or component should be enabled. Set to <see langword="true"/> to enable; otherwise, <see langword="false"/>.</param>
+        public void SetEnabled(bool isEnabled) => enabled = isEnabled;
+
+        /// <summary>
+        /// Sets both the value and enabled state of the object in a single operation.
+        /// </summary>
+        /// <param name="newValue">The new value to assign to the object.</param>
+        /// <param name="isEnabled">A value indicating whether the object should be enabled. Set to <see langword="true"/> to enable; otherwise, <see langword="false"/>.</param>
+        public void SetState(T newValue, bool isEnabled)
+        {
+            value = newValue;
+            enabled = isEnabled;
+        }
+
+        /// <summary>
         /// Executes the specified action if the current instance contains a value.
         /// </summary>
         /// <remarks>
@@ -105,6 +152,32 @@ namespace WorldShaper
         public void IfValue(System.Action<T> action, System.Action onNoValue)
         {
             if (HasValue) action(value);
+            else onNoValue();
+        }
+
+        /// <summary>
+        /// Invokes the specified action if the current instance is enabled.
+        /// </summary>
+        /// <remarks>Use this method to perform an operation only when the instance is in an enabled
+        /// state. If the instance is not enabled, the action is not invoked.</remarks>
+        /// <param name="action">The action to execute if the instance is enabled. The action receives the current value as its argument. Cannot be null.</param>
+        public void IfEnabled(System.Action<T> action)
+        {
+            if (Enabled) action(value);
+        }
+
+        /// <summary>
+        /// Executes one of two actions based on whether the current instance is enabled.
+        /// </summary>
+        /// <remarks>
+        /// This method allows conditional execution based on the enabled status of the instance.
+        /// If <paramref name="action"/> or <paramref name="onNoValue"/> is <see langword="null"/>, an exception will be thrown.
+        /// </remarks>
+        /// <param name="action">The action to execute if the instance is enabled. The value is passed as a parameter to the action.</param>
+        /// <param name="onNoValue">The action to execute if the instance is not enabled.</param>
+        public void IfEnabled(System.Action<T> action, System.Action onNoValue)
+        {
+            if (Enabled) action(value);
             else onNoValue();
         }
 

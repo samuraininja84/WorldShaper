@@ -56,7 +56,7 @@ namespace WorldShaper
         /// The singleton instance of the <see cref="WorldMap"/>. 
         /// </summary>
         /// <remarks>
-        /// This property provides access to the single instance of the WorldMap class, ensuring that only one instance exists throughout the application. 
+        /// This property provides access to the single instance of the <see cref="WorldMap"/> class, ensuring that only one instance exists throughout the application. 
         /// If an instance does not already exist, it attempts to find and load one from the project's assets. 
         /// If no instance is found, it will return null until an instance is created or assigned.
         /// </remarks>

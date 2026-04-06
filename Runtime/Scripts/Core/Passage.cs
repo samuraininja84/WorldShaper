@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using UnityEngine;
-using Puppeteer;
 
 namespace WorldShaper
 {
@@ -8,66 +7,45 @@ namespace WorldShaper
     {
         public ConnectionReference passage;
         public PassageType type;
+        public bool canInteract = true;
 
         [Header("Intialization")]
         public ObjectLocator target = ObjectLocator.Default;
         public Vector3 positionOffset;
 
-        //[Header("Behaviours")]
-        //public InterfaceReference<IBehaviour>[] onInitializeMethods;
-        //public InterfaceReference<IBehaviour>[] onActivateMethods;
-        //public InterfaceReference<IBehaviour>[] onEnterMethods;
-        //public InterfaceReference<IBehaviour>[] onExitMethods;
-
-        [Header("Interactions")]
-        public ThreadBase enterInteraction;
-        public ThreadBase exitInteraction;
-        public bool canInteract = true;
+        [Header("Behaviours")]
+        public InterfaceReference<IBehaviour>[] onInitializeMethods = null;
+        public InterfaceReference<IBehaviour>[] onActivateMethods = null;
+        public InterfaceReference<IBehaviour>[] onEnterMethods = null;
+        public InterfaceReference<IBehaviour>[] onExitMethods = null;
 
         public AreaHandle Area => passage.Area;
 
-        private void OnValidate()
-        {
-            // Ensure exit interaction is null if passage is closed
-            if (type == PassageType.Closed) exitInteraction = null;
-        }
+        private bool CanUsePassage => canInteract && type == PassageType.Open;
 
-        private void LoadArea() => passage.LoadDestination();
+        public override void SetActive(bool status) => canInteract = status;
 
-        private bool CanUsePassage()
+        public async override Task Initialize()
         {
-            bool canUsePassage = canInteract;
-            switch (type)
+            // Check if there are no methods to initialize
+            if (onInitializeMethods == null || onInitializeMethods.Length == 0)
             {
-                //case PassageType.Open:
-                //    canUsePassage = true;
-                //    break;
-                case PassageType.Closed:
-                    canUsePassage = false;
-                break;
+                // Return a completed task
+                await Task.CompletedTask;
+
+                // No methods to initialize, return early
+                return;
             }
-            return canUsePassage;
+
+            // Await each method's OnInitialize if it has a value
+            foreach (var method in onInitializeMethods)
+            {
+                // Await each method's OnInitialize if it has a value
+                if (method.HasValue) await method.Value.OnInitialize();
+            }
         }
 
-        private bool ThreadActive()
-        {
-            if (GetInteraction() != null) return GetInteraction().ThreadActive();
-            return false;
-        }
-
-        private ThreadBase GetInteraction()
-        {
-            // Create the interaction and set it to null
-            ThreadBase interaction = null;
-
-            // Check if the player can interact before setting the appropriate interaction
-            if (!canInteract && enterInteraction != null) interaction = enterInteraction;
-            else if (canInteract && exitInteraction != null) interaction = exitInteraction;
-
-            // Return the interaction
-            return interaction;
-        }
-        public override Task Activate()
+        public async override Task Activate()
         {
             // Ensure the target reference is valid
             target.FindIfNull();
@@ -75,104 +53,94 @@ namespace WorldShaper
             // Set the target position
             target.Set(GetPosition());
 
-            // Return a completed task
-            return Task.CompletedTask;
+            // Check if there are no methods to activate
+            if (onActivateMethods == null || onActivateMethods.Length == 0)
+            {
+                // Return a completed task
+                await Task.CompletedTask;
+
+                // No methods to activate, return early
+                return;
+            }
+
+            // Await each method's OnActivate if it has a value
+            foreach (var method in onActivateMethods)
+            {
+                // Await each method's OnActivate if it has a value
+                if (method.HasValue) await method.Value.OnActivate();
+            }
         }
 
-        #region Placeholders
+        public async override Task Enter()
+        {
+            // Check if there are no methods to enter
+            if (onEnterMethods == null || onEnterMethods.Length == 0)
+            {
+                // Return a completed task
+                await Task.CompletedTask;
 
-        //public async override Task Initialize()
-        //{
-        //    // Check if there are no methods to initialize
-        //    if (onInitializeMethods.Length == 0)
-        //    {
-        //        // Return a completed task
-        //        await Task.CompletedTask;
+                // No methods to enter, return early
+                return;
+            }
 
-        //        // No methods to initialize, return early
-        //        return;
-        //    }
+            // Await each method's OnEnter if it has a value
+            foreach (var method in onEnterMethods)
+            {
+                // Await each method's OnEnter if it has a value
+                if (method.HasValue) await method.Value.OnEnter();
+            }
+        }
 
-        //    // Await each method's OnInitialize if it has a value
-        //    foreach (var method in onInitializeMethods)
-        //    {
-        //        // Await each method's OnInitialize if it has a value
-        //        if (method.HasValue) await method.Value.OnInitialize();
-        //    }
-        //}
+        public async override Task Exit()
+        {
+            // Check if there are no methods to exit
+            if (onExitMethods == null || onExitMethods.Length == 0)
+            {
+                // Return a completed task
+                await Task.CompletedTask;
 
-        //public async override Task Activate()
-        //{
-        //    // Check if there are no methods to activate
-        //    if (onActivateMethods.Length == 0)
-        //    {
-        //        // Return a completed task
-        //        await Task.CompletedTask;
+                // No methods to exit, return early
+                return;
+            }
 
-        //        // No methods to activate, return early
-        //        return;
-        //    }
+            // Await each method's OnExit if it has a value
+            foreach (var method in onExitMethods)
+            {
+                // Await each method's OnExit if it has a value
+                if (method.HasValue) await method.Value.OnExit();
+            }
+        }
 
-        //    // Await each method's OnActivate if it has a value
-        //    foreach (var method in onActivateMethods)
-        //    {
-        //        // Await each method's OnActivate if it has a value
-        //        if (method.HasValue) await method.Value.OnActivate();
-        //    }
-        //}
-
-        //public async override Task Enter()
-        //{
-        //    // Check if there are no methods to enter
-        //    if (onEnterMethods.Length == 0)
-        //    {
-        //        // Return a completed task
-        //        await Task.CompletedTask;
-
-        //        // No methods to enter, return early
-        //        return;
-        //    }
-
-        //    // Await each method's OnEnter if it has a value
-        //    foreach (var method in onEnterMethods)
-        //    {
-        //        // Await each method's OnEnter if it has a value
-        //        if (method.HasValue) await method.Value.OnEnter();
-        //    }
-        //}
-
-        //public async override Task Exit()
-        //{
-        //    // Check if there are no methods to exit
-        //    if (onExitMethods.Length == 0)
-        //    {
-        //        // Return a completed task
-        //        await Task.CompletedTask;
-        //        // No methods to exit, return early
-        //        return;
-        //    }
-
-        //    // Await each method's OnExit if it has a value
-        //    foreach (var method in onExitMethods)
-        //    {
-        //        // Await each method's OnExit if it has a value
-        //        if (method.HasValue) await method.Value.OnExit();
-        //    }
-        //}
-
-        #endregion
-
-        public override void SetActive(bool status) => canInteract = status;
-
-        public override void AssignConnectedArea(AreaHandle handle) => passage = new ConnectionReference(handle);
-
-        public override void AssignConnection(ConnectionReference data) => passage = data;
-
-        public override AreaHandle GetDestinationArea() => passage.Area;
+        public override Vector3 GetPosition() => transform.position + positionOffset;
 
         public override string GetEndpoint() => passage.Value;
 
-        public override Vector3 GetPosition() => transform.position + positionOffset;
+        private async void TriggerEnter(GameObject gameObject)
+        {
+            // Check if the target matches and the player can use the passage, then load the destination area
+            if (target.Matching(gameObject) && CanUsePassage)
+            {
+                // Await the exit of the current area
+                await Exit();
+
+                // Load the destination area through the passage reference
+                passage.LoadDestination();
+            }
+        }
+
+        private void TriggerExit(GameObject gameObject)
+        {
+            // Check if the target matches, then set the player to be able to interact again
+            if (target.Matching(gameObject)) canInteract = true;
+        }
+
+        private void OnTriggerEnter(Collider collision) => TriggerEnter(collision.gameObject);
+
+        private void OnTriggerExit(Collider collision) => TriggerExit(collision.gameObject);
+
+        private void OnTriggerEnter2D(Collider2D collision) => TriggerEnter(collision.gameObject);
+
+        private void OnTriggerExit2D(Collider2D collision) => TriggerExit(collision.gameObject);
 
         private void OnDrawGizmos()
         {
@@ -181,70 +149,6 @@ namespace WorldShaper
 
             // Draw a wire sphere at the passage position
             Gizmos.DrawWireSphere(GetPosition(), 0.25f);
-        }
-
-        private void OnTriggerEnter(Collider collision)
-        {
-            // Check if the target matches and the thread is not active
-            if (target.Matching(collision.gameObject))
-            {
-                // Get the appropriate interaction
-                ThreadBase interaction = GetInteraction();
-
-                // Add the listener, if it is not null
-                if (interaction != null && !ThreadActive()) interaction.AddListener();
-
-                // Initiate area loading
-                if (CanUsePassage()) LoadArea();
-            }
-        }
-
-        private void OnTriggerExit(Collider collision)
-        {
-            // Check if the target matches and the thread is active
-            if (target.Matching(collision.gameObject))
-            {
-                // Get the appropriate interaction
-                ThreadBase interaction = GetInteraction();
-
-                // Add the listener, if it is not null
-                if (interaction != null && ThreadActive()) interaction.RemoveListener();
-
-                // Set the player to be able to interact if it is not already
-                canInteract = true;
-            }
-        }
-
-        private void OnTriggerEnter2D(Collider2D collision)
-        {
-            // Check if the target matches and the thread is not active
-            if (target.Matching(collision.gameObject))
-            {
-                // Get the appropriate interaction
-                ThreadBase interaction = GetInteraction();
-
-                // Add the listener, if it is not null
-                if (interaction != null && ThreadActive()) interaction.AddListener();
-
-                // Initiate area loading
-                if (CanUsePassage()) LoadArea();
-            }
-        }
-
-        private void OnTriggerExit2D(Collider2D collision)
-        {
-            // Check if the target matches and the thread is active
-            if (target.Matching(collision.gameObject))
-            {
-                // Get the appropriate interaction
-                ThreadBase interaction = GetInteraction();
-
-                // Add the listener, if it is not null
-                if (interaction != null && ThreadActive()) interaction.RemoveListener();
-
-                // Set the player to be able to interact if it is not already
-                canInteract = true;
-            }
         }
     }
 

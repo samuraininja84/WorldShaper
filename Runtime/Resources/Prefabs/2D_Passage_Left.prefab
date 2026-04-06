@@ -59,6 +59,7 @@ GameObject:
   - component: {fileID: 145576439916329776}
   - component: {fileID: 6202073454157678323}
   - component: {fileID: 8814794599535885821}
+  - component: {fileID: 934679979289517499}
   m_Layer: 0
   m_Name: 2D_Passage_Left
   m_TagString: Untagged
@@ -91,6 +92,7 @@ BoxCollider2D:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2357710287491685336}
   m_Enabled: 1
+  serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
@@ -114,7 +116,8 @@ BoxCollider2D:
     m_Bits: 4294967295
   m_IsTrigger: 1
   m_UsedByEffector: 0
-  m_UsedByComposite: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
@@ -125,7 +128,6 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  serializedVersion: 2
   m_Size: {x: 4, y: 4}
   m_EdgeRadius: 0
 --- !u!114 &8814794599535885821
@@ -142,12 +144,41 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   passage:
     Area: {fileID: 0}
+    ID:
+      Part1: 0
+      Part2: 0
+      Part3: 0
+      Part4: 0
     Value: 
     Index: 0
   type: 0
-  enterInteraction: {fileID: 247874125160928208}
-  exitInteraction: {fileID: 8055073272403257613}
   canInteract: 1
+  target:
+    target: {fileID: 0}
+    tag: Player
+  positionOffset: {x: 0, y: 0, z: 0}
+  onInitializeMethods: []
+  onActivateMethods:
+  - underlyingValue: {fileID: 934679979289517499}
+  onEnterMethods: []
+  onExitMethods: []
+--- !u!114 &934679979289517499
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2357710287491685336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e83c486e0d1870b419abc18bda091039, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: WorldShaper::WorldShaper.RelocateBehaviour
+  target:
+    target: {fileID: 0}
+    tag: Player
+  positionOffset: {x: 0, y: 0, z: 0}
+  sphereRadius: 0.1
 --- !u!1 &5562208233034385695
 GameObject:
   m_ObjectHideFlags: 0

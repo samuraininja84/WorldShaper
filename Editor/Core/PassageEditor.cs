@@ -20,6 +20,9 @@ namespace WorldShaper.Editor
             // Draw the base inspector
             DrawDefaultInspector();
 
+            // Add a separator between the fields and the connection points
+            EditorGUILayout.Space(10);
+
             // Check if the area handle is null
             if (passage.Area == null)
             {

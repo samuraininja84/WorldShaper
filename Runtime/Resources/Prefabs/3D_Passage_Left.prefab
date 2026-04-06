@@ -59,6 +59,7 @@ GameObject:
   - component: {fileID: 145576439916329776}
   - component: {fileID: 8168824760508782176}
   - component: {fileID: 8814794599535885821}
+  - component: {fileID: 2483880347783813225}
   m_Layer: 0
   m_Name: 3D_Passage_Left
   m_TagString: Untagged
@@ -118,12 +119,41 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   passage:
     Area: {fileID: 0}
+    ID:
+      Part1: 0
+      Part2: 0
+      Part3: 0
+      Part4: 0
     Value: 
     Index: 0
   type: 0
-  enterInteraction: {fileID: 247874125160928208}
-  exitInteraction: {fileID: 8055073272403257613}
   canInteract: 1
+  target:
+    target: {fileID: 0}
+    tag: Player
+  positionOffset: {x: 0, y: 0, z: 0}
+  onInitializeMethods: []
+  onActivateMethods:
+  - underlyingValue: {fileID: 2483880347783813225}
+  onEnterMethods: []
+  onExitMethods: []
+--- !u!114 &2483880347783813225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2357710287491685336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e83c486e0d1870b419abc18bda091039, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: WorldShaper::WorldShaper.RelocateBehaviour
+  target:
+    target: {fileID: 0}
+    tag: Player
+  positionOffset: {x: 0, y: 0, z: 0}
+  sphereRadius: 0.1
 --- !u!1 &5562208233034385695
 GameObject:
   m_ObjectHideFlags: 0

@@ -55,6 +55,8 @@ namespace WorldShaper.Editor
 
         private static Color SelectionColor => Color.gold;
 
+        private static bool loadPersistentScenes = false;
+
         /// <summary>
         /// Checks if the window is in horizontal layout mode.
         /// </summary>
@@ -1082,7 +1084,7 @@ namespace WorldShaper.Editor
             if (!Application.isPlaying)
             {
                 // Load the area for the area handle using the EditorAreaHandleDispatcher
-                await EditorLoad(handle, true);
+                await EditorLoad(handle, loadPersistentScenes, true);
             }
             else
             {
@@ -1110,7 +1112,7 @@ namespace WorldShaper.Editor
             if (!Application.isPlaying)
             {
                 // Load the area for the area handle using the EditorAreaHandleDispatcher
-                await EditorLoad(handle, true);
+                await EditorLoad(handle, loadPersistentScenes, true);
 
                 // Find the location with the connection name
                 ILocationPointer[] pointer = ILocationPointerExtensions.GetAllLocations().ToArray();
@@ -1122,6 +1124,9 @@ namespace WorldShaper.Editor
                     // Set the camera position to the target location's position
                     SceneView.lastActiveSceneView.pivot = target.GetPosition();
                     SceneView.lastActiveSceneView.Repaint();
+
+                    // Ping the target object in the editor to provide visual feedback to the user
+                    EditorGUIUtility.PingObject((Object)target);
                 }
                 else
                 {
@@ -1152,7 +1157,7 @@ namespace WorldShaper.Editor
             if (!Application.isPlaying)
             {
                 // Load the area for the destination area handle using the EditorAreaHandleDispatcher
-                await EditorLoad(connection.destinationArea, true);
+                await EditorLoad(connection.destinationArea, loadPersistentScenes, true);
 
                 // Find the location with the connection name
                 ILocationPointer[] pointer = ILocationPointerExtensions.GetAllLocations().ToArray();
@@ -1164,6 +1169,9 @@ namespace WorldShaper.Editor
                     // Set the camera position to the target location's position
                     SceneView.lastActiveSceneView.pivot = target.GetPosition();
                     SceneView.lastActiveSceneView.Repaint();
+
+                    // Ping the target object in the editor to provide visual feedback to the user
+                    EditorGUIUtility.PingObject((Object)target);
                 }
                 else
                 {
@@ -1194,7 +1202,7 @@ namespace WorldShaper.Editor
         /// <param name="handle">The <see cref="AreaHandle"/> representing the group of scenes to load.</param>
         /// <param name="unloadUnusedAssets">A boolean value indicating whether to unload unused assets after unloading scenes. The default value is <see langword="false"/>.</param>
         /// <returns>A <see cref="Task"/> that represents the asynchronous operation. The task completes when all scenes are loaded.</returns>
-        public async Task EditorLoad(AreaHandle handle, bool unloadUnusedAssets = false)
+        public async Task EditorLoad(AreaHandle handle, bool loadPersistentScenes = false, bool unloadUnusedAssets = false)
         {
             // Start a background progress operation to provide feedback to the user during the loading process
             int progressId = BackgroundProgress.Start("Loading Area...");
@@ -1206,7 +1214,7 @@ namespace WorldShaper.Editor
             var handleScenesToLoad = handle.additiveScenes.Count;
 
             // Get the count of persistent scenes that will also be loaded
-            var persistentScenesToLoad = WorldMap.PersistentScenes.Count;
+            var persistentScenesToLoad = loadPersistentScenes ? WorldMap.PersistentScenes.Count : 0;
 
             // Get the total number of scenes that will be loaded, including the scenes in the area handle and any persistent scenes, for progress reporting purposes
             int totalScenesToLoad = handleScenesToLoad + persistentScenesToLoad + 1;
