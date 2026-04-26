@@ -75,9 +75,6 @@ namespace WorldShaper
                 // If the instance is null, ensure it exists
                 if (instance == null) Load();
 
-                // Ensure the instance is not destroyed on load
-                DontDestroyOnLoad(instance.transform.gameObject);
-
                 // Return the instance
                 return instance;
             }
@@ -109,6 +106,9 @@ namespace WorldShaper
                 // Set this instance as the singleton instance
                 instance = this as T;
 
+                // Call the initialization hook
+                instance.OnInit();
+
                 // Ensure the instance is not destroyed on load
                 DontDestroyOnLoad(transform.gameObject);
 
@@ -135,7 +135,7 @@ namespace WorldShaper
             instance = FindFirstObjectByType<T>();
 
             // If no instance was found, create a new one
-            if (instance == null)
+            if (instance == null && Application.isPlaying)
             {
                 // Create a new GameObject
                 GameObject obj = new GameObject();

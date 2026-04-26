@@ -81,7 +81,7 @@ namespace WorldShaper
         /// This constant is used internally to define the maximum number of handles allowed. 
         /// <list type="bullet"> <item> <description>
         /// It is not intended for external use.
-        /// </description> </item> </list>
+        /// </description></item></list>
         /// </remarks>
         private const int HandleCount = 10;
 
@@ -117,14 +117,14 @@ namespace WorldShaper
         /// <returns>A <see cref="Task"/> that represents the asynchronous operation. The task completes when all scenes are loaded.</returns>
         public static async Task LoadAreas(AreaHandle handle, IProgress<float> progress, bool reloadActiveScene = false, bool reloadAdditiveScenes = false, bool unloadUnusedAssets = false)
         {
-            // Invoke the OnAreaLoadingStarted event
-            OnAreaLoadingStarted.Invoke();
-
             // Set the active area handle to the provided group
             ActiveAreaHandle = handle;
 
             // Unload all scenes that are not part of the active area handle
             await UnloadAreas(reloadActiveScene, reloadAdditiveScenes, unloadUnusedAssets);
+
+            // Invoke the OnAreaLoadingStarted event
+            OnAreaLoadingStarted.Invoke();
 
             // Get the count of currently loaded scenes
             int sceneCount = SceneManager.sceneCount;
