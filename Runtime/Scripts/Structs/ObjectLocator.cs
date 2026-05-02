@@ -323,13 +323,13 @@ namespace WorldShaper
         /// langword="null"/>.</param>
         /// <returns><see langword="true"/> if the component of type <typeparamref name="T"/> is found; otherwise, <see
         /// langword="false"/>.</returns>
-        public bool TryGetComponent<T>(out T component)
+        public bool TryGetComponent<T>(out T component) where T : Component
         {
             // If the target is not null, try to get the component of type T.
             if (target != null) return target.TryGetComponent(out component);
 
             // If the target is null, we cannot get a component, so set component to null.
-            component = default;
+            component = null;
 
             // / If the target is null, we cannot get a component, so return false.
             return false;
