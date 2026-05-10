@@ -27,8 +27,11 @@ namespace WorldShaper
                 // Enable the transition camera
                 transitionCamera.gameObject.SetActive(true);
 
+                // Try to get the main camera, and if it exists, copy its position and rotation to the transition camera
+                var mainCamera = Camera.main;
+
                 // Copy the main camera position and rotation to the transition camera
-                CopyCameraSettings(Camera.main);
+                if (mainCamera != null) CopyCameraSettings(Camera.main);
             }
 
             // Await the in transition animation
@@ -46,8 +49,11 @@ namespace WorldShaper
                 // Enable the transition camera
                 transitionCamera.gameObject.SetActive(true);
 
+                // Try to get the main camera, and if it exists, copy its position and rotation to the transition camera
+                var mainCamera = Camera.main;
+
                 // Copy the main camera position and rotation to the transition camera
-                CopyCameraSettings(Camera.main);
+                if (mainCamera != null) CopyCameraSettings(Camera.main);
             }
 
             // Await the out transition animation
