@@ -12,7 +12,7 @@ namespace WorldShaper
     /// This type is designed to be flexible and extensible, making it suitable for scenarios where a dynamic enumeration-like structure is required.
     /// </remarks>
     [Serializable]
-    public struct ExtendableEnum
+    public struct ExtendableEnum : IEquatable<ExtendableEnum>
     {
         public List<string> list;
         public string value;
@@ -20,6 +20,97 @@ namespace WorldShaper
         public string selectionValue;
         public bool showSelection;
         public bool locked;
+
+        #region Operators
+
+        // Equality and inequality operators for ExtendableEnum
+        public static bool operator ==(ExtendableEnum e1, ExtendableEnum e2) => e1.Equals(e2);
+        public static bool operator !=(ExtendableEnum e1, ExtendableEnum e2) => !e1.Equals(e2);
+
+        // Equality and inequality operators for ExtendableEnum and string
+        public static bool operator ==(ExtendableEnum e, string value) => e.Equals(value);
+        public static bool operator !=(ExtendableEnum e, string value) => !e.Equals(value);
+
+        /// Implicit conversion from ExtendableEnum to string
+        public static implicit operator string(ExtendableEnum e) => e.value;
+
+        // Implicit conversion from string to ExtendableEnum
+        public static implicit operator ExtendableEnum(string value) => new ExtendableEnum(new List<string> { value }, 0) { value = value };
+
+        // Implicit conversion from List<string> to ExtendableEnum
+        public static implicit operator ExtendableEnum(List<string> strings) => new ExtendableEnum(strings, 0);
+
+        // Implicit conversion from ExtendableEnum to List<string>
+        public static implicit operator List<string>(ExtendableEnum e) => e.list;
+
+        #endregion
+
+        #region Static Instances
+
+        /// <summary>
+        /// Gets a predefined instance of <see cref="ExtendableEnum"/> representing the value "None".
+        /// </summary>
+        public static ExtendableEnum None => new ExtendableEnum(string.Empty, false);
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="ExtendableEnum"/> class with the specified value and status.
+        /// </summary>
+        /// <param name="value">The string value to associate with the <see cref="ExtendableEnum"/> instance. Cannot be null or empty.</param>
+        /// <param name="locked">An optional boolean indicating the lock status of the instance. The default value is <see langword="true"/>.</param>
+        /// <returns>A new <see cref="ExtendableEnum"/> instance initialized with the specified value and status.</returns>
+        public static ExtendableEnum Some(string value, bool locked = false) => new ExtendableEnum(value, locked);
+
+        /// <summary>
+        /// Creates a new instance of the <see cref="ExtendableEnum"/> class using the specified list of strings and
+        /// status.
+        /// </summary>
+        /// <param name="strings">A list of strings used to initialize the <see cref="ExtendableEnum"/>. Cannot be null.</param>
+        /// <param name="locked">An optional boolean value indicating the lock status. Defaults to <see langword="true"/>.</param>
+        /// <returns>A new instance of the <see cref="ExtendableEnum"/> class initialized with the provided parameters.</returns>
+        public static ExtendableEnum Some(List<string> strings, bool locked = true) => new ExtendableEnum(strings, locked);
+
+        /// <summary>
+        /// Creates a sequence of extendable enums based on the specified prefix, amount, start value, and suffix.
+        /// </summary>
+        /// <param name="prefix">The string to prepend to each enum value in the sequence.</param>
+        /// <param name="amount">The total number of enum values to generate. Must be greater than zero.</param>
+        /// <param name="start">The starting numeric value for the sequence.</param>
+        /// <param name="suffix">The string to append to each enum value in the sequence.</param>
+        /// <returns>An <see cref="ExtendableEnum"/> representing the generated sequence of enums.</returns>
+        public static ExtendableEnum Recursive(string prefix, int amount, int start = 0, string suffix = "") => CreateSequentialEnum(prefix, amount, start, suffix);
+
+        /// <summary>
+        /// Creates a new <see cref="ExtendableEnum"/> instance containing a sequence of strings generated  based on the
+        /// specified prefix, amount, starting index, and suffix.
+        /// </summary>
+        /// <remarks>
+        /// Each string in the sequence is generated in the format "<paramref name="prefix"/> <index> <paramref name="suffix"/>", where <c>index</c> starts at <paramref name="start"/> and increments for each item.
+        /// </remarks>
+        /// <param name="prefix">The string to prepend to each generated item in the sequence.</param>
+        /// <param name="amount">The total number of items to generate in the sequence. Must be non-negative.</param>
+        /// <param name="start">The starting index for the sequence generation.</param>
+        /// <param name="suffix">The string to append to each generated item in the sequence.</param>
+        /// <returns>An <see cref="ExtendableEnum"/> instance initialized with the generated sequence of strings.</returns>
+        private static ExtendableEnum CreateSequentialEnum(string prefix, int amount, int start, string suffix)
+        {
+            // This method creates a new ExtendableEnum instance with a list of strings generated recursively.
+            List<string> list = new List<string>();
+
+            // Iterate from start # to start # + amount, generating a string for each index
+            for (int i = start; i < start + amount; i++)
+            {
+                // Generate the string using the prefix, index, and suffix
+                string generatedString = $"{prefix}{i}{suffix}";
+
+                // Add the generated string to the list
+                list.Add(generatedString);
+            }
+
+            // Return a new ExtendableEnum initialized with the generated list
+            return new ExtendableEnum(list);
+        }
+
+        #endregion
 
         public ExtendableEnum(string value, bool status = true)
         {
@@ -565,6 +656,8 @@ namespace WorldShaper
 
         #region IEquatable Implementation
 
+        public readonly bool Equals(ExtendableEnum other) => list.Equals(other);
+
         /// <summary>
         /// Determines whether the specified object is equal to the current instance.
         /// </summary>
@@ -576,7 +669,7 @@ namespace WorldShaper
         /// <returns>
         /// <see langword="true"/> if the specified object is an <see cref="ExtendableEnum"/> or a <see cref="string"/> and its value matches the value of the current instance; otherwise, <see langword="false"/>.
         /// </returns>
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             // If the object is an extendable enum, compare the values
             if (obj is ExtendableEnum other) return value == other.value;
@@ -589,14 +682,6 @@ namespace WorldShaper
         }
 
         /// <summary>
-        /// Returns a string representation of the current object.
-        /// </summary>
-        /// <returns>
-        /// The string value associated with the current object.
-        /// </returns>
-        public override string ToString() => value;
-
-        /// <summary>
         /// Returns the hash code for the current instance.
         /// </summary>
         /// <remarks>
@@ -606,98 +691,15 @@ namespace WorldShaper
         /// <returns>
         /// An integer representing the hash code of the current instance.
         /// </returns>
-        public override int GetHashCode() => value.GetHashCode();
-
-        #endregion
-
-        #region Static Instances
+        public override readonly int GetHashCode() => value.GetHashCode();
 
         /// <summary>
-        /// Gets a predefined instance of <see cref="ExtendableEnum"/> representing the value "None".
+        /// Returns a string representation of the current object.
         /// </summary>
-        public static ExtendableEnum None => new ExtendableEnum(string.Empty, false);
-
-        /// <summary>
-        /// Creates a new instance of the <see cref="ExtendableEnum"/> class with the specified value and status.
-        /// </summary>
-        /// <param name="value">The string value to associate with the <see cref="ExtendableEnum"/> instance. Cannot be null or empty.</param>
-        /// <param name="locked">An optional boolean indicating the lock status of the instance. The default value is <see langword="true"/>.</param>
-        /// <returns>A new <see cref="ExtendableEnum"/> instance initialized with the specified value and status.</returns>
-        public static ExtendableEnum Some(string value, bool locked = false) => new ExtendableEnum(value, locked);
-
-        /// <summary>
-        /// Creates a new instance of the <see cref="ExtendableEnum"/> class using the specified list of strings and
-        /// status.
-        /// </summary>
-        /// <param name="strings">A list of strings used to initialize the <see cref="ExtendableEnum"/>. Cannot be null.</param>
-        /// <param name="locked">An optional boolean value indicating the lock status. Defaults to <see langword="true"/>.</param>
-        /// <returns>A new instance of the <see cref="ExtendableEnum"/> class initialized with the provided parameters.</returns>
-        public static ExtendableEnum Some(List<string> strings, bool locked = true) => new ExtendableEnum(strings, locked);
-
-        /// <summary>
-        /// Creates a sequence of extendable enums based on the specified prefix, amount, start value, and suffix.
-        /// </summary>
-        /// <param name="prefix">The string to prepend to each enum value in the sequence.</param>
-        /// <param name="amount">The total number of enum values to generate. Must be greater than zero.</param>
-        /// <param name="start">The starting numeric value for the sequence.</param>
-        /// <param name="suffix">The string to append to each enum value in the sequence.</param>
-        /// <returns>An <see cref="ExtendableEnum"/> representing the generated sequence of enums.</returns>
-        public static ExtendableEnum Recursive(string prefix, int amount, int start = 0, string suffix = "") => CreateSequentialEnum(prefix, amount, start, suffix);
-
-        /// <summary>
-        /// Creates a new <see cref="ExtendableEnum"/> instance containing a sequence of strings generated  based on the
-        /// specified prefix, amount, starting index, and suffix.
-        /// </summary>
-        /// <remarks>
-        /// Each string in the sequence is generated in the format "<paramref name="prefix"/> <index> <paramref name="suffix"/>", where <c>index</c> starts at <paramref name="start"/> and increments for each item.
-        /// </remarks>
-        /// <param name="prefix">The string to prepend to each generated item in the sequence.</param>
-        /// <param name="amount">The total number of items to generate in the sequence. Must be non-negative.</param>
-        /// <param name="start">The starting index for the sequence generation.</param>
-        /// <param name="suffix">The string to append to each generated item in the sequence.</param>
-        /// <returns>An <see cref="ExtendableEnum"/> instance initialized with the generated sequence of strings.</returns>
-        private static ExtendableEnum CreateSequentialEnum(string prefix, int amount, int start, string suffix)
-        {
-            // This method creates a new ExtendableEnum instance with a list of strings generated recursively.
-            List<string> list = new List<string>();
-
-            // Iterate from start # to start # + amount, generating a string for each index
-            for (int i = start; i < start + amount; i++)
-            {
-                // Generate the string using the prefix, index, and suffix
-                string generatedString = $"{prefix}{i}{suffix}";
-
-                // Add the generated string to the list
-                list.Add(generatedString);
-            }
-
-            // Return a new ExtendableEnum initialized with the generated list
-            return new ExtendableEnum(list);
-        }
-
-        #endregion
-
-        #region Operators
-
-        // Equality and inequality operators for ExtendableEnum
-        public static bool operator ==(ExtendableEnum e1, ExtendableEnum e2) => e1.Equals(e2);
-        public static bool operator !=(ExtendableEnum e1, ExtendableEnum e2) => !e1.Equals(e2);
-
-        // Equality and inequality operators for ExtendableEnum and string
-        public static bool operator ==(ExtendableEnum e, string value) => e.Equals(value);
-        public static bool operator !=(ExtendableEnum e, string value) => !e.Equals(value);
-
-        /// Implicit conversion from ExtendableEnum to string
-        public static implicit operator string(ExtendableEnum e) => e.value;
-
-        // Implicit conversion from string to ExtendableEnum
-        public static implicit operator ExtendableEnum(string value) => new ExtendableEnum(new List<string> { value }, 0) { value = value };
-
-        // Implicit conversion from List<string> to ExtendableEnum
-        public static implicit operator ExtendableEnum(List<string> strings) => new ExtendableEnum(strings, 0);
-
-        // Implicit conversion from ExtendableEnum to List<string>
-        public static implicit operator List<string>(ExtendableEnum e) => e.list;
+        /// <returns>
+        /// The string value associated with the current object.
+        /// </returns>
+        public override string ToString() => value;
 
         #endregion
     }

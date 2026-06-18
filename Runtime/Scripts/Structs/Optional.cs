@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,8 +12,8 @@ namespace WorldShaper
     /// It provides methods and properties to safely access and manipulate the value if it exists, to check whether the value is enabled, and to handle scenarios where no value is present.
     /// </remarks>
     /// <typeparam name="T">The type of the value that the optional object can contain.</typeparam>
-    [System.Serializable]
-    public struct Optional<T>
+    [Serializable]
+    public struct Optional<T> : IEquatable<Optional<T>>
     {
         [SerializeField] private T value;
         [SerializeField] private bool enabled;
@@ -135,7 +136,7 @@ namespace WorldShaper
         /// If the instance does not contain a value, the action is not executed.
         /// </remarks>
         /// <param name="action">The action to execute if a value is present. The value is passed as a parameter to the action.</param>
-        public void IfValue(System.Action<T> action)
+        public void IfValue(Action<T> action)
         {
             if (HasValue) action(value);
         }
@@ -149,7 +150,7 @@ namespace WorldShaper
         /// </remarks>
         /// <param name="action">The action to execute if a value is present. The value is passed as a parameter to this action.</param>
         /// <param name="onNoValue">The action to execute if no value is present.</param>
-        public void IfValue(System.Action<T> action, System.Action onNoValue)
+        public void IfValue(Action<T> action, Action onNoValue)
         {
             if (HasValue) action(value);
             else onNoValue();
@@ -161,7 +162,7 @@ namespace WorldShaper
         /// <remarks>Use this method to perform an operation only when the instance is in an enabled
         /// state. If the instance is not enabled, the action is not invoked.</remarks>
         /// <param name="action">The action to execute if the instance is enabled. The action receives the current value as its argument. Cannot be null.</param>
-        public void IfEnabled(System.Action<T> action)
+        public void IfEnabled(Action<T> action)
         {
             if (Enabled) action(value);
         }
@@ -175,7 +176,7 @@ namespace WorldShaper
         /// </remarks>
         /// <param name="action">The action to execute if the instance is enabled. The value is passed as a parameter to the action.</param>
         /// <param name="onNoValue">The action to execute if the instance is not enabled.</param>
-        public void IfEnabled(System.Action<T> action, System.Action onNoValue)
+        public void IfEnabled(Action<T> action, Action onNoValue)
         {
             if (Enabled) action(value);
             else onNoValue();
@@ -188,7 +189,7 @@ namespace WorldShaper
         /// <param name="onValue">A function to execute if the instance contains a value. The function receives the value as its argument.</param>
         /// <param name="onNoValue">A function to execute if the instance does not contain a value.</param>
         /// <returns>The result of the <paramref name="onValue"/> function if the instance contains a value; otherwise, the result of the <paramref name="onNoValue"/> function.</returns>
-        public TResult Match<TResult>(System.Func<T, TResult> onValue, System.Func<TResult> onNoValue) => HasValue ? onValue(value) : onNoValue();
+        public TResult Match<TResult>(Func<T, TResult> onValue, Func<TResult> onNoValue) => HasValue ? onValue(value) : onNoValue();
 
         /// <summary>
         /// Transforms the value contained in the current <see cref="Optional{T}"/> instance  using the specified mapping function, and returns a new <see cref="Optional{TResult}"/>.
@@ -196,7 +197,7 @@ namespace WorldShaper
         /// <typeparam name="TResult">The type of the value in the resulting <see cref="Optional{TResult}"/>.</typeparam>
         /// <param name="map">A function that maps the current value to a new value of type <typeparamref name="TResult"/>.</param>
         /// <returns>An <see cref="Optional{TResult}"/> containing the mapped value if the current instance has a value; otherwise, an <see cref="Optional{TResult}"/> with no value.</returns>
-        public Optional<TResult> Select<TResult>(System.Func<T, TResult> map) => HasValue ? Optional<TResult>.Some(map(value)) : Optional<TResult>.Empty;
+        public Optional<TResult> Select<TResult>(Func<T, TResult> map) => HasValue ? Optional<TResult>.Some(map(value)) : Optional<TResult>.Empty;
 
         /// <summary>
         /// Projects the value of the current <see cref="Optional{T}"/> into a new <see cref="Optional{TResult}"/> using the specified binding function.
@@ -210,7 +211,7 @@ namespace WorldShaper
         /// <returns>
         /// An <see cref="Optional{TResult}"/> containing the result of the binding function if the current <see cref="Optional{T}"/> has a value; otherwise, an <see cref="Optional{TResult}"/> with no value.
         /// </returns>
-        public Optional<TResult> SelectMany<TResult>(System.Func<T, Optional<TResult>> bind) => HasValue ? bind(value) : Optional<TResult>.Empty;
+        public Optional<TResult> SelectMany<TResult>(Func<T, Optional<TResult>> bind) => HasValue ? bind(value) : Optional<TResult>.Empty;
 
         /// <summary>
         /// Combines the values of two <see cref="Optional{T}"/> instances using the specified combiner function, if both instances have values.
@@ -225,7 +226,7 @@ namespace WorldShaper
         /// An <see cref="Optional{T}"/> containing the result of the combiner function if both <paramref name="first"/> and <paramref name="second"/> have values;
         /// otherwise, an <see cref="Optional{T}"/> representing no value.
         /// </returns>
-        public static Optional<TResult> Combine<T1, T2, TResult>(Optional<T1> first, Optional<T2> second, System.Func<T1, T2, TResult> combiner)
+        public static Optional<TResult> Combine<T1, T2, TResult>(Optional<T1> first, Optional<T2> second, Func<T1, T2, TResult> combiner)
         {
             // Combine two Optional<T> instances into an Optional<TResult>
             if (first.HasValue && second.HasValue) return Optional<TResult>.Some(combiner(first.value, second.value));
@@ -233,15 +234,6 @@ namespace WorldShaper
             // If either first or second does not have a value, return NoValue
             return Optional<TResult>.Empty;
         }
-
-        /// <summary>
-        /// Determines whether the current instance is equal to the specified object.
-        /// </summary>
-        /// <param name="obj">The object to compare with the current instance. Must be of type <see cref="Optional{T}"/>.</param>
-        /// <returns>
-        /// <see langword="true"/> if the specified object is an <see cref="Optional{T}"/> instance and is equal to the current instance; otherwise, <see langword="false"/>.
-        /// </returns>
-        public override bool Equals(object obj) => obj is Optional<T> other && Equals(other);
 
         /// <summary>
         /// Determines whether the current <see cref="Optional{T}"/> instance is equal to another specified <see cref="Optional{T}"/> instance.
@@ -254,6 +246,15 @@ namespace WorldShaper
         /// <param name="other">The <see cref="Optional{T}"/> instance to compare with the current instance.</param>
         /// <returns><see langword="true"/> if both instances represent the same value or both are empty; otherwise, <see langword="false"/>.</returns>
         public bool Equals(Optional<T> other) => !HasValue ? !other.HasValue : EqualityComparer<T>.Default.Equals(value, other.value);
+
+        /// <summary>
+        /// Determines whether the current instance is equal to the specified object.
+        /// </summary>
+        /// <param name="obj">The object to compare with the current instance. Must be of type <see cref="Optional{T}"/>.</param>
+        /// <returns>
+        /// <see langword="true"/> if the specified object is an <see cref="Optional{T}"/> instance and is equal to the current instance; otherwise, <see langword="false"/>.
+        /// </returns>
+        public override bool Equals(object obj) => obj is Optional<T> other && Equals(other);
 
         /// <summary>
         /// Returns a hash code for the current instance.

@@ -7,12 +7,23 @@ namespace WorldShaper
     /// The <see cref="ConnectionReference"/> struct is used to associate a connection with a specific area and provides methods for creating and managing such associations. 
     /// </remarks>
     [System.Serializable]
-    public struct ConnectionReference
+    public struct ConnectionReference : System.IEquatable<ConnectionReference>
     {
         public AreaHandle Area;
         public SerializableGuid ID;
         public string Value;
         public int Index;
+
+        // Implicit conversion from ConnectionReference to string
+        public static implicit operator string(ConnectionReference connectionReference) => connectionReference.Value;
+
+        // Equality operators for ConnectionReference
+        public static bool operator ==(ConnectionReference left, ConnectionReference right) => left.Equals(right);
+        public static bool operator !=(ConnectionReference left, ConnectionReference right) => !(left == right);
+
+        // Equality operators for ConnectionReference and string
+        public static bool operator ==(ConnectionReference left, object right) => left.Equals(right);
+        public static bool operator !=(ConnectionReference left, object right) => !(left == right);
 
         /// <summary>
         /// Gets a value indicating whether the current object is considered empty.
@@ -115,6 +126,13 @@ namespace WorldShaper
         public override string ToString() => $"{Area?.activeScene.Name} - {Value}";
 
         /// <summary>
+        /// Determines whether the specified <see cref="ConnectionReference"/> is equal to the current instance by comparing their properties.
+        /// </summary>
+        /// <param name="other">The <see cref="ConnectionReference"/> to compare with the current instance.</param>
+        /// <returns><see langword="true"/> if the specified <see cref="ConnectionReference"/> is equal to the current instance; otherwise, <see langword="false"/>.</returns>
+        public bool Equals(ConnectionReference other) => Area == other.Area && Value == other.Value && Index == other.Index && ID == other.ID;
+
+        /// <summary>
         /// Determines whether the specified object is equal to the current instance.
         /// </summary>
         /// <remarks>This method compares the specified object with the current instance based on the
@@ -128,7 +146,7 @@ namespace WorldShaper
         /// cref="string"/>.</param>
         /// <returns><see langword="true"/> if the specified object is equal to the current instance; otherwise, <see
         /// langword="false"/>.</returns>
-        public override bool Equals(object obj)
+        public override readonly bool Equals(object obj)
         {
             // If the object is a ConnectionReference, compare its properties
             if (obj is ConnectionReference other) return Area == other.Area && Value == other.Value && Index == other.Index;
@@ -147,17 +165,6 @@ namespace WorldShaper
         /// The hash code is computed using the hash codes of the <see cref="Area"/>, <see cref="Value"/>, and <see cref="Index"/> properties. 
         /// If <see cref="Area"/> or <see cref="Value"/> is null, their contribution to the hash code is treated as 0.
         /// </remarks><returns>An integer representing the hash code of the current object.</returns>
-        public override int GetHashCode() => (Area?.GetHashCode() ?? 0) ^ (Value?.GetHashCode() ?? 0) ^ Index.GetHashCode();
-
-        // Implicit conversion from ConnectionReference to string
-        public static implicit operator string(ConnectionReference connectionReference) => connectionReference.Value;
-
-        // Equality operators for ConnectionReference
-        public static bool operator ==(ConnectionReference left, ConnectionReference right) => left.Equals(right);
-        public static bool operator !=(ConnectionReference left, ConnectionReference right) => !(left == right);
-
-        // Equality operators for ConnectionReference and string
-        public static bool operator ==(ConnectionReference left, object right) => left.Equals(right);
-        public static bool operator !=(ConnectionReference left, object right) => !(left == right);
+        public override readonly int GetHashCode() => (Area?.GetHashCode() ?? 0) ^ (Value?.GetHashCode() ?? 0) ^ Index.GetHashCode();
     }
 }
