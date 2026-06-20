@@ -1,7 +1,5 @@
 # World Shaper - A Tool For Shaping Larger Worlds
 
-- Internal Dependencies: 
- 	- Puppeteer: `https://github.com/samuraininja84/Puppeteer`
 - External Dependencies: 
 	- Demigiant: DoTween
  	- Eflatun.SceneReference: `https://github.com/starikcetin/Eflatun.SceneReference.git#4.1.1`
