@@ -28,6 +28,6 @@ namespace WorldShaper
 
         public override int GetHashCode() => transitionID.GetHashCode();
 
-        public override string ToString() => transitionID.ToHexString();
+        public override string ToString() => transitionID.ToString();
     }
 }
