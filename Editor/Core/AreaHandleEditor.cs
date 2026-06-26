@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+using UnityEditorInternal;
 
 namespace WorldShaper.Editor
 {
@@ -12,17 +13,58 @@ namespace WorldShaper.Editor
         public SerializedProperty areaHandleTypeProperty;
         public SerializedProperty activeSceneProperty;
         public SerializedProperty additiveScenesProperty;
+        public ReorderableList additiveScenesList;
+        public ReorderableList connectionList;
 
         private bool showConnections = true;
 
         private void OnEnable()
         {
+            // Get the target AreaHandle object
             areaHandle = target as AreaHandle;
+
+            // Validate the connections in the area handle to ensure they are consistent and valid
             areaHandle.ValidateConnections();
+
+            // Find the serialized property for the script field
             script = serializedObject.FindProperty("m_Script");
-            areaHandleTypeProperty = serializedObject.FindProperty("areaHandleType");
-            activeSceneProperty = serializedObject.FindProperty("activeScene");
-            additiveScenesProperty = serializedObject.FindProperty("additiveScenes");
+
+            // Find the serialized properties for areaHandleType, activeScene, and additiveScenes
+            areaHandleTypeProperty = serializedObject.FindProperty(nameof(AreaHandle.areaHandleType));
+            activeSceneProperty = serializedObject.FindProperty(nameof(AreaHandle.activeScene));
+            additiveScenesProperty = serializedObject.FindProperty(nameof(AreaHandle.additiveScenes));
+
+            // Create a ReorderableList for the additiveScenes property
+            additiveScenesList = CreateAdditiveScenesList();
+        }
+
+        private ReorderableList CreateAdditiveScenesList()
+        {
+            // Create a ReorderableList for the additiveScenes property
+            var entryList = new ReorderableList(serializedObject, additiveScenesProperty, true, true, true, true)
+            {
+                // Define how the header of the list should be drawn
+                drawHeaderCallback = rect => EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), "Additive Scenes")
+            };
+
+            // Define how each element in the list should be drawn
+            entryList.drawElementCallback = (rect, index, isActive, isFocused) =>
+            {
+                // Get the element at the current index
+                var element = entryList.serializedProperty.GetArrayElementAtIndex(index);
+
+                // Adjust the rect for better spacing
+                rect.y += 2;
+
+                // Draw the properties
+                var entryRect = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
+
+                // Draw the value type and key name fields
+                EditorGUI.PropertyField(entryRect, element, GUIContent.none);
+            };
+
+            // Define how each element in the list should be drawn
+            return entryList;
         }
 
         public override void OnInspectorGUI()
@@ -93,7 +135,7 @@ namespace WorldShaper.Editor
             else if (areaHandle.Impassable())
             {
                 // Display the additive scenes field
-                EditorGUILayout.PropertyField(additiveScenesProperty);
+                additiveScenesList.DoLayoutList();
 
                 // Draw a button to clear all connections if there are any
                 if (areaHandle.HasConnections())
@@ -121,7 +163,7 @@ namespace WorldShaper.Editor
             else if (areaHandle.Normal()) 
             {
                 // Display the additive scenes field
-                EditorGUILayout.PropertyField(additiveScenesProperty);
+                additiveScenesList.DoLayoutList();
 
                 // Add a space between the additive scenes field and the connections section
                 EditorGUILayout.Separator();
