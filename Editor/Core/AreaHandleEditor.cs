@@ -8,14 +8,15 @@ namespace WorldShaper.Editor
     [CustomEditor(typeof(AreaHandle))]
     public class AreaHandleEditor : UnityEditor.Editor
     {
-        public AreaHandle areaHandle;
-        public SerializedProperty script;
-        public SerializedProperty areaHandleTypeProperty;
-        public SerializedProperty activeSceneProperty;
-        public SerializedProperty additiveScenesProperty;
-        public ReorderableList additiveScenesList;
-        public ReorderableList connectionList;
-
+        private AreaHandle areaHandle;
+        private SerializedProperty script;
+        private SerializedProperty areaHandleTypeProperty;
+        private SerializedProperty activeSceneProperty;
+        private SerializedProperty additiveScenesProperty;
+        private SerializedProperty connectionsProperty;
+        private ReorderableList additiveScenesList;
+        private ReorderableList connectionsList;
+        private GUIStyle miniButtonStyle;
         private bool showConnections = true;
 
         private void OnEnable()
@@ -33,42 +34,234 @@ namespace WorldShaper.Editor
             areaHandleTypeProperty = serializedObject.FindProperty(nameof(AreaHandle.areaHandleType));
             activeSceneProperty = serializedObject.FindProperty(nameof(AreaHandle.activeScene));
             additiveScenesProperty = serializedObject.FindProperty(nameof(AreaHandle.additiveScenes));
+            connectionsProperty = serializedObject.FindProperty(nameof(AreaHandle.connections));
+
+            // Get the mini button style for the connection buttons
+            miniButtonStyle = GetMiniButtonStyle();
 
             // Create a ReorderableList for the additiveScenes property
-            additiveScenesList = CreateAdditiveScenesList();
+            CreateAdditiveScenesList();
+
+            // Create a ReorderableList for the connections property
+            CreateConnectionsList();
         }
 
-        private ReorderableList CreateAdditiveScenesList()
+        private void CreateAdditiveScenesList()
         {
             // Create a ReorderableList for the additiveScenes property
-            var entryList = new ReorderableList(serializedObject, additiveScenesProperty, true, true, true, true)
+            additiveScenesList = new ReorderableList(serializedObject, additiveScenesProperty, true, true, true, true)
             {
                 // Define how the header of the list should be drawn
-                drawHeaderCallback = rect => EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), "Additive Scenes")
-            };
+                drawHeaderCallback = rect => EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), "Additive Scenes"),
 
-            // Define how each element in the list should be drawn
-            entryList.drawElementCallback = (rect, index, isActive, isFocused) =>
+                // Define how each element in the list should be drawn
+                drawElementCallback = (rect, index, isActive, isFocused) =>
+                {
+                    // Get the element at the current index
+                    var element = additiveScenesList.serializedProperty.GetArrayElementAtIndex(index);
+
+                    // Adjust the rect for better spacing
+                    rect.y += 2;
+
+                    // Draw the properties
+                    var entryRect = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
+
+                    // Draw the value type and key name fields
+                    EditorGUI.PropertyField(entryRect, element, GUIContent.none);
+                }
+            };
+        }
+
+        private void CreateConnectionsList()
+        {
+            // Create a ReorderableList for the connections property
+            connectionsList = new ReorderableList(serializedObject, connectionsProperty, true, true, true, true)
             {
-                // Get the element at the current index
-                var element = entryList.serializedProperty.GetArrayElementAtIndex(index);
+                // Define how the header of the list should be drawn
+                drawHeaderCallback = rect => EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), "Connections"),
 
-                // Adjust the rect for better spacing
-                rect.y += 2;
+                // Dynamically calculate the height of each element based on its properties
+                elementHeightCallback = (int index) =>
+                {
+                    // Get the connection at the current index
+                    var connection = areaHandle.connections[index];
 
-                // Draw the properties
-                var entryRect = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
+                    // Check if the connection is closed
+                    bool closedConnection = connection.Closed();
 
-                // Draw the value type and key name fields
-                EditorGUI.PropertyField(entryRect, element, GUIContent.none);
+                    // Check if the connection has a destination or an endpoint
+                    bool hasDestination = connection.HasDestination();
+                    bool hasEndpoint = connection.HasEndpoint();
+
+                    // Determine if the connection has either a destination or an endpoint
+                    bool hasEither = hasDestination || hasEndpoint;
+
+                    // If the connection is closed and has no destination or endpoint, draw a smaller height
+                    return EditorGUIUtility.singleLineHeight * (closedConnection ? hasEither ? 7 : 4 : 6) + 10;
+                },
+
+                // Define how each element in the list should be drawn
+                drawElementCallback = (rect, index, isActive, isFocused) =>
+                {
+                    // Get the element at the current index
+                    var connection = areaHandle.connections[index];
+                    var element = new SerializedObject(connection);
+
+                    // Adjust the rect for better spacing
+                    rect.y += 2;
+
+                    // Adjust this value for more or less spacing
+                    float spacing = 2f;
+
+                    // Adjust this value for the width of the buttons
+                    float buttonWidth = 20f;
+
+                    // Calculate the width for the property fields, leaving space for buttons
+                    float width = rect.width - buttonWidth - spacing;
+
+                    #region Connection Properties
+
+                    // Get the properties of the Connection object
+                    var name = element.FindProperty(nameof(Connection.connectionName));
+                    var type = element.FindProperty(nameof(Connection.connectionType));
+                    var destination = element.FindProperty(nameof(Connection.destinationArea));
+                    var transitionIn = element.FindProperty(nameof(Connection.transitionIn));
+                    var transitionOut = element.FindProperty(nameof(Connection.transitionOut));
+                    var endpoint = element.FindProperty(nameof(Connection.endpoint));
+
+                    // Draw the properties
+                    var nameRect = new Rect(rect.x, rect.y, width, EditorGUIUtility.singleLineHeight);
+                    var typeRect = new Rect(rect.x, rect.y + EditorGUIUtility.singleLineHeight + spacing, width, EditorGUIUtility.singleLineHeight);
+                    var transitionInRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 2, width, EditorGUIUtility.singleLineHeight);
+                    var transitionOutRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 3, width, EditorGUIUtility.singleLineHeight);
+                    var destinationRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 4, width, EditorGUIUtility.singleLineHeight);
+                    var endpointRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 5, width, EditorGUIUtility.singleLineHeight);
+
+                    // Check if the connection is closed
+                    bool connectionClosed = connection.Closed();
+
+                    // Draw the properties
+                    EditorGUI.PropertyField(nameRect, name);
+                    EditorGUI.PropertyField(typeRect, type);
+                    EditorGUI.PropertyField(transitionInRect, transitionIn);
+                    EditorGUI.PropertyField(transitionOutRect, transitionOut);
+
+                    // If the connection is closed, do not allow editing of the destination and endpoint properties
+                    if (!connectionClosed) EditorGUI.PropertyField(destinationRect, destination);
+                    if (!connectionClosed) EditorGUI.PropertyField(endpointRect, endpoint);
+
+                    #endregion
+
+                    #region Connection Action Buttons
+
+                    // Create rects for the buttons, positioned to the right of the property fields
+                    var buttonRect = new Rect(rect.x + width + spacing, rect.y, buttonWidth, EditorGUIUtility.singleLineHeight);
+
+                    // Display buttons to set a two-way connection
+                    var refreshContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Sync"))) {
+                        tooltip = "Set Two-Way Connection"
+                    };
+
+                    // Draw a button to set the connection to a two-way connection, which will sync the endpoint link
+                    if (GUI.Button(buttonRect, refreshContent, miniButtonStyle))
+                    {
+                        // Sync the endpoint link to set the connection to a two-way connection
+                        connection.SyncEndpointLink();
+
+                        // Apply the modified properties to the serialized object
+                        element.ApplyModifiedProperties();
+                    }
+
+                    // Move the buttonRect down for the next button
+                    buttonRect.y += EditorGUIUtility.singleLineHeight + spacing;
+
+                    // Get the GUIContent for the close button and set its tooltip
+                    var closeSingleContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("OneWay"))) {
+                        tooltip = "Set Endpoint to Closed"
+                    };
+
+                    // Draw a button to set the endpoint to closed, which will set the connection type to closed 
+                    if (GUI.Button(buttonRect, closeSingleContent, miniButtonStyle))
+                    {
+                        // Get the endpoint connection for the current connection
+                        var endpointConnection = connection.GetEndpoint();
+
+                        // Set the connection type to closed, which will prevent the connection from being used
+                        endpointConnection.SetConnectionType(ConnectionType.Closed);
+
+                        // Apply the modified properties to the serialized object for the endpoint connection
+                        var endpointElement = new SerializedObject(endpointConnection);
+
+                        // Apply the modified properties to the serialized object
+                        endpointElement.ApplyModifiedProperties();
+                    }
+
+                    // Move the buttonRect down for the next button
+                    buttonRect.y += EditorGUIUtility.singleLineHeight + spacing;
+
+                    // Get the GUIContent for the refresh button and set its tooltip
+                    var refreshSingleContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Refresh"))) {
+                        tooltip = "Refresh Connection" };
+
+                    // Draw a button to refresh the connection, which will update the destination and endpoint properties
+                    if (GUI.Button(buttonRect, refreshSingleContent, miniButtonStyle))
+                    {
+                        // Refresh the connection to update the destination and endpoint properties
+                        connection.Refresh();
+
+                        // Apply the modified properties to the serialized object
+                        element.ApplyModifiedProperties();
+                    }
+
+                    // If the connection is closed but still has a destination or endpoint, display a warning message
+                    if (connectionClosed && (connection.HasDestination() || connection.HasEndpoint()))
+                    {
+                        // Create strings to determine if the connection has a destination or endpoint for the warning message
+                        string hasDestination = connection.HasDestination() ? "has a destination" : string.Empty;
+                        string hasEndpoint = connection.HasEndpoint() ? "has a endpoint" : string.Empty;
+                        string and = (connection.HasDestination() && connection.HasEndpoint()) ? " and " : string.Empty;
+                        string isPlural = (connection.HasDestination() && connection.HasEndpoint()) ? "them" : "it";
+
+                        // Create a rect for the warning message, positioned below the property fields and buttons
+                        var warningRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 4, rect.width, EditorGUIUtility.singleLineHeight * 2);
+
+                        // Display a warning message if the connection is closed
+                        EditorGUI.HelpBox(warningRect, $"This connection is closed but {hasDestination}{and}{hasEndpoint}.\nPlease clear {isPlural} to avoid issues with unwanted loading.", MessageType.Warning);
+
+                        // Create a rect for the clear button, positioned below the warning message
+                        var clearButtonRect = new Rect(rect.x, warningRect.y + warningRect.height + spacing, rect.width, EditorGUIUtility.singleLineHeight);
+
+                        // Display a button to clear the destination
+                        if (GUI.Button(clearButtonRect, "Clear Destination & Endpoint"))
+                        {
+                            // Clear the destination in the connection
+                            connection.destinationArea = null;
+
+                            // Clear the endpoint in the connection
+                            connection.endpoint.Set("None");
+
+                            // Refresh the connection to update the destination and endpoint properties
+                            connection.Refresh();
+
+                            // Apply the modified properties to the serialized object
+                            element.ApplyModifiedProperties();
+                        }
+                    }
+
+                    #endregion
+
+                    // Apply the modified properties to the serialized object
+                    element.ApplyModifiedProperties();
+                }
             };
-
-            // Define how each element in the list should be drawn
-            return entryList;
         }
 
         public override void OnInspectorGUI()
         {
+            // If the additiveScenesList or connectionsList is null, recreate them
+            if (additiveScenesList == null) CreateAdditiveScenesList();
+            if (connectionsList == null) CreateConnectionsList();
+
             // Start the change check
             EditorGUI.BeginChangeCheck();
 
@@ -171,17 +364,8 @@ namespace WorldShaper.Editor
                 // Add a label for the connections section
                 EditorGUILayout.LabelField("Connections", EditorStyles.boldLabel);
 
-                // Draw the connections if there are any
-                DrawConnections();
-
-                // Add a space between the connections and the buttons
-                EditorGUILayout.Separator();
-
-                // Add a label for the buttons section
-                EditorGUILayout.LabelField("Connection Actions", EditorStyles.boldLabel);
-
-                // Draw the connection action buttons
-                DrawActions();
+                // Display the connections field
+                connectionsList.DoLayoutList();
             }
 
             // End the change check
@@ -192,249 +376,15 @@ namespace WorldShaper.Editor
             }
         }
 
-        private void DrawConnections()
-        {
-            // Check if there are any connections in the area handle, then display the connections
-            if (areaHandle.HasConnections())
-            {
-                // Display a foldout header group for the connections
-                showConnections = EditorGUILayout.BeginFoldoutHeaderGroup(showConnections, "Connections: " + areaHandle.connections.Count.ToString());
-
-                // If the foldout is expanded, display each connection
-                if (showConnections)
-                {
-                    // Get the area handle
-                    for (int i = 0; i < areaHandle.connections.Count; i++)
-                    {
-                        // Draw each connection in the list
-                        DrawConnection(areaHandle.connections[i]);
-                    }
-                }
-
-                // End the foldout header group
-                EditorGUILayout.EndFoldoutHeaderGroup();
-            }
-        }
-
-        private void DrawConnection(Connection connection)
-        {
-            // Create a serialized object for the connection
-            SerializedObject connectionProperty = new SerializedObject(connection);
-
-            // Update the connection
-            connectionProperty.Update();
-
-            // Get the connection name, connected scene, and endpoint properties
-            SerializedProperty connectionName = connectionProperty.FindProperty("connectionName");
-            SerializedProperty connectionType = connectionProperty.FindProperty("connectionType");
-            SerializedProperty connectedScene = connectionProperty.FindProperty("destinationArea");
-            SerializedProperty transitionIn = connectionProperty.FindProperty("transitionIn");
-            SerializedProperty transitionOut = connectionProperty.FindProperty("transitionOut");
-            SerializedProperty endpoint = connectionProperty.FindProperty("endpoint");
-
-            // Check if the connection is closed
-            bool closedConnection = connection.Closed();
-
-            // Start a horizontal group to encapsulate the connection fields and their buttons
-            EditorGUILayout.BeginHorizontal();
-
-            // Start a vertical group to encapsulate the connection fields
-            EditorGUILayout.BeginVertical();
-
-            // Display the connection fields
-            EditorGUILayout.PropertyField(connectionName);
-            EditorGUILayout.PropertyField(connectionType);
-            if (!closedConnection) EditorGUILayout.PropertyField(connectedScene);
-            EditorGUILayout.PropertyField(transitionIn);
-            EditorGUILayout.PropertyField(transitionOut);
-            if (!closedConnection) EditorGUILayout.PropertyField(endpoint);
-
-            // If the connection is closed but still has a destination or endpoint, display a warning message
-            if (closedConnection && (connection.HasDestination() || connection.HasEndpoint()))
-            {
-                // Create strings to determine if the connection has a destination or endpoint for the warning message
-                string hasDestination = connection.HasDestination() ? "has a destination" : string.Empty;
-                string hasEndpoint = connection.HasEndpoint() ? "has an endpoint" : string.Empty;
-                string and = (connection.HasDestination() && connection.HasEndpoint()) ? " and " : string.Empty;
-                string isPlural = (connection.HasDestination() && connection.HasEndpoint()) ? "them" : "it";
-
-                // Display a warning message if the connection is closed
-                EditorGUILayout.HelpBox($"This connection is closed but {hasDestination}{and}{hasEndpoint}. Please clear {isPlural} to avoid issues with unwanted loading.", MessageType.Warning);
-
-                // Display a button to clear the destination and endpoint if the connection has either
-                if (connection.HasDestination() || connection.HasEndpoint())
-                {
-                    // Display a button to clear the destination
-                    if (GUILayout.Button("Clear Destination & Endpoint"))
-                    {
-                        // Clear the destination in the connection
-                        connection.destinationArea = null;
-
-                        // Clear the endpoint in the connection
-                        connection.endpoint.Set("None");
-
-                        // Refresh the connection to update the destination and endpoint properties
-                        connection.Refresh();
-
-                        // Apply the modified properties to the serialized object
-                        serializedObject.ApplyModifiedProperties();
-                    }
-                }
-            }
-
-            // End the vertical group for the connection fields
-            EditorGUILayout.EndVertical();
-
-            // Get the button style for the connection
-            GUIStyle buttonStyle = new GUIStyle(EditorStyles.miniButton);
-            buttonStyle.padding = new RectOffset(1, 1, 1, 1);
-            buttonStyle.fixedHeight = EditorGUIUtility.singleLineHeight;
-            buttonStyle.fixedWidth = 20;
-
-            // Create a grid layout to display the buttons
-            EditorGUILayout.BeginVertical(GUILayout.Width(1));
-
-            // Display buttons to set a two-way connection
-            EditorGUILayout.BeginHorizontal(GUILayout.Width(1));
-            GUIContent refreshContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Sync")));
-            refreshContent.tooltip = "Set Two-Way Connection";
-            if (GUILayout.Button(refreshContent, buttonStyle))
-            {
-                connection.SyncEndpointLink();
-                serializedObject.ApplyModifiedProperties();
-            }
-
-            // Display a button to set the endpoint to closed
-            GUIContent closeSingleContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("OneWay")));
-            closeSingleContent.tooltip = "Set Endpoint to Closed";
-            if (GUILayout.Button(closeSingleContent, buttonStyle))
-            {
-                connection.SetConnectionType(ConnectionType.Closed);
-                serializedObject.ApplyModifiedProperties();
-            }
-            EditorGUILayout.EndHorizontal();
-
-            // Display a button to refresh the connection
-            EditorGUILayout.BeginHorizontal(GUILayout.Width(1));
-            GUIContent refreshSingleContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Refresh")));
-            refreshSingleContent.tooltip = "Refresh Connection";
-            if (GUILayout.Button(refreshSingleContent, buttonStyle))
-            {
-                connection.Refresh();
-                serializedObject.ApplyModifiedProperties();
-            }
-
-            // Display a button to remove the connection
-            GUIContent closeContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Delete")));
-            closeContent.tooltip = "Remove Connection";
-            if (GUILayout.Button(closeContent, buttonStyle))
-            {
-                connection.Remove();
-                serializedObject.ApplyModifiedProperties();
-            }
-            EditorGUILayout.EndHorizontal();
-
-            // Display a button to move the connection to the top of the list
-            EditorGUILayout.BeginHorizontal(GUILayout.Width(1));
-            GUIContent topContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("MoveTop")));
-            topContent.tooltip = "Move Connection To Top";
-            if (GUILayout.Button(topContent, buttonStyle))
-            {
-                areaHandle.MoveToTop(connection);
-                serializedObject.ApplyModifiedProperties();
-            }
-
-            // Display a button to move the connection up in the list
-            GUIContent upContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("MoveUp")));
-            upContent.tooltip = "Move Connection Up";
-            if (GUILayout.Button(upContent, buttonStyle))
-            {
-                areaHandle.MoveConnectionUp(connection);
-                serializedObject.ApplyModifiedProperties();
-            }
-            EditorGUILayout.EndHorizontal();
-
-            // Display a button to move the connection to the bottom of the list
-            EditorGUILayout.BeginHorizontal(GUILayout.Width(1));
-            GUIContent bottomContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("MoveBottom")));
-            bottomContent.tooltip = "Move Connection To Bottom";
-            if (GUILayout.Button(bottomContent, buttonStyle))
-            {
-                areaHandle.MoveToBottom(connection);
-                serializedObject.ApplyModifiedProperties();
-            }
-
-            // Display a button to move the connection down in the list
-            GUIContent downContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("MoveDown")));
-            downContent.tooltip = "Move Connection Down";
-            if (GUILayout.Button(downContent, buttonStyle))
-            {
-                areaHandle.MoveConnectionDown(connection);
-                serializedObject.ApplyModifiedProperties();
-            }
-            EditorGUILayout.EndHorizontal();
-
-            // End the encapsulating vertical group
-            EditorGUILayout.EndVertical();
-
-            // End the encapsulating horizontal group
-            EditorGUILayout.EndHorizontal();
-
-            // Apply changes to the serialized object
-            connectionProperty.ApplyModifiedProperties();
-
-            // Add a space between connections
-            EditorGUILayout.Space(5);
-        }
-
-        private void DrawActions()
+        private static GUIStyle GetMiniButtonStyle()
         {
             // Get the button style for the connection
-            GUIStyle buttonStyle = new GUIStyle(EditorStyles.miniButton);
-            buttonStyle.padding = new RectOffset(1, 1, 1, 1);
-            buttonStyle.fixedHeight = EditorGUIUtility.singleLineHeight;
-
-            // Total width available for buttons, accounting for padding
-            float totalWidth = EditorGUIUtility.currentViewWidth - 25;
-
-            // If the area handle is normal and has connections, let the buttons take the full width, otherwise split it in half
-            buttonStyle.fixedWidth = !areaHandle.HasConnections() ? totalWidth : (totalWidth) / 2;
-
-            // Begin a horizontal layout for the action buttons
-            EditorGUILayout.BeginHorizontal();
-
-            // Display buttons to create a new connection
-            GUIContent plusContent = EditorGUIUtility.IconContent("d_Toolbar Plus");
-            plusContent.tooltip = "Create New Connection";
-            if (GUILayout.Button(plusContent, buttonStyle))
+            return new GUIStyle(EditorStyles.miniButton)
             {
-                // Create a new connection at the end of the list
-                areaHandle.CreateConnection();
-
-                // Apply the modified properties to the serialized object
-                serializedObject.ApplyModifiedProperties();
-            }
-
-            // Check if there are any connections in the area handle, then display a button to clear all connections
-            if (areaHandle.HasConnections())
-            {
-                // Get the button content for the clear all connections button
-                GUIContent minusContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("ClearAll")));
-                minusContent.tooltip = "Clear All Connections";
-
-                // Draw the button to clear all connections
-                if (GUILayout.Button(minusContent, buttonStyle))
-                {
-                    // Clear all connections in the area handle
-                    areaHandle.ClearConnections();
-
-                    // Apply the modified properties to the serialized object
-                    serializedObject.ApplyModifiedProperties();
-                }
-            }
-
-            // End the horizontal layout for the action buttons
-            EditorGUILayout.EndHorizontal();
+                padding = new RectOffset(1, 1, 1, 1),
+                fixedHeight = EditorGUIUtility.singleLineHeight,
+                fixedWidth = 20
+            };
         }
 
         private void DrawPersistentSceneWarning()
