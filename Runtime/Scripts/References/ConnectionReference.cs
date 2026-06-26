@@ -28,7 +28,7 @@ namespace WorldShaper
         /// <summary>
         /// Gets a value indicating whether the current object is considered empty.
         /// </summary>
-        public bool Empty => Area == null || string.IsNullOrEmpty(Value);
+        public readonly bool Empty => Area == null || string.IsNullOrEmpty(Value);
 
         public ConnectionReference(AreaHandle area)
         {

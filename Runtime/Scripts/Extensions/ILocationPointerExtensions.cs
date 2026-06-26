@@ -105,7 +105,7 @@ namespace WorldShaper
             foreach (ILocationPointer locations in GetAllLocations())
             {
                 // Add the location to the list
-                connectables.Add(new InterfaceReference<ILocationPointer>(locations));
+                connectables.Add(InterfaceReference<ILocationPointer>.FromValue(locations));
             }
 
             // Return the list of locationPointer

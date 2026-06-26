@@ -331,7 +331,7 @@ namespace WorldShaper
         /// </summary>
         /// <remarks>If the specified <paramref name="location"/> is already registered, it will not be added again.</remarks>
         /// <param name="location">The <see cref="ILocationPointer"/> instance to register. Cannot be null.</param>
-        public void Register(ILocationPointer location) => locations.Add(new InterfaceReference<ILocationPointer>(location));
+        public void Register(ILocationPointer location) => locations.Add(InterfaceReference<ILocationPointer>.FromValue(location));
 
         /// <summary>
         /// Removes the specified location object from the collection of registered objects.
@@ -605,7 +605,7 @@ namespace WorldShaper
             if (!handle.HasConnections()) return;
 
             // Find the connection in the area handle that matches the end point and disable interaction
-            if (TryGetLocation(EndPoint, out ILocationPointer connectable)) currentLocation.Set(connectable);
+            if (TryGetLocation(EndPoint, out ILocationPointer connectable)) currentLocation.SetValue(connectable);
 
             // Check if the location is not null
             if (currentLocation.HasValue)
@@ -638,7 +638,7 @@ namespace WorldShaper
             if (!handle.HasConnections()) return;
 
             // Find the connection in the area handle that matches the end point and disable interaction
-            if (TryGetLocation(EndPoint, out ILocationPointer connectable)) currentLocation.Set(connectable);
+            if (TryGetLocation(EndPoint, out ILocationPointer connectable)) currentLocation.SetValue(connectable);
 
             // Check if the location is not null
             if (currentLocation.HasValue)
