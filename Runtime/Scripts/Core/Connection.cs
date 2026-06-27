@@ -11,13 +11,18 @@ namespace WorldShaper
     [CreateAssetMenu(fileName = "New Connection", menuName = "World Shaper/New Connection")]
     public class Connection : ScriptableObject
     {
+        [Header("Connection Identity")]
         public SerializableGuid connectionId = SerializableGuid.NewGuid();
         public string connectionName = string.Empty;
         public ConnectionType connectionType = ConnectionType.Standard;
+
+        [Header("Destination")]
         public AreaHandle destinationArea;
+        public ExtendableEnum endpoint;
+
+        [Header("Transition Settings")]
         public TransitionIdentifier transitionIn;
         public TransitionIdentifier transitionOut;
-        public ExtendableEnum endpoint;
 
         /// <summary>
         /// Gets the scene reference of the destination area.

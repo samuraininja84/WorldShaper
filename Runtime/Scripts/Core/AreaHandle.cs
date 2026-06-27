@@ -220,6 +220,13 @@ namespace WorldShaper
         }
 
         /// <summary>
+        /// Retrieves the index of a connection in the collection based on its unique identifier.
+        /// </summary>
+        /// <param name="id">The unique identifier of the connection.</param>
+        /// <returns>The zero-based index of the connection if found; otherwise, -1.</returns>
+        public int GetConnectionIndex(SerializableGuid id) => connections.FindIndex(c => c.connectionId == id);
+
+        /// <summary>
         /// Retrieves the index of the specified connection in the collection.
         /// </summary>
         /// <param name="connection">The connection whose index is to be found.</param>
