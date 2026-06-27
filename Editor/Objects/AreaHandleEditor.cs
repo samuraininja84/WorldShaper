@@ -86,6 +86,28 @@ namespace WorldShaper.Editor
                     serializedObject.ApplyModifiedProperties();
                 },
 
+                // Define what happens when the remove button is clicked
+                onRemoveCallback = (ReorderableList l) =>
+                {
+                    // Record the removal of the selected connection for undo functionality
+                    Undo.RecordObject(target, "Removed Connection At Index " + l.index);
+
+                    // Remove the selected connection from the area handle's connections list
+                    ReorderableList.defaultBehaviours.DoRemoveButton(l);
+
+                    // Get the connection to delete based on the index of the removed element
+                    var connectionToDelete = areaHandle.connections[l.index];
+
+                    // Delete the connection ScriptableObject from the project
+                    if (connectionToDelete != null) connectionToDelete.Remove();
+
+                    // Mark the serialized object as dirty to ensure changes are saved
+                    serializedObject.SetIsDifferentCacheDirty();
+
+                    // Apply the modified properties to the serialized object
+                    serializedObject.ApplyModifiedProperties();
+                },
+
                 // Dynamically calculate the height of each element based on its properties
                 elementHeightCallback = (int index) =>
                 {
@@ -278,9 +300,9 @@ namespace WorldShaper.Editor
             serializedObject.Update();
 
             // Display the script field for the AreaHandle component and disable the script field
-            GUI.enabled = false;
-            EditorGUILayout.PropertyField(script);
-            GUI.enabled = true;
+            //GUI.enabled = false;
+            //EditorGUILayout.PropertyField(script);
+            //GUI.enabled = true;
 
             // Remove a gap between the script field and the current scene field
             EditorGUILayout.Space(-10);

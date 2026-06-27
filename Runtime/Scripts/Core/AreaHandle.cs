@@ -299,8 +299,11 @@ namespace WorldShaper
         public void ValidateConnections()
         {
             // Iterate through all connections and rename them if necessary
-            foreach (Connection connection in connections)
+            for (int i = 0; i < connections.Count; i++)
             {
+                // Get the connection at the current index
+                Connection connection = connections[i];
+
                 // If the connection's name is null or empty, set it to the connection's connection name, otherwise do nothing
                 connection.RenameConnection(connection.connectionName);
 

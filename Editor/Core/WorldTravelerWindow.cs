@@ -1,14 +1,10 @@
-using DG.DemiEditor;
-using Sirenix.OdinInspector;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.MemoryProfiler;
 using UnityEditor.SceneManagement;
 using UnityEditorInternal;
 using UnityEngine;
-using static UnityEngine.Audio.ProcessorInstance.AvailableData;
-using static VoxelLabs.UltimatePreview.Core.UnityShims;
+using static UnityEngine.GraphicsBuffer;
 using BackgroundProgress = UnityEditor.Progress;
 using Scene = UnityEngine.SceneManagement.Scene;
 using SceneManager = UnityEngine.SceneManagement.SceneManager;
@@ -763,6 +759,9 @@ namespace WorldShaper.Editor
 
         private void CreateConnectionsList(AreaHandle handle)
         {
+            // Return early if the handle is null
+            if (handle == null) return;
+
             // Create a serialized object for the AreaHandle
             SerializedObject serializedObject = new(handle);
 
@@ -775,8 +774,8 @@ namespace WorldShaper.Editor
             // Define a method to filter connections based on the search string
             bool Filtered(Connection connection) => !string.IsNullOrEmpty(searchString) && !connection.connectionName.ToLower().Contains(searchString.ToLower());
 
-            // Create a ReorderableList for the connections property
-            connectionsList = new ReorderableList(serializedObject, connectionsProperty, true, true, true, true)
+            // Create a ReorderableList for the connections property, temporarily disabling the add and remove buttons because the seem to be causing issues with the serialized object and the connections list not updating correctly
+            connectionsList = new ReorderableList(serializedObject, connectionsProperty, false, true, displayAddButton: false, displayRemoveButton: false)
             {
                 // Define how the header of the list should be drawn
                 drawHeaderCallback = rect => EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), "Connections"),
@@ -789,6 +788,34 @@ namespace WorldShaper.Editor
 
                     // Apply the modified properties to the serialized object
                     serializedObject.ApplyModifiedProperties();
+
+                    // Refresh the editor window to reflect the changes in the connections list
+                    Refresh();
+                },
+
+                // Define what happens when the remove button is clicked
+                onRemoveCallback = (ReorderableList l) =>
+                {
+                    // Record the removal of the selected connection for undo functionality
+                    Undo.RecordObject(handle, "Removed Connection At Index " + l.index);
+
+                    // Remove the selected connection from the area handle's connections list
+                    ReorderableList.defaultBehaviours.DoRemoveButton(l);
+
+                    // Get the connection to delete based on the index of the removed element
+                    var connectionToDelete = handle.connections[l.index];
+
+                    // Delete the connection ScriptableObject from the project
+                    if (connectionToDelete != null) connectionToDelete.Remove();
+
+                    // Mark the serialized object as dirty to ensure changes are saved
+                    serializedObject.SetIsDifferentCacheDirty();
+
+                    // Apply the modified properties to the serialized object
+                    serializedObject.ApplyModifiedProperties();
+
+                    // Refresh the editor window to reflect the changes in the connections list
+                    Refresh();
                 },
 
                 // Dynamically calculate the height of each element based on its properties
