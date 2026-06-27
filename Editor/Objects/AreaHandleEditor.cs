@@ -108,6 +108,19 @@ namespace WorldShaper.Editor
                     serializedObject.ApplyModifiedProperties();
                 },
 
+                // Define what happens when the list is reordered
+                onReorderCallback = (ReorderableList l) =>
+                {
+                    // Record the reordering of the connections list for undo functionality
+                    Undo.RecordObject(target, "Reordered Connections");
+
+                    // Mark the serialized object as dirty to ensure changes are saved
+                    serializedObject.SetIsDifferentCacheDirty();
+
+                    // Apply the modified properties to the serialized object
+                    serializedObject.ApplyModifiedProperties();
+                },
+
                 // Dynamically calculate the height of each element based on its properties
                 elementHeightCallback = (int index) =>
                 {

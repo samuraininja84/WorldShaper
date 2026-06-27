@@ -775,7 +775,7 @@ namespace WorldShaper.Editor
             bool Filtered(Connection connection) => !string.IsNullOrEmpty(searchString) && !connection.connectionName.ToLower().Contains(searchString.ToLower());
 
             // Create a ReorderableList for the connections property, temporarily disabling the add and remove buttons because the seem to be causing issues with the serialized object and the connections list not updating correctly
-            connectionsList = new ReorderableList(serializedObject, connectionsProperty, false, true, displayAddButton: true, displayRemoveButton: true)
+            connectionsList = new ReorderableList(serializedObject, connectionsProperty, true, true, displayAddButton: true, displayRemoveButton: true)
             {
                 // Define how the header of the list should be drawn
                 drawHeaderCallback = rect => EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), "Connections"),
@@ -807,6 +807,22 @@ namespace WorldShaper.Editor
 
                     // Delete the connection ScriptableObject from the project
                     if (connectionToDelete != null) connectionToDelete.Delete();
+
+                    // Mark the serialized object as dirty to ensure changes are saved
+                    serializedObject.SetIsDifferentCacheDirty();
+
+                    // Apply the modified properties to the serialized object
+                    serializedObject.ApplyModifiedProperties();
+
+                    // Refresh the editor window to reflect the changes in the connections list
+                    Refresh();
+                },
+
+                // Define what happens when the list is reordered
+                onReorderCallback = (ReorderableList l) =>
+                {
+                    // Record the reordering of the connections list for undo functionality
+                    Undo.RecordObject(handle, "Reordered Connections");
 
                     // Mark the serialized object as dirty to ensure changes are saved
                     serializedObject.SetIsDifferentCacheDirty();
