@@ -57,7 +57,7 @@ namespace WorldShaper
         /// <summary>
         /// Gets a default instance of <see cref="ConnectionReference"/> representing a "none" state.
         /// </summary>
-        public static ConnectionReference None => new ConnectionReference(null, string.Empty);
+        public static ConnectionReference None => new(null, string.Empty);
 
         /// <summary>
         /// Creates a new instance of <see cref="ConnectionReference"/> using the specified area and value.
@@ -65,7 +65,7 @@ namespace WorldShaper
         /// <param name="area">The <see cref="AreaHandle"/> representing the area to associate with the data. Cannot be null.</param>
         /// <param name="value">A string value to associate with the data. Cannot be null or empty.</param>
         /// <returns>A new <see cref="ConnectionReference"/> instance initialized with the specified area and value.</returns>
-        public static ConnectionReference Some(AreaHandle area, string value) => new ConnectionReference(area, value);
+        public static ConnectionReference Create(AreaHandle area, string value) => new(area, value);
 
         /// <summary>
         /// Creates a new instance of <see cref="ConnectionReference"/> for the specified area and index.
@@ -73,7 +73,7 @@ namespace WorldShaper
         /// <param name="area">The <see cref="AreaHandle"/> representing the area to associate with the data.</param>
         /// <param name="index">The index within the specified area to associate with the data.</param>
         /// <returns>A new <see cref="ConnectionReference"/> instance associated with the specified area and index.</returns>
-        public static ConnectionReference Some(AreaHandle area, int index) => new ConnectionReference(area, index);
+        public static ConnectionReference Create(AreaHandle area, int index) => new(area, index);
 
         /// <summary>
         /// Associates the specified value with the given area handle.
@@ -83,7 +83,7 @@ namespace WorldShaper
         /// method.</remarks>
         /// <param name="area">The handle representing the area to associate the value with. Cannot be null.</param>
         /// <param name="value">The value to associate with the specified area. Cannot be null or empty.</param>
-        public void Set(AreaHandle area, string value) => new ConnectionReference(area, value);
+        public readonly void Set(AreaHandle area, string value) => new ConnectionReference(area, value);
 
         /// <summary>
         /// Associates the specified area and index with a new instance of <see cref="ConnectionReference"/>.
@@ -92,29 +92,29 @@ namespace WorldShaper
         /// provided area and index.</remarks>
         /// <param name="area">The <see cref="AreaHandle"/> representing the area to associate with the data.</param>
         /// <param name="index">The index within the area to associate with the data.</param>
-        public void Set(AreaHandle area, int index) => new ConnectionReference(area, index);
+        public readonly void Set(AreaHandle area, int index) => new ConnectionReference(area, index);
 
         /// <summary>
         /// Retrieves the connection associated with the current value.
         /// </summary>
         /// <returns>A <see cref="WorldShaper.Connection"/> object representing the connection. Returns <see langword="null"/> if no connection is found.</returns>
-        public Connection GetCurrent() => Area.GetConnection(Value);
+        public readonly Connection GetCurrent() => Area.GetConnection(Value);
 
         /// <summary>
         /// Load the area associated with this connection.
         /// </summary>
-        public void LoadArea() => GetCurrent().LoadArea();
+        public readonly void LoadArea() => GetCurrent().LoadArea();
 
         /// <summary>
         /// Loads the destination area associated with this connection.
         /// </summary>
-        public void LoadDestination() => GetCurrent().LoadDestination();
+        public readonly void LoadDestination() => GetCurrent().LoadDestination();
 
         /// <summary>
         /// Determines whether the current object is in a valid state.
         /// </summary>
         /// <returns><see langword="true"/> if the <see cref="Area"/> property is not null and the <see cref="Value"/> property is not null or empty;  otherwise, <see langword="false"/>.</returns>
-        public bool IsValid() => Area != null && !string.IsNullOrEmpty(Value);
+        public readonly bool IsValid() => Area != null && !string.IsNullOrEmpty(Value);
 
         /// <summary>
         /// Returns a string representation of the object, including the current scene name and value.
@@ -123,14 +123,14 @@ namespace WorldShaper
         /// A string in the format "<c>SceneName - Value</c>", where <c>SceneName</c> is the name of the current scene and <c>Value</c> is the associated value. 
         /// If the current scene is null, the scene name is omitted.
         /// </returns>
-        public override string ToString() => $"{Area?.activeScene.Name} - {Value}";
+        public override readonly string ToString() => $"{Area?.activeScene.Name} - {Value}";
 
         /// <summary>
         /// Determines whether the specified <see cref="ConnectionReference"/> is equal to the current instance by comparing their properties.
         /// </summary>
         /// <param name="other">The <see cref="ConnectionReference"/> to compare with the current instance.</param>
         /// <returns><see langword="true"/> if the specified <see cref="ConnectionReference"/> is equal to the current instance; otherwise, <see langword="false"/>.</returns>
-        public bool Equals(ConnectionReference other) => Area == other.Area && Value == other.Value && Index == other.Index && ID == other.ID;
+        public readonly bool Equals(ConnectionReference other) => Area == other.Area && Value == other.Value && Index == other.Index && ID == other.ID;
 
         /// <summary>
         /// Determines whether the specified object is equal to the current instance.

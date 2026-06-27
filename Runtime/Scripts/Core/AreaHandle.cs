@@ -330,7 +330,7 @@ namespace WorldShaper
             string connectionName = EditorUtility.SaveFilePanelInProject("Save Connection Data", "New Connection Data", "asset", "Save Connection Data", path);
 
             // If the user provided a name, set the connection's name and add it to the area handle, otherwise do nothing
-            if (connectionName != "")
+            if (!string.IsNullOrEmpty(connectionName))
             {
                 // Set the connection's name based on the name provided by the user, remove the ".asset" extension, and set it as the connection's name
                 connection.name = Path.GetFileNameWithoutExtension(connectionName);

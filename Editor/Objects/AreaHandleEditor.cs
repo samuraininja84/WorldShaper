@@ -80,6 +80,16 @@ namespace WorldShaper.Editor
                 // Define how the header of the list should be drawn
                 drawHeaderCallback = rect => EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), "Connections"),
 
+                // Define what happens when the add button is clicked
+                onAddCallback = (ReorderableList l) =>
+                {
+                    // Create a new Connection ScriptableObject
+                    areaHandle.CreateConnection();
+
+                    // Apply the modified properties to the serialized object
+                    serializedObject.ApplyModifiedProperties();
+                },
+
                 // Dynamically calculate the height of each element based on its properties
                 elementHeightCallback = (int index) =>
                 {

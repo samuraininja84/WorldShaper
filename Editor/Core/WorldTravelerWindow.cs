@@ -2,6 +2,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEditor.SceneManagement;
 using Task = System.Threading.Tasks.Task;
 using Scene = UnityEngine.SceneManagement.Scene;
@@ -14,6 +15,7 @@ namespace WorldShaper.Editor
     {
         private List<AreaHandle> AreaHandles = new();
         private List<Connection> Connections = new();
+        private ReorderableList connectionsList;
         private List<bool> foldouts = new();
 
         private AreaHandle currentArea;
@@ -34,8 +36,8 @@ namespace WorldShaper.Editor
         private string searchString = string.Empty;
 
         // Section resizing
-        private Vector2 minSectionSplit = new Vector2(275f, 200f);
-        private Vector2 sectionSplit = new Vector2(350f, 420f);
+        private Vector2 minSectionSplit = new(275f, 200f);
+        private Vector2 sectionSplit = new(350f, 420f);
         private Rect dataSectionRect;
         private bool resizingSection;
 
@@ -55,7 +57,7 @@ namespace WorldShaper.Editor
 
         private static Color SelectionColor => Color.gold;
 
-        private static bool loadPersistentScenes = false;
+        private static readonly bool loadPersistentScenes = false;
 
         /// <summary>
         /// Checks if the window is in horizontal layout mode.
@@ -509,6 +511,12 @@ namespace WorldShaper.Editor
             // Create a scroll view for the connections
             connectionScrollPosition = EditorGUILayout.BeginScrollView(connectionScrollPosition, GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true));
 
+            // If the connectionsList is null, create it
+            if (connectionsList == null) CreateConnectionsList(handle);
+
+            // Draw the ReorderableList for the connections
+            connectionsList.DoLayoutList();
+
             // Iterate through each connection in the handle and display it
             foreach (Connection connection in handle.connections)
             {
@@ -700,10 +708,10 @@ namespace WorldShaper.Editor
         private void DrawHandleActions(AreaHandle handle, string handleName)
         {
             // Create a style for the search field
-            GUIStyle searchField = new GUIStyle(EditorStyles.toolbarSearchField) { fixedHeight = EditorGUIUtility.singleLineHeight };
+            var searchField = new GUIStyle(EditorStyles.toolbarSearchField) { fixedHeight = EditorGUIUtility.singleLineHeight };
 
             // Get the button style for the connection
-            GUIStyle buttonStyle = new GUIStyle(EditorStyles.miniButton);
+            var buttonStyle = new GUIStyle(EditorStyles.miniButton);
             buttonStyle.padding = new RectOffset(1, 1, 1, 1);
             buttonStyle.fixedHeight = EditorGUIUtility.singleLineHeight;
             buttonStyle.fixedWidth = 25;
@@ -761,6 +769,225 @@ namespace WorldShaper.Editor
             EditorGUILayout.Space(2);
         }
 
+        private void CreateConnectionsList(AreaHandle handle)
+        {
+            // Create a serialized object for the AreaHandle
+            SerializedObject serializedObject = new(handle);
+
+            // Find the connections property in the serialized object
+            SerializedProperty connectionsProperty = serializedObject.FindProperty(nameof(AreaHandle.connections));
+
+            // Create a ReorderableList for the connections property
+            connectionsList = new ReorderableList(serializedObject, connectionsProperty, true, true, true, true)
+            {
+                // Define how the header of the list should be drawn
+                drawHeaderCallback = rect => EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), "Connections"),
+
+                // Define what happens when the add button is clicked
+                onAddCallback = (ReorderableList l) =>
+                {
+                    // Create a new Connection ScriptableObject
+                    handle.CreateConnection();
+
+                    // Apply the modified properties to the serialized object
+                    serializedObject.ApplyModifiedProperties();
+                },
+
+                // Dynamically calculate the height of each element based on its properties
+                elementHeightCallback = (int index) =>
+                {
+                    // Get the connection at the current index
+                    var connection = handle.connections[index];
+
+                    // Check if the connection is closed
+                    bool connectionClosed = connection.Closed();
+
+                    // Check if the connection has a destination or an endpoint
+                    bool hasDestination = connection.HasDestination();
+                    bool hasEndpoint = connection.HasEndpoint();
+
+                    // Determine if the connection has either a destination or an endpoint
+                    bool hasEither = hasDestination || hasEndpoint;
+
+                    // Determine if the connection is folded (collapsed) in the UI, which will set the height to a single line
+                    bool folded = foldouts[Connections.IndexOf(connection)];
+
+                    // If the connection is closed and has no destination or endpoint, draw a smaller height
+                    return EditorGUIUtility.singleLineHeight * (folded ? connectionClosed ? hasEither ? 7 : 4 : 6 : 1) + 10;
+                },
+
+                // Define how each element in the list should be drawn
+                drawElementCallback = (rect, index, isActive, isFocused) =>
+                {
+                    // Get the element at the current index
+                    var connection = handle.connections[index];
+                    var element = new SerializedObject(connection);
+
+                    // Adjust the rect for better spacing
+                    rect.y += 2;
+
+                    // Adjust this value for more or less spacing
+                    float spacing = 2f;
+
+                    // Adjust this value for the width of the buttons
+                    float buttonWidth = 20f;
+
+                    // Calculate the width for the property fields, leaving space for buttons
+                    float width = rect.width - buttonWidth - spacing;
+
+                    #region Connection Properties
+
+                    // Get the properties of the Connection object
+                    var current = connectionsList.serializedProperty.GetArrayElementAtIndex(index);
+                    var type = element.FindProperty(nameof(Connection.connectionType));
+                    var destination = element.FindProperty(nameof(Connection.destinationArea));
+                    var transitionIn = element.FindProperty(nameof(Connection.transitionIn));
+                    var transitionOut = element.FindProperty(nameof(Connection.transitionOut));
+                    var endpoint = element.FindProperty(nameof(Connection.endpoint));
+
+                    // Draw the properties
+                    var elementRect = new Rect(rect.x, rect.y, width, EditorGUIUtility.singleLineHeight);
+                    var typeRect = new Rect(rect.x, rect.y + EditorGUIUtility.singleLineHeight + spacing, width, EditorGUIUtility.singleLineHeight);
+                    var transitionInRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 2, width, EditorGUIUtility.singleLineHeight);
+                    var transitionOutRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 3, width, EditorGUIUtility.singleLineHeight);
+                    var destinationRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 4, width, EditorGUIUtility.singleLineHeight);
+                    var endpointRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 5, width, EditorGUIUtility.singleLineHeight);
+
+                    // Draw the properties
+                    EditorGUI.PropertyField(elementRect, current);
+
+                    // Check if the connection is closed
+                    bool connectionClosed = connection.Closed();
+
+                    // Determine if the connection is folded (collapsed) in the UI, which will set the height to a single line
+                    int foldoutIndex = Connections.IndexOf(connection);
+
+                    // Draw a foldout for the connection properties, allowing the user to expand or collapse the connection details
+                    foldouts[foldoutIndex] = EditorGUI.Foldout(elementRect, foldouts[foldoutIndex], string.Empty);
+
+                    // Draw the foldout properties if the connection is unfolded
+                    if (foldouts[foldoutIndex])
+                    {
+                        // Draw the connection type, transition in, and transition out properties
+                        EditorGUI.PropertyField(typeRect, type);
+                        EditorGUI.PropertyField(transitionInRect, transitionIn);
+                        EditorGUI.PropertyField(transitionOutRect, transitionOut);
+
+                        // If the connection is closed, do not allow editing of the destination and endpoint properties
+                        if (!connectionClosed) EditorGUI.PropertyField(destinationRect, destination);
+                        if (!connectionClosed) EditorGUI.PropertyField(endpointRect, endpoint);
+
+                        #region Connection Action Buttons
+
+                        // Create rects for the buttons, positioned to the right of the property fields
+                        var buttonRect = new Rect(rect.x + width + spacing, rect.y, buttonWidth, EditorGUIUtility.singleLineHeight);
+
+                        // Display buttons to set a two-way connection
+                        var refreshContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Sync")))
+                        {
+                            tooltip = "Set Two-Way Connection"
+                        };
+
+                        // Draw a button to set the connection to a two-way connection, which will sync the endpoint link
+                        if (GUI.Button(buttonRect, refreshContent, _miniButtonStyle))
+                        {
+                            // Sync the endpoint link to set the connection to a two-way connection
+                            connection.SyncEndpointLink();
+
+                            // Apply the modified properties to the serialized object
+                            element.ApplyModifiedProperties();
+                        }
+
+                        // Move the buttonRect down for the next button
+                        buttonRect.y += EditorGUIUtility.singleLineHeight + spacing;
+
+                        // Get the GUIContent for the close button and set its tooltip
+                        var closeSingleContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("OneWay")))
+                        {
+                            tooltip = "Set Endpoint to Closed"
+                        };
+
+                        // Draw a button to set the endpoint to closed, which will set the connection type to closed 
+                        if (GUI.Button(buttonRect, closeSingleContent, _miniButtonStyle))
+                        {
+                            // Get the endpoint connection for the current connection
+                            var endpointConnection = connection.GetEndpoint();
+
+                            // Set the connection type to closed, which will prevent the connection from being used
+                            endpointConnection.SetConnectionType(ConnectionType.Closed);
+
+                            // Apply the modified properties to the serialized object for the endpoint connection
+                            var endpointElement = new SerializedObject(endpointConnection);
+
+                            // Apply the modified properties to the serialized object
+                            endpointElement.ApplyModifiedProperties();
+                        }
+
+                        // Move the buttonRect down for the next button
+                        buttonRect.y += EditorGUIUtility.singleLineHeight + spacing;
+
+                        // Get the GUIContent for the refresh button and set its tooltip
+                        var refreshSingleContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Refresh")))
+                        {
+                            tooltip = "Refresh Connection"
+                        };
+
+                        // Draw a button to refresh the connection, which will update the destination and endpoint properties
+                        if (GUI.Button(buttonRect, refreshSingleContent, _miniButtonStyle))
+                        {
+                            // Refresh the connection to update the destination and endpoint properties
+                            connection.Refresh();
+
+                            // Apply the modified properties to the serialized object
+                            element.ApplyModifiedProperties();
+                        }
+
+                        // If the connection is closed but still has a destination or endpoint, display a warning message
+                        if (connectionClosed && (connection.HasDestination() || connection.HasEndpoint()))
+                        {
+                            // Create strings to determine if the connection has a destination or endpoint for the warning message
+                            string hasDestination = connection.HasDestination() ? "has a destination" : string.Empty;
+                            string hasEndpoint = connection.HasEndpoint() ? "has a endpoint" : string.Empty;
+                            string and = (connection.HasDestination() && connection.HasEndpoint()) ? " and " : string.Empty;
+                            string isPlural = (connection.HasDestination() && connection.HasEndpoint()) ? "them" : "it";
+
+                            // Create a rect for the warning message, positioned below the property fields and buttons
+                            var warningRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 4, rect.width, EditorGUIUtility.singleLineHeight * 2);
+
+                            // Display a warning message if the connection is closed
+                            EditorGUI.HelpBox(warningRect, $"This connection is closed but {hasDestination}{and}{hasEndpoint}.\nPlease clear {isPlural} to avoid issues with unwanted loading.", MessageType.Warning);
+
+                            // Create a rect for the clear button, positioned below the warning message
+                            var clearButtonRect = new Rect(rect.x, warningRect.y + warningRect.height + spacing, rect.width, EditorGUIUtility.singleLineHeight);
+
+                            // Display a button to clear the destination
+                            if (GUI.Button(clearButtonRect, "Clear Destination & Endpoint"))
+                            {
+                                // Clear the destination in the connection
+                                connection.destinationArea = null;
+
+                                // Clear the endpoint in the connection
+                                connection.endpoint.Set("None");
+
+                                // Refresh the connection to update the destination and endpoint properties
+                                connection.Refresh();
+
+                                // Apply the modified properties to the serialized object
+                                element.ApplyModifiedProperties();
+                            }
+                        }
+
+                        #endregion
+                    }
+
+                    #endregion
+
+                    // Apply the modified properties to the serialized object
+                    element.ApplyModifiedProperties();
+                }
+            };
+        }
+
         private void DrawConnection(AreaHandle handle, Connection connection)
         {
             #region Connection Display
@@ -781,8 +1008,7 @@ namespace WorldShaper.Editor
             GUI.enabled = true;
 
             // Create a style for the mini button
-            GUIStyle buttonStyle = new GUIStyle(EditorStyles.miniButton)
-            {
+            var buttonStyle = new GUIStyle(EditorStyles.miniButton) {
                 // Set the padding for the button
                 padding = new RectOffset(0, 0, 1, 1),
 
@@ -792,17 +1018,17 @@ namespace WorldShaper.Editor
             };
 
             // Create a style for the select button based on the mini button style
-            GUIStyle selectStyle = new GUIStyle(buttonStyle) { padding = new RectOffset(0, 2, 0, 2) };
+            var selectStyle = new GUIStyle(buttonStyle) { padding = new RectOffset(0, 2, 0, 2) };
 
             // Create GUIContent for the select button
-            GUIContent selectContent = new GUIContent(_selectContent);
+            var selectContent = new GUIContent(_selectContent);
             selectContent.tooltip = "Select the connection object";
 
             // Add a button to select the connection object
             if (GUILayout.Button(selectContent, selectStyle)) Selection.activeObject = connection;
 
             // Create GUIContent for the load area button
-            GUIContent loadContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("LoadArea")), $"Load the area for {connection.connectionName}");
+            var loadContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("LoadArea")), $"Load the area for {connection.connectionName}");
 
             // Check if the handle is valid before allowing us to load the scene
             if (!handle.IsValid) GUI.contentColor = InvalidColor;
@@ -814,7 +1040,7 @@ namespace WorldShaper.Editor
             if (!handle.IsValid) GUI.contentColor = Color.white;
 
             // Get the icon and tooltip for the load destination button
-            GUIContent loadDestinationContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("LoadDestination")), $"Load the destination area for this {connection.connectionName}");
+            var loadDestinationContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("LoadDestination")), $"Load the destination area for this {connection.connectionName}");
 
             // Check if the handle is valid before allowing us to load the scene
             if (!connection.IsValid) GUI.contentColor = InvalidColor;
@@ -885,11 +1111,11 @@ namespace WorldShaper.Editor
                         }
 
                         // Display buttons to set a two-way connection
-                        GUIContent refreshContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Sync")), $"Set a two-way connection for {connection.connectionName}");
+                        var refreshContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Sync")), $"Set a two-way connection for {connection.connectionName}");
                         if (GUILayout.Button(refreshContent, buttonStyle)) connection.SyncEndpointLink();
 
                         // Display a button to set the endpoint to closed
-                        GUIContent closeSingleContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("OneWay")), $"Set Endpoint to Closed for {connection.connectionName}");
+                        var closeSingleContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("OneWay")), $"Set Endpoint to Closed for {connection.connectionName}");
                         if (GUILayout.Button(closeSingleContent, buttonStyle)) connection.SetConnectionType(ConnectionType.Closed);
 
                         // End the horizontal layout for the connection buttons
@@ -907,11 +1133,11 @@ namespace WorldShaper.Editor
                     {
                         // Display a button to refresh the connection
                         EditorGUILayout.BeginHorizontal(GUILayout.Width(1));
-                        GUIContent refreshSingleContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Refresh")), $"Refresh Connection for {connection.connectionName}");
+                        var refreshSingleContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Refresh")), $"Refresh Connection for {connection.connectionName}");
                         if (GUILayout.Button(refreshSingleContent, buttonStyle)) connection.Refresh();
 
                         // Display a button to remove the connection
-                        GUIContent closeContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Delete")), $"Remove {connection.connectionName} connection");
+                        var closeContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Delete")), $"Remove {connection.connectionName} connection");
                         if (GUILayout.Button(closeContent, buttonStyle)) connection.Remove();
                         EditorGUILayout.EndHorizontal();
 
@@ -929,11 +1155,11 @@ namespace WorldShaper.Editor
                     if (!closedConnection)
                     {
                         // Display a button to move the connection to the top of the list
-                        GUIContent topContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("MoveTop")), $"Move {connection.connectionName} to the top of the Area's connection list");
+                        var topContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("MoveTop")), $"Move {connection.connectionName} to the top of the Area's connection list");
                         if (GUILayout.Button(topContent, buttonStyle)) handle.MoveToTop(connection);
 
                         // Display a button to move the connection up in the list
-                        GUIContent upContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("MoveUp")), $"Move {connection.connectionName} up in the Area's connection list");
+                        var upContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("MoveUp")), $"Move {connection.connectionName} up in the Area's connection list");
                         if (GUILayout.Button(upContent, buttonStyle)) handle.MoveConnectionUp(connection);
 
                         // End the horizontal layout for the connection buttons
@@ -982,11 +1208,11 @@ namespace WorldShaper.Editor
                             }
 
                             // Display a button to move the connection to the bottom of the list
-                            GUIContent bottomContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("MoveBottom")), $"Move {connection.connectionName} to the bottom in the Area's connection list");
+                            var bottomContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("MoveBottom")), $"Move {connection.connectionName} to the bottom in the Area's connection list");
                             if (GUILayout.Button(bottomContent, buttonStyle)) handle.MoveToBottom(connection);
 
                             // Display a button to move the connection down in the list
-                            GUIContent downContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("MoveDown")), $"Move {connection.connectionName} down in the Area's connection list");
+                            var downContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("MoveDown")), $"Move {connection.connectionName} down in the Area's connection list");
                             if (GUILayout.Button(downContent, buttonStyle)) handle.MoveConnectionDown(connection);
 
                             // End the horizontal layout for the connection buttons
@@ -1309,6 +1535,9 @@ namespace WorldShaper.Editor
 
             // Select the area handle in the editor
             Selection.activeObject = AreaHandles[currentIndex];
+
+            // Create a ReorderableList for the connections in the handle when the current area changes
+            CreateConnectionsList(AreaHandles[currentIndex]);
 
             // Repaint the window to reflect changes
             Repaint();
