@@ -304,6 +304,9 @@ namespace WorldShaper
                 // Get the connection at the current index
                 Connection connection = connections[i];
 
+                // Check if the connection is null, if so, skip to the next connection
+                if (connection == null) continue;
+
                 // If the connection's name is null or empty, set it to the connection's connection name, otherwise do nothing
                 connection.RenameConnection(connection.connectionName);
 
@@ -349,9 +352,6 @@ namespace WorldShaper
 
                 // Refresh the connections in the area handle to update the editor
                 Refresh();
-
-                // Move the connection to the bottom of the list to ensure it is added at the end of the list
-                MoveToBottom(connection);
             }
         }
 
@@ -361,7 +361,7 @@ namespace WorldShaper
         /// <param name="connection">The connection to be added to the area handle.</param>
         public void AddConnection(Connection connection)
         {
-            // Add the connection to the list of connections
+            // Add the connection to the list of connections at the end of the list
             connections.Add(connection);
 
             // Add the connection to the asset database as a sub asset of the area handle
@@ -375,134 +375,6 @@ namespace WorldShaper
 
             // Refresh the asset database to update the connection order in the editor
             AssetDatabase.Refresh();
-        }
-
-        /// <summary>
-        /// Move a connection up in the list of connections.
-        /// </summary>
-        /// <param name="connection">The connection to be moved up in the list.</param>
-        public void MoveConnectionUp(Connection connection)
-        {
-            // Check if the connection is not the first one in the list, if so, move it up
-            int index = connections.IndexOf(connection);
-
-            // If the connection is not already at the top, move it up
-            if (index > 0)
-            {
-                // Remove the connection from its current position
-                connections.Remove(connection);
-
-                // If the connection is being moved up from the last position, insert it at the index, otherwise insert it at the index - 1
-                connections.Insert(index - 1, connection);
-
-                // Force resave the asset to update the connection order
-                AssetDatabase.ForceReserializeAssets(new string[] { AssetDatabase.GetAssetPath(this) });
-
-                // Set the this area handle to dirty
-                EditorUtility.SetDirty(this);
-
-                // Save the changes to the asset database
-                AssetDatabase.SaveAssets();
-
-                // Refresh the asset database to update the connection order in the editor
-                AssetDatabase.Refresh();
-            }
-        }
-
-        /// <summary>
-        /// Move a connection down in the list of connections.
-        /// </summary>
-        /// <param name="connection">The connection to be moved down in the list.</param>
-        public void MoveConnectionDown(Connection connection)
-        {
-            // Check if the connection is not the last one in the list, if so, move it down
-            int index = connections.IndexOf(connection);
-
-            // If the connection is not already at the bottom, move it down
-            if (index < connections.Count - 1)
-            {
-                // Remove the connection from its current position
-                connections.Remove(connection);
-
-                // If the connection is being moved down from the first position, insert it at the index, otherwise insert it at the index + 1
-                connections.Insert(index + 1, connection);
-
-                // Force resave the asset to update the connection order
-                AssetDatabase.ForceReserializeAssets(new string[] { AssetDatabase.GetAssetPath(this) });
-
-                // Set the this area handle to dirty
-                EditorUtility.SetDirty(this);
-
-                // Save the changes to the asset database
-                AssetDatabase.SaveAssets();
-
-                // Refresh the asset database to update the connection order in the editor
-                AssetDatabase.Refresh();
-            }
-        }
-
-        /// <summary>
-        /// Moves a connection to the top of the list of connections.
-        /// </summary>
-        /// <param name="connection">The connection to move to the top of the list. Cannot be null.</param>
-        public void MoveToTop(Connection connection)
-        {
-            // Check if the connection is not the first one in the list, if so, move it to the top
-            int index = connections.IndexOf(connection);
-
-            // If the connection is not already at the top, move it to the top
-            if (index > 0)
-            {
-                // Remove the connection from its current position
-                connections.Remove(connection);
-
-                // Add the connection to the beginning of the list
-                connections.Insert(0, connection);
-
-                // Force resave the asset to update the connection order
-                AssetDatabase.ForceReserializeAssets(new string[] { AssetDatabase.GetAssetPath(this) });
-
-                // Set the this area handle to dirty
-                EditorUtility.SetDirty(this);
-
-                // Save the changes to the asset database
-                AssetDatabase.SaveAssets();
-
-                // Refresh the asset database to update the connection order in the editor
-                AssetDatabase.Refresh();
-            }
-        }
-
-        /// <summary>
-        /// Move a connection to the bottom of the list of connections.
-        /// </summary>
-        /// <param name="connection">The connection to be moved to the bottom of the list.</param>
-        public void MoveToBottom(Connection connection)
-        {
-            // Check if the connection is not the last one in the list, if so, move it to the bottom
-            int index = connections.IndexOf(connection);
-
-            // If the connection is not already at the bottom, move it to the bottom
-            if (index < connections.Count - 1)
-            {
-                // Remove the connection from its current position
-                connections.Remove(connection);
-
-                // Add the connection to the end of the list
-                connections.Add(connection);
-
-                // Force resave the asset to update the connection order
-                AssetDatabase.ForceReserializeAssets(new string[] { AssetDatabase.GetAssetPath(this) });
-
-                // Set the this area handle to dirty
-                EditorUtility.SetDirty(this);
-
-                // Save the changes to the asset database
-                AssetDatabase.SaveAssets();
-
-                // Refresh the asset database to update the connection order in the editor
-                AssetDatabase.Refresh();
-            }
         }
 
         /// <summary>
@@ -712,11 +584,11 @@ namespace WorldShaper
 
         #endregion
     }
+}
 
-    public enum AreaHandleType
-    {
-        Normal,
-        Impassable,
-        Persistent
-    }
+public enum AreaHandleType
+{
+    Normal,
+    Impassable,
+    Persistent
 }

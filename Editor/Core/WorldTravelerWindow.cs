@@ -775,7 +775,7 @@ namespace WorldShaper.Editor
             bool Filtered(Connection connection) => !string.IsNullOrEmpty(searchString) && !connection.connectionName.ToLower().Contains(searchString.ToLower());
 
             // Create a ReorderableList for the connections property, temporarily disabling the add and remove buttons because the seem to be causing issues with the serialized object and the connections list not updating correctly
-            connectionsList = new ReorderableList(serializedObject, connectionsProperty, false, true, displayAddButton: false, displayRemoveButton: false)
+            connectionsList = new ReorderableList(serializedObject, connectionsProperty, false, true, displayAddButton: true, displayRemoveButton: true)
             {
                 // Define how the header of the list should be drawn
                 drawHeaderCallback = rect => EditorGUI.LabelField(new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight), "Connections"),
@@ -806,7 +806,7 @@ namespace WorldShaper.Editor
                     var connectionToDelete = handle.connections[l.index];
 
                     // Delete the connection ScriptableObject from the project
-                    if (connectionToDelete != null) connectionToDelete.Remove();
+                    if (connectionToDelete != null) connectionToDelete.Delete();
 
                     // Mark the serialized object as dirty to ensure changes are saved
                     serializedObject.SetIsDifferentCacheDirty();
@@ -823,6 +823,9 @@ namespace WorldShaper.Editor
                 {
                     // Get the connection at the current index
                     var connection = handle.connections[index];
+
+                    // Check if the connection is null, if so, skip to the next connection
+                    if (connection == null) return EditorGUIUtility.singleLineHeight;
 
                     // Skip connections that do not match the search string, if a search string is provided
                     if (Filtered(connection)) return EditorGUIUtility.singleLineHeight + 5;
@@ -847,9 +850,11 @@ namespace WorldShaper.Editor
                 // Define how each element in the list should be drawn
                 drawElementCallback = (rect, index, isActive, isFocused) =>
                 {
-                    // Get the element at the current index
+                    // Get the connection at the current index
                     var connection = handle.connections[index];
-                    var element = new SerializedObject(connection);
+
+                    // Check if the connection is null, if so, skip to the next connection
+                    if (connection == null) return;
 
                     // Skip connections that do not match the search string, if a search string is provided
                     if (Filtered(connection))
@@ -860,6 +865,9 @@ namespace WorldShaper.Editor
                         // Add a space for better UI spacing
                         return;
                     }
+
+                    // Get the element at the current index
+                    var element = new SerializedObject(connection);
 
                     #region Connection Properties
 

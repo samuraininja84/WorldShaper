@@ -92,14 +92,14 @@ namespace WorldShaper.Editor
                     // Record the removal of the selected connection for undo functionality
                     Undo.RecordObject(target, "Removed Connection At Index " + l.index);
 
-                    // Remove the selected connection from the area handle's connections list
-                    ReorderableList.defaultBehaviours.DoRemoveButton(l);
-
                     // Get the connection to delete based on the index of the removed element
                     var connectionToDelete = areaHandle.connections[l.index];
 
                     // Delete the connection ScriptableObject from the project
-                    if (connectionToDelete != null) connectionToDelete.Remove();
+                    if (connectionToDelete != null) connectionToDelete.Delete();
+
+                    // Remove the selected connection from the area handle's connections list
+                    ReorderableList.defaultBehaviours.DoRemoveButton(l);
 
                     // Mark the serialized object as dirty to ensure changes are saved
                     serializedObject.SetIsDifferentCacheDirty();
@@ -113,6 +113,9 @@ namespace WorldShaper.Editor
                 {
                     // Get the connection at the current index
                     var connection = areaHandle.connections[index];
+
+                    // Check if the connection is null, if so, skip to the next connection
+                    if (connection == null) return EditorGUIUtility.singleLineHeight;
 
                     // Check if the connection is closed
                     bool closedConnection = connection.Closed();
@@ -131,8 +134,13 @@ namespace WorldShaper.Editor
                 // Define how each element in the list should be drawn
                 drawElementCallback = (rect, index, isActive, isFocused) =>
                 {
-                    // Get the element at the current index
+                    // Get the connection at the current index
                     var connection = areaHandle.connections[index];
+
+                    // Check if the connection is null, if so, skip to the next connection
+                    if (connection == null) return;
+
+                    // Get the element at the current index
                     var element = new SerializedObject(connection);
 
                     // Adjust the rect for better spacing
@@ -300,9 +308,9 @@ namespace WorldShaper.Editor
             serializedObject.Update();
 
             // Display the script field for the AreaHandle component and disable the script field
-            //GUI.enabled = false;
-            //EditorGUILayout.PropertyField(script);
-            //GUI.enabled = true;
+            GUI.enabled = false;
+            EditorGUILayout.PropertyField(script);
+            GUI.enabled = true;
 
             // Remove a gap between the script field and the current scene field
             EditorGUILayout.Space(-10);
