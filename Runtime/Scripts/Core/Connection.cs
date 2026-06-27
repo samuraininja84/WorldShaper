@@ -170,7 +170,7 @@ namespace WorldShaper
         private List<string> GetPassagesFromAreaHandle(AreaHandle handle)
         {
             // Create the list of connections
-            List<string> connections = new List<string> { "None" };
+            var connections = new List<string> { "None" };
 
             // Check if the handle is null or if it has no connections
             if (handle != null && handle.connections.Count > 0)
@@ -181,6 +181,9 @@ namespace WorldShaper
                 // Add the connection names to the list
                 foreach (Connection connectionData in handle.connections)
                 {
+                    // Skip the connection if it is null or if its name is empty
+                    if (connectionData == null || string.IsNullOrEmpty(connectionData.connectionName)) continue;
+
                     // Add the connection name to the list
                     connections.Add(connectionData.connectionName);
                 }
