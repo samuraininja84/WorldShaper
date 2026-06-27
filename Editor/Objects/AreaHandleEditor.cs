@@ -16,7 +16,6 @@ namespace WorldShaper.Editor
         private SerializedProperty connectionsProperty;
         private ReorderableList additiveScenesList;
         private ReorderableList connectionsList;
-        private GUIStyle miniButtonStyle;
         private bool showConnections = true;
 
         private void OnEnable()
@@ -35,9 +34,6 @@ namespace WorldShaper.Editor
             activeSceneProperty = serializedObject.FindProperty(nameof(AreaHandle.activeScene));
             additiveScenesProperty = serializedObject.FindProperty(nameof(AreaHandle.additiveScenes));
             connectionsProperty = serializedObject.FindProperty(nameof(AreaHandle.connections));
-
-            // Get the mini button style for the connection buttons
-            miniButtonStyle = GetMiniButtonStyle();
 
             // Create a ReorderableList for the additiveScenes property
             CreateAdditiveScenesList();
@@ -163,6 +159,9 @@ namespace WorldShaper.Editor
                     #endregion
 
                     #region Connection Action Buttons
+
+                    // Get the mini button style for the connection action buttons
+                    var miniButtonStyle = GetMiniButtonStyle();
 
                     // Create rects for the buttons, positioned to the right of the property fields
                     var buttonRect = new Rect(rect.x + width + spacing, rect.y, buttonWidth, EditorGUIUtility.singleLineHeight);
