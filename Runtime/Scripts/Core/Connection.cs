@@ -52,7 +52,7 @@ namespace WorldShaper
         /// <summary>
         /// Load the area associated with this connection.
         /// </summary>
-        public void LoadArea() => Transistor.Current.SwitchToArea(this);
+        public void LoadArea() => Transistor.SwitchToArea(this);
 
         /// <summary>
         /// Loads the destination area associated with this connection.
@@ -80,7 +80,7 @@ namespace WorldShaper
             }
 
             // Load the destination area
-            Transistor.Current.SwitchToDestination(this);
+            Transistor.SwitchToDestination(this);
         }
 
         /// <summary>

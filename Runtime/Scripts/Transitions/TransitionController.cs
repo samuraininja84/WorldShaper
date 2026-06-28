@@ -19,7 +19,11 @@ namespace WorldShaper
         public List<TransitionAnimation> availableTransitions;
 
         [Provide]
-        public TransitionController ProvideController() => this;
+        public TransitionController ProvideController()
+        {
+            Transistor.controller = this;
+            return this;
+        }
 
         public override async Task AnimateTransitionIn(bool realTime = false)
         {

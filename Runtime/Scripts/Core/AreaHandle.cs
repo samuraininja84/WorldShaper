@@ -50,8 +50,8 @@ namespace WorldShaper
             }
 
             // If a valid connection index is provided, attempt to switch to the area associated with that connection; otherwise, switch to the area represented by this AreaHandle
-            if (connectionIndex >= 0) await Transistor.Current.SwitchToArea(Name, connectionIndex);
-            else await Transistor.Current.HandleAreaSwitch(this);
+            if (connectionIndex >= 0) await Transistor.SwitchToArea(Name, connectionIndex);
+            else await Transistor.HandleAreaSwitch(this);
         }
 
         #region Scene Reference Retrieval Methods
