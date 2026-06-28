@@ -1177,7 +1177,7 @@ namespace WorldShaper.Editor
         private async void LoadArea(AreaHandle handle, string handleName = null)
         {
             // If the handle name is not provided, get the handle name for logging purposes, replacing any underscores with spaces
-            if (handleName == null) handleName = handle.Name.Replace("_", " ");
+            handleName ??= handle.Name.Replace("_", " ");
 
             // If the handle is invalid, log an error to the console and return early
             if (!handle.IsValid)
@@ -1315,9 +1315,6 @@ namespace WorldShaper.Editor
         {
             // Start a background progress operation to provide feedback to the user during the loading process
             int progressId = BackgroundProgress.Start("Loading Area...");
-
-            // Get the count of currently loaded scenes
-            int sceneCount = SceneManager.sceneCount;
 
             // Get the count of scenes to load from the area handle
             var handleScenesToLoad = handle.additiveScenes.Count;
