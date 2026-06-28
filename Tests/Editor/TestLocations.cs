@@ -18,13 +18,6 @@ namespace WorldShaper.Tests
         /// </summary>
         public static WorldMap WorldMap => WorldMap.Instance;
 
-        /// <summary>
-        /// Indicates whether the test should throw an exception on failure. 
-        /// If set to <see langword="true"/>, the test will throw an exception when a failure occurs, causing the test to fail.
-        /// If set to <see langword="false"/>, the test will log a warning message instead of throwing an exception, allowing the test to continue running.
-        /// </summary>
-        public const bool ThrowOnFailure = true;
-
         [Test]
         public async Task TestPersistentScenes()
         {
@@ -35,12 +28,7 @@ namespace WorldShaper.Tests
                 var scene = WorldMap.PersistentScenes[i];
 
                 // If the scene is not valid, throw an exception to indicate that the test cannot proceed
-                if (scene == null || scene.UnsafeReason != UnsafeReason.None)
-                {
-                    if (ThrowOnFailure && i == 0) throw new System.Exception($"Persistent scene at index {i} is not valid. Cannot proceed with the test.");
-                    else Debug.LogError($"Persistent scene at index {i} is not valid. Skipping this scene and continuing with the test.");
-                    continue;
-                }
+                if (scene == null || scene.UnsafeReason != UnsafeReason.None) throw new System.Exception($"Persistent scene at index {i} is not valid. Cannot proceed with the test.");
 
                 // Open the first scene in single mode to ensure that it is the only scene loaded
                 if (i == 0) EditorSceneManager.OpenScene(scene.Path, OpenSceneMode.Single);
@@ -60,12 +48,7 @@ namespace WorldShaper.Tests
                 var area = WorldMap.registeredAreas[i];
 
                 // If the area is not valid, throw an exception to indicate that the test cannot proceed
-                if (area == null || !area.IsValid)
-                {
-                    if (ThrowOnFailure) throw new System.Exception($"Registered area at index {i} is not valid. Cannot proceed with the test.");
-                    else Debug.LogError($"Registered area at index {i} is not valid. Skipping this area and continuing with the test.");
-                    continue;
-                }
+                if (area == null || !area.IsValid) throw new System.Exception($"Registered area at index {i} is not valid. Cannot proceed with the test.");
 
                 // Load the area using the EditorLoad method, which will load all scenes associated with the area handle
                 await EditorLoad(area, loadPersistentScenes: false, unloadUnusedAssets: true);
@@ -84,12 +67,7 @@ namespace WorldShaper.Tests
                 var area = WorldMap.registeredAreas[i];
 
                 // If the area is not valid, throw an exception to indicate that the test cannot proceed
-                if (area == null || !area.IsValid)
-                {
-                    if (ThrowOnFailure) throw new System.Exception($"Registered area: {area.Name} at index {i} is not valid. Cannot proceed with the test.");
-                    else Debug.LogError($"Registered area: {area.Name} at index {i} is not valid. Skipping this area and continuing with the test.");
-                    continue;
-                }
+                if (area == null || !area.IsValid) throw new System.Exception($"Registered area: {area.Name} at index {i} is not valid. Cannot proceed with the test.");
 
                 // Load the area using the EditorLoad method, which will load all scenes associated with the area handle
                 await EditorLoad(area, loadPersistentScenes: true, unloadUnusedAssets: true);
@@ -99,9 +77,8 @@ namespace WorldShaper.Tests
             Debug.Log("All areas contained in the world map have been loaded successfully.");
         }
 
-
         [Test]
-        public async Task TestAllConnections()
+        public async Task TestAllLocations()
         {
             for (int i = 0; i < WorldMap.registeredAreas.Count; i++)
             {
@@ -109,18 +86,10 @@ namespace WorldShaper.Tests
                 var area = WorldMap.registeredAreas[i];
 
                 // If the area is not valid, throw an exception to indicate that the test cannot proceed
-                if (area == null || !area.IsValid)
-                {
-                    if (ThrowOnFailure) throw new System.Exception($"Registered area: {area.Name} at index {i} is not valid. Cannot proceed with the test.");
-                    else Debug.LogError($"Registered area: {area.Name} at index {i} is not valid. Skipping this area and continuing with the test.");
-                    continue;
-                }
+                if (area == null || !area.IsValid) throw new System.Exception($"Registered area: {area.Name} at index {i} is not valid. Cannot proceed with the test.");
 
                 // Load the area using the EditorLoad method, which will load all scenes associated with the area handle
                 await EditorLoad(area, loadPersistentScenes: true, unloadUnusedAssets: true);
-
-                // Get all location pointers in the loaded scenes to test connections against
-                ILocationPointer[] pointer = ILocationPointerExtensions.GetAllLocations().ToArray();
 
                 // Iterate through each connection in the area and test if it is valid and can be found in the loaded scenes
                 for (int j = 0; j < area.connections.Count; j++)
@@ -129,18 +98,16 @@ namespace WorldShaper.Tests
                     var connection = area.connections[j];
 
                     // If the connection is not valid, throw an exception to indicate that the test cannot proceed
-                    if (connection == null || !connection.IsValid)
-                    {
-                        if (ThrowOnFailure) throw new System.Exception($"Connection: {connection.Endpoint} in area: {area.Name} at index {j} is not valid. Cannot proceed with the test.");
-                        else Debug.LogError($"Connection: {connection.Endpoint} in area: {area.Name} at index {j} is not valid. Skipping this connection and continuing with the test.");
-                        continue;
-                    }
+                    if (connection == null || !connection.IsValid) throw new System.Exception($"Connection: {connection.Endpoint} in area: {area.Name} at index {j} is not valid. Cannot proceed with the test.");
 
                     // Log the connection information for debugging purposes
                     Debug.Log($"Testing connection: {connection.Endpoint} in area: {area.Name}");
 
+                    // Get all location pointers in the loaded scenes to test connections against
+                    ILocationPointer[] pointers = ILocationPointerExtensions.GetAllLocations().ToArray();
+
                     // Find the location with the connection name
-                    ILocationPointer target = pointer.FirstOrDefault(c => c.GetEndpoint() == connection.Endpoint);
+                    ILocationPointer target = pointers.FirstOrDefault(c => c.GetEndpoint() == connection.Endpoint);
 
                     // Move the camera to the target pointer if found
                     if (target != null)
@@ -148,9 +115,6 @@ namespace WorldShaper.Tests
                         // Set the camera position to the target location's position
                         SceneView.lastActiveSceneView.pivot = target.GetPosition();
                         SceneView.lastActiveSceneView.Repaint();
-
-                        // Ping the target object in the editor to provide visual feedback to the user
-                        EditorGUIUtility.PingObject((Object)target);
                     }
                     else
                     {
