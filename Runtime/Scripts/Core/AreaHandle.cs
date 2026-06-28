@@ -33,9 +33,9 @@ namespace WorldShaper
         [Tooltip("Connections that lead to other Area Handles or Scenes.")]
         public List<Connection> connections = new();
 
-        public string Name => IsValid ? activeScene.Name : name;
+        public string Name => activeScene.UnsafeReason != SceneReferenceUnsafeReason.Empty ? activeScene.Name : name;
 
-        public bool IsValid => activeScene.UnsafeReason != SceneReferenceUnsafeReason.Empty;
+        public bool IsValid => activeScene.UnsafeReason == SceneReferenceUnsafeReason.None;
 
         public async void LoadArea(int connectionIndex = -1)
         {
