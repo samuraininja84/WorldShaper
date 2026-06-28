@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using UnityEngine;
+using WorldShaper.Injection;
 
 namespace WorldShaper
 {
@@ -15,20 +16,18 @@ namespace WorldShaper
     public class Transistor : PersistentSingleton<Transistor>
     {
         [Header("Dynamic References")]
-        public WorldMap worldMap;
+        [Inject] public TransitionController controller;
 
-        // Find a cleaner way to handle this, maybe a TransitionManager or similar class that encapsulates the transition logic and settings.
-
-        public TransitionController controller;
-
-        // To Do: Move these settings to a separate configuration class or scriptable object for better organization and maintainability.
+        // To Do: Remove the following properties and methods in a future update, as they will be replaced by method chains and a more flexible transition system.
 
         [Header("Transition Settings")]
-        public float delay = 0.5f;
-        public bool realtimeTransitions = false;
-        public bool reloadActiveScene = false;
-        public bool reloadAdditiveScenes = false;
-        public bool unloadUnusedAssets = true;
+        public float TransitionDelay => WorldMap.transitionDelay;
+        public bool RealtimeTransitions => WorldMap.realtimeTransitions;
+        public bool ReloadActiveScene => WorldMap.reloadActiveScene;
+        public bool ReloadAdditiveScenes => WorldMap.reloadAdditiveScenes;
+        public bool UnloadUnusedAssets => WorldMap.unloadUnusedAssets;
+
+        public WorldMap WorldMap => WorldMap.Instance;
 
         /// <summary>
         /// Initiates the "transition in" animation for the current state.
@@ -77,7 +76,7 @@ namespace WorldShaper
         /// <remarks>This method initiates a scene transition to the specified area. Ensure that the <paramref name="areaName"/> corresponds to a valid scene and that the connection index is within the valid range for the area's connections.</remarks>
         /// <param name="areaName">The name of the area to switch to. This must match the name of an existing scene.</param>
         /// <param name="connectionIndex">The index of the connection point to use when transitioning to the new area. Defaults to <see langword="0"/>.</param>
-        public async void SwitchToDestination(string areaName, int connectionIndex = 0, bool useTransition = true) => await HandleDestinationSwitch(worldMap.GetArea(areaName).GetConnection(connectionIndex), useTransition);
+        public async void SwitchToDestination(string areaName, int connectionIndex = 0, bool useTransition = true) => await HandleDestinationSwitch(WorldMap.GetArea(areaName).GetConnection(connectionIndex), useTransition);
 
         /// <summary>
         /// Switches to the endpoint area of the specified area index and connection index.
@@ -86,7 +85,7 @@ namespace WorldShaper
         /// This method initiates a scene transition to the specified area using the provided parameters. Ensure that <paramref name="areaIndex"/> corresponds to a valid area handle; otherwise, the behavior is undefined.</remarks>
         /// <param name="areaIndex">The index of the area to switch to. Must correspond to a valid area handle.</param>
         /// <param name="connectionIndex">The index of the connection point within the area. Defaults to <see langword="0"/>. Determines the starting and ending passage points for the transition.</param>
-        public async void SwitchToDestination(int areaIndex, int connectionIndex = 0, bool useTransition = true) => await HandleDestinationSwitch(worldMap.GetArea(areaIndex).GetConnection(connectionIndex), useTransition);
+        public async void SwitchToDestination(int areaIndex, int connectionIndex = 0, bool useTransition = true) => await HandleDestinationSwitch(WorldMap.GetArea(areaIndex).GetConnection(connectionIndex), useTransition);
 
         /// <summary>
         /// Centralized method to handle destination switching logic based around a given connection.
@@ -110,17 +109,17 @@ namespace WorldShaper
                 else SetTransitionIn(connection.transitionIn);
 
                 // Wait for the transition in animation to complete
-                await TransitionIn(realtimeTransitions);
+                await TransitionIn(RealtimeTransitions);
             }
 
             // Get the target area handle by switching to the destination defined by the connection
-            AreaHandle targetArea = worldMap.SwitchToDestination(connection);
+            AreaHandle targetArea = WorldMap.SwitchToDestination(connection);
 
             // Switch to the new area using the specified connection and transition settings
-            await worldMap.ExecuteTransition(targetArea, reloadActiveScene, reloadAdditiveScenes, unloadUnusedAssets);
+            await WorldMap.ExecuteTransition(targetArea, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
 
             // Wait for the specified delay before loading the new area
-            if (delay > 0f) await Task.Delay(TimeSpan.FromSeconds(delay));
+            if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
 
             // Perform the transition out animation after switching areas, if specified
             if (useTransition)
@@ -130,11 +129,11 @@ namespace WorldShaper
                 else SetTransitionOut(connection.transitionOut);
 
                 // Wait for the transition out animation to complete
-                await TransitionOut(realtimeTransitions);
+                await TransitionOut(RealtimeTransitions);
             }
 
             // Await the OnEnter event of the world map after the transition is complete
-            await worldMap.OnEnter(targetArea);
+            await WorldMap.OnEnter(targetArea);
 
             // Invoke the OnTransitionCompleted action to signal the completion of the transition
             WorldMap.OnTransitionCompleted.Invoke();
@@ -153,7 +152,13 @@ namespace WorldShaper
         /// <remarks>This method initiates a scene transition to the specified area. Ensure that the <paramref name="areaName"/> corresponds to a valid scene and that the connection index is within the valid range for the area's connections.</remarks>
         /// <param name="areaName">The name of the area to switch to. This must match the name of an existing scene.</param>
         /// <param name="connectionIndex">The index of the connection point to use when transitioning to the new area. Defaults to <see langword="0"/>.</param>
-        public async Task SwitchToArea(string areaName, int connectionIndex = 0) => await HandleAreaSwitch(worldMap.GetArea(areaName).GetConnection(connectionIndex));
+        public async Task SwitchToArea(string areaName, int connectionIndex = 0) => await HandleAreaSwitch(WorldMap.GetArea(areaName).GetConnection(connectionIndex));
+
+        /// <summary>
+        /// Switches the current scene to the specified area
+        /// </summary>
+        /// <param name="area">The handle representing the target area to switch to. Cannot be null.</param>
+        public async void SwitchToArea(AreaHandle area) => await HandleAreaSwitch(area);
 
         /// <summary>
         /// Centralized method to handle area switching logic based around a given connection.
@@ -170,35 +175,40 @@ namespace WorldShaper
             SetTransitionIn(connection.transitionIn);
 
             // Perform the transition in animation before switching areas, if specified
-            await TransitionIn(realtimeTransitions);
+            if (useTransition)
+            {
+                // Get the transition in animation from the connection's endpoint
+                SetTransitionIn(connection.transitionIn);
+
+                // Wait for the transition in animation to complete
+                await TransitionIn(RealtimeTransitions);
+            }
 
             // Get the target area handle by switching to the destination defined by the connection
-            AreaHandle targetArea = worldMap.SwitchToArea(connection);
+            AreaHandle targetArea = WorldMap.SwitchToArea(connection);
 
             // Switch to the new area using the connection and transition settings
-            await worldMap.ExecuteTransition(targetArea, reloadActiveScene, reloadAdditiveScenes, unloadUnusedAssets);
+            await WorldMap.ExecuteTransition(targetArea, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
 
             // Wait for the specified delay before loading the new area
-            if (delay > 0f) await Task.Delay(TimeSpan.FromSeconds(delay));
-
-            // Get the transition out animation from the connection
-            SetTransitionOut(connection.transitionOut);
+            if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
 
             // Perform the transition out animation after switching areas, if specified
-            await TransitionOut(realtimeTransitions);
+            if (useTransition)
+            {
+                // Get the transition out animation from the connection
+                SetTransitionOut(connection.transitionOut);
+
+                // Wait for the transition out animation to complete
+                await TransitionOut(RealtimeTransitions);
+            }
 
             // Await the OnEnter event of the world map after the transition is complete
-            await worldMap.OnEnter(targetArea);
+            await WorldMap.OnEnter(targetArea);
 
             // Invoke the OnTransitionCompleted action to signal the completion of the transition
             WorldMap.OnTransitionCompleted.Invoke();
         }
-
-        /// <summary>
-        /// Switches the current scene to the specified area
-        /// </summary>
-        /// <param name="area">The handle representing the target area to switch to. Cannot be null.</param>
-        public async void SwitchToArea(AreaHandle area) => await HandleAreaSwitch(area);
 
         /// <summary>
         /// Performs an asynchronous transition to the specified area, including transition animations and event signaling.
@@ -216,19 +226,19 @@ namespace WorldShaper
             WorldMap.OnTransitionStarted.Invoke();
 
             // Perform the transition in animation before switching areas, if specified
-            await TransitionIn(realtimeTransitions);
+            await TransitionIn(RealtimeTransitions);
 
             // Switch to the new area using the connection and transition settings
-            await worldMap.ExecuteTransition(area, reloadActiveScene, reloadAdditiveScenes, unloadUnusedAssets);
+            await WorldMap.ExecuteTransition(area, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
 
             // Wait for the specified delay before loading the new area
-            if (delay > 0f) await Task.Delay(TimeSpan.FromSeconds(delay));
+            if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
 
             // Perform the transition out animation after switching areas, if specified
-            await TransitionOut(realtimeTransitions);
+            await TransitionOut(RealtimeTransitions);
 
             // Await the OnEnter event of the world map after the transition is complete
-            await worldMap.OnEnter(area);
+            await WorldMap.OnEnter(area);
 
             // Invoke the OnTransitionCompleted action to signal the completion of the transition
             WorldMap.OnTransitionCompleted.Invoke();
@@ -249,22 +259,22 @@ namespace WorldShaper
             WorldMap.OnTransitionStarted.Invoke();
 
             // Perform the transition in animation before switching areas, if specified
-            if (useTransition) await TransitionIn(realtimeTransitions);
+            if (useTransition) await TransitionIn(RealtimeTransitions);
 
             // Get the target area handle by switching to the destination defined by the connection
-            AreaHandle currentArea = worldMap.currentArea;
+            AreaHandle currentArea = WorldMap.currentArea;
 
             // Reload the current area
-            await worldMap.ReloadArea();
+            await WorldMap.ReloadArea();
 
             // Wait for the specified delay before loading the new area
-            if (delay > 0f) await Task.Delay(TimeSpan.FromSeconds(delay));
+            if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
 
             // Perform the transition out animation after switching areas, if specified
-            if (useTransition) await TransitionOut(realtimeTransitions);
+            if (useTransition) await TransitionOut(RealtimeTransitions);
 
             // Await the OnEnter event of the world map after the transition is complete
-            await worldMap.OnEnter(currentArea);
+            await WorldMap.OnEnter(currentArea);
 
             // Invoke the OnTransitionCompleted action to signal the completion of the transition
             WorldMap.OnTransitionCompleted.Invoke();

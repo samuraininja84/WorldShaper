@@ -1,10 +1,12 @@
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
+using WorldShaper.Injection;
 
 namespace WorldShaper
 {
-    public class TransitionController : TransitionAnimation
+    [AddComponentMenu("World Shaper/Transitions/Transition Controller")]
+    public class TransitionController : TransitionAnimation, IDependencyProvider
     {
         [Header("Transition Camera")]
         public Camera transitionCamera;
@@ -15,6 +17,9 @@ namespace WorldShaper
 
         [Header("Available Transitions")]
         public List<TransitionAnimation> availableTransitions;
+
+        [Provide]
+        public TransitionController ProvideController() => this;
 
         public override async Task AnimateTransitionIn(bool realTime = false)
         {
@@ -106,8 +111,7 @@ namespace WorldShaper
 
         private void CopyCameraSettings(Camera camera)
         {
-            transitionCamera.transform.position = camera.transform.position;
-            transitionCamera.transform.rotation = camera.transform.rotation;
+            transitionCamera.transform.SetPositionAndRotation(camera.transform.position, camera.transform.rotation);
             transitionCamera.fieldOfView = camera.fieldOfView;
         }
     }

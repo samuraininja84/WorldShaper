@@ -20,11 +20,21 @@ namespace WorldShaper
         [Header("World Info")]
         public string worldName = "New World";
 
+        [Header("Transition Settings")]
+        public float transitionDelay = 2f;
+        public bool realtimeTransitions = false;
+        public bool reloadActiveScene = false;
+        public bool reloadAdditiveScenes = false;
+        public bool unloadUnusedAssets = true;
+
         [Header("Connection Status")]
         public AreaHandle currentArea;
         public InterfaceReference<ILocationPointer> currentLocation;
         public ConnectionState connection = ConnectionState.Empty;
         public Progress transitionProgress = Progress.Empty;
+
+        [Header("Locations")]
+        public List<InterfaceReference<ILocationPointer>> locations;
 
         [Header("Areas")]
         public List<AreaHandle> persistentAreas = new();
@@ -47,9 +57,9 @@ namespace WorldShaper
             }
         }
 
-        [Header("Locations")]
-        public List<InterfaceReference<ILocationPointer>> locations;
-
+        /// <summary>
+        /// The singleton instance of the <see cref="WorldMap"/> class.
+        /// </summary>
         protected static WorldMap instance;
 
         /// <summary>

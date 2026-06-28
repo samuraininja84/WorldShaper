@@ -1394,7 +1394,7 @@ GameObject:
   - component: {fileID: 2579481398628303532}
   - component: {fileID: 9107232762618603123}
   - component: {fileID: 4964540689521889254}
-  - component: {fileID: 7321762546659721808}
+  - component: {fileID: 4219548926727138429}
   - component: {fileID: 5401299307131121609}
   m_Layer: 0
   m_Name: Transistor
@@ -1488,7 +1488,7 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 63
---- !u!114 &7321762546659721808
+--- !u!114 &4219548926727138429
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1497,16 +1497,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 7245504911265432856}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b85eb4ce67569146900dd877d83d2bd, type: 3}
+  m_Script: {fileID: 11500000, guid: b25cd3b9b949fa841be9417a3e4585ff, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: WorldShaper::WorldShaper.Transistor
+  m_EditorClassIdentifier: WorldShaper::WorldShaper.Injection.WorldShaperInjector
   UnparentOnAwake: 1
-  worldMap: {fileID: 11400000, guid: 7ecb06e862238da429750952866d46d2, type: 2}
-  controller: {fileID: 5401299307131121609}
-  delay: 2
-  realtimeTransitions: 0
-  reloadDuplicates: 0
-  unloadUnusedAssets: 1
 --- !u!114 &5401299307131121609
 MonoBehaviour:
   m_ObjectHideFlags: 0
