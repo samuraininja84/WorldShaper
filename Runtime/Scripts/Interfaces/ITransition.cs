@@ -8,6 +8,10 @@ namespace WorldShaper
 
         Task AnimateTransitionOut(bool realTime = false);
 
+        void SetTransitionState(bool status);
+
         float GetDuration();
+
+        TransitionIdentifier GetIdentifier();
     }
 }

@@ -13,12 +13,9 @@ namespace WorldShaper
     /// </remarks>
     public static class Transistor
     {
-        [Header("Dynamic References")]
         public static ITransitionController controller;
 
         // To Do: Remove the following properties and methods in a future update, as they will be replaced by method chains and a more flexible transition system.
-
-        [Header("Transition Settings")]
         public static float TransitionDelay => WorldMap.transitionDelay;
         public static bool RealtimeTransitions => WorldMap.realtimeTransitions;
         public static bool ReloadActiveScene => WorldMap.reloadActiveScene;

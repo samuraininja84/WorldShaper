@@ -5,57 +5,50 @@ using UnityEngine;
 namespace WorldShaper
 {
     [AddComponentMenu("World Shaper/Transitions/Transition Controller")]
-    public class TransitionController : MonoBehaviour, ITransitionController
+    public class TransitionController : PersistentSingleton<TransitionController>, ITransitionController
     {
         [Header("Transition Camera")]
         public Camera transitionCamera;
 
         [Header("Current Transitions")]
-        public TransitionAnimation inTransition;
-        public TransitionAnimation outTransition;
+        public InterfaceReference<ITransition> inTransition;
+        public InterfaceReference<ITransition> outTransition;
 
         [Header("Available Transitions")]
-        public List<TransitionAnimation> availableTransitions;
+        public List<InterfaceReference<ITransition>> availableTransitions;
 
-        public void Awake() => Transistor.controller = this;
+        public ITransition InTransition => inTransition.Value;
 
-        public void SetInTransition(TransitionAnimation transition) => inTransition = transition;
+        public ITransition OutTransition => outTransition.Value;
 
-        public void SetOutTransition(TransitionAnimation transition) => outTransition = transition;
+        protected override void OnInit() => Transistor.controller = this;
+
+        protected override void OnTeardown() => Transistor.controller = null;
 
         public void SetInTransition(TransitionIdentifier transitionId)
         {
             // Find the transition by its identifier
-            if (TryGetTransition(transitionId, out TransitionAnimation transition))
+            if (TryGetTransition(transitionId, out var transition))
             {
                 // Only set the transition if it was found
-                inTransition = transition;
+                inTransition.SetValue(transition);
             }
         }
 
         public void SetOutTransition(TransitionIdentifier transitionId)
         {
             // Find the transition by its identifier
-            if (TryGetTransition(transitionId, out TransitionAnimation transition))
+            if (TryGetTransition(transitionId, out var transition))
             {
                 // Only set the transition if it was found
-                outTransition = transition;
+                outTransition.SetValue(transition);
             }
-        }
-
-        private bool TryGetTransition(TransitionIdentifier transitionId, out TransitionAnimation transition)
-        {
-            // Find the transition by its identifier
-            transition = availableTransitions.Find(t => t.GetIdentifier() == transitionId);
-
-            // Return whether the transition was found
-            return transition != null;
         }
 
         public virtual async Task AnimateTransitionIn(bool realTime = false)
         {
             // Set the in transition state to true before starting the in transition
-            inTransition.SetTransitionState(true);
+            InTransition.SetTransitionState(true);
 
             // Enable the transition camera if it exists
             if (transitionCamera != null)
@@ -71,13 +64,13 @@ namespace WorldShaper
             }
 
             // Await the in transition animation
-            await inTransition.AnimateTransitionIn(realTime);
+            await InTransition.AnimateTransitionIn(realTime);
         }
 
         public virtual async Task AnimateTransitionOut(bool realTime = false)
         {
             // Set the in transition state to false before starting the out transition
-            inTransition.SetTransitionState(false);
+            InTransition.SetTransitionState(false);
 
             // Enable the transition camera if it exists
             if (transitionCamera != null)
@@ -93,13 +86,22 @@ namespace WorldShaper
             }
 
             // Await the out transition animation
-            await outTransition.AnimateTransitionOut(realTime);
+            await OutTransition.AnimateTransitionOut(realTime);
 
             // Disable the transition camera if it exists
             if (transitionCamera != null) transitionCamera.enabled = false;
         }
 
-        public virtual float GetDuration() => Mathf.Max(inTransition.GetDuration(), outTransition.GetDuration());
+        public virtual float GetDuration() => Mathf.Max(InTransition.GetDuration(), OutTransition.GetDuration());
+
+        private bool TryGetTransition(TransitionIdentifier transitionId, out ITransition transition)
+        {
+            // Find the transition by its identifier
+            transition = availableTransitions.Find(t => t.Value.GetIdentifier() == transitionId).Value;
+
+            // Return whether the transition was found
+            return transition != null;
+        }
 
         private void CopyCameraSettings(Camera camera)
         {
@@ -107,6 +109,17 @@ namespace WorldShaper
             transitionCamera.fieldOfView = camera.fieldOfView;
         }
 
-        private void OnDestroy() => Transistor.controller = null;
+        [ContextMenu("Get Transitions")]
+        private void GetTransitions()
+        {
+            // Get all transitions in under the TransitionController in the scene
+            var transitions = GetComponentsInChildren<ITransition>();
+
+            // Clear the available transitions list
+            availableTransitions.Clear();
+
+            // Add all transitions to the available transitions list
+            foreach (var transition in transitions) availableTransitions.Add(InterfaceReference<ITransition>.FromValue(transition));
+        }
     }
 }

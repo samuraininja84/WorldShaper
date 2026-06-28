@@ -1499,19 +1499,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb969b41200dae1499b0b057d3e38422, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  identifier: {fileID: 11400000, guid: 7ca8d4701d723e245bb985b12abfccc5, type: 2}
-  animatingIn: 0
-  animatingOut: 0
+  UnparentOnAwake: 1
   transitionCamera: {fileID: 7602352010229994050}
-  inTransition: {fileID: 1949501511256243581}
-  outTransition: {fileID: 520068466808047486}
+  inTransition:
+    underlyingValue: {fileID: 520068466808047486}
+  outTransition:
+    underlyingValue: {fileID: 520068466808047486}
   availableTransitions:
-  - {fileID: 520068466808047486}
-  - {fileID: 2076776398441901736}
-  - {fileID: 5150850719361148230}
-  - {fileID: 8747821694906033257}
-  - {fileID: 3687268681722978733}
-  - {fileID: 1949501511256243581}
+  - underlyingValue: {fileID: 1949501511256243581}
+  - underlyingValue: {fileID: 3687268681722978733}
+  - underlyingValue: {fileID: 8747821694906033257}
+  - underlyingValue: {fileID: 520068466808047486}
+  - underlyingValue: {fileID: 2076776398441901736}
+  - underlyingValue: {fileID: 5150850719361148230}
 --- !u!1 &7447925480720358396
 GameObject:
   m_ObjectHideFlags: 0
