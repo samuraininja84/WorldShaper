@@ -3,7 +3,7 @@ using UnityEditor;
 
 namespace WorldShaper.Injection.Editor
 {
-    [CustomEditor(typeof(WorldShaperInjector))]
+    [CustomEditor(typeof(Injector))]
     public class WorldShaperInjectorEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI() 
@@ -12,7 +12,7 @@ namespace WorldShaper.Injection.Editor
             DrawDefaultInspector();
 
             // Get the target object as an Injector
-            WorldShaperInjector injector = (WorldShaperInjector) target;
+            Injector injector = (Injector) target;
 
             // Add a button to validate dependencies
             if (GUILayout.Button("Validate Dependencies")) injector.ValidateDependencies();

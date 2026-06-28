@@ -9,7 +9,7 @@ namespace WorldShaper.Injection
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-1000)]
     [AddComponentMenu("World Shaper/World Shaper Injector")]
-    public class WorldShaperInjector : PersistentSingleton<WorldShaperInjector> 
+    public class Injector : PersistentSingleton<Injector> 
     {
         private readonly Dictionary<Type, object> registry = new();
 
