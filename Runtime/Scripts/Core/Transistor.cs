@@ -11,11 +11,17 @@ namespace WorldShaper
     /// This class handles the loading and unloading of scenes, manages player relocation, and maintains connections.
     /// Runs before other scripts to ensure proper initialization.
     /// </remarks>
+    [Obsolete("Transistor will soon be changed to a static class. Please prepare to update your code accordingly.")]
     public class Transistor : PersistentSingleton<Transistor>
     {
         [Header("Dynamic References")]
         public WorldMap worldMap;
+
+        // Find a cleaner way to handle this, maybe a TransitionManager or similar class that encapsulates the transition logic and settings.
+
         public TransitionController controller;
+
+        // To Do: Move these settings to a separate configuration class or scriptable object for better organization and maintainability.
 
         [Header("Transition Settings")]
         public float delay = 0.5f;

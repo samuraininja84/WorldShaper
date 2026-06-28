@@ -11,16 +11,16 @@ namespace WorldShaper
     [CreateAssetMenu(fileName = "New Connection", menuName = "World Shaper/New Connection")]
     public class Connection : ScriptableObject
     {
-        [Header("Connection Identity")]
+        // [Header("Connection Identity")]
         public SerializableGuid connectionId = SerializableGuid.NewGuid();
         public string connectionName = string.Empty;
         public ConnectionType connectionType = ConnectionType.Standard;
 
-        [Header("Destination")]
+        // [Header("Destination")]
         public AreaHandle destinationArea;
         public ExtendableEnum endpoint;
 
-        [Header("Transition Settings")]
+        // [Header("Transition Settings")]
         public TransitionIdentifier transitionIn;
         public TransitionIdentifier transitionOut;
 
