@@ -14,7 +14,7 @@ namespace WorldShaper
     public static class Transistor
     {
         [Header("Dynamic References")]
-        public static TransitionController controller;
+        public static ITransitionController controller;
 
         // To Do: Remove the following properties and methods in a future update, as they will be replaced by method chains and a more flexible transition system.
 

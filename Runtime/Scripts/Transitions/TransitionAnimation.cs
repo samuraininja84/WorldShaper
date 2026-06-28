@@ -19,7 +19,7 @@ namespace WorldShaper
 
         public virtual async Task AnimateTransitionOut(bool realTime = false) { await Task.CompletedTask; }
 
-        public abstract void SetTransitionState(bool status);
+        public virtual void SetTransitionState(bool status) { }
 
         public abstract float GetDuration();
 

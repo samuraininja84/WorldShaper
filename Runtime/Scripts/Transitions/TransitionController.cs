@@ -1,12 +1,11 @@
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
-using WorldShaper.Injection;
 
 namespace WorldShaper
 {
     [AddComponentMenu("World Shaper/Transitions/Transition Controller")]
-    public class TransitionController : TransitionAnimation, IDependencyProvider
+    public class TransitionController : MonoBehaviour, ITransitionController
     {
         [Header("Transition Camera")]
         public Camera transitionCamera;
@@ -18,63 +17,7 @@ namespace WorldShaper
         [Header("Available Transitions")]
         public List<TransitionAnimation> availableTransitions;
 
-        [Provide]
-        public TransitionController ProvideController()
-        {
-            Transistor.controller = this;
-            return this;
-        }
-
-        public override async Task AnimateTransitionIn(bool realTime = false)
-        {
-            // Set the in transition state to true before starting the in transition
-            inTransition.SetTransitionState(true);
-
-            // Enable the transition camera if it exists
-            if (transitionCamera != null)
-            {
-                // Enable the transition camera
-                transitionCamera.gameObject.SetActive(true);
-
-                // Try to get the main camera, and if it exists, copy its position and rotation to the transition camera
-                var mainCamera = Camera.main;
-
-                // Copy the main camera position and rotation to the transition camera
-                if (mainCamera != null) CopyCameraSettings(Camera.main);
-            }
-
-            // Await the in transition animation
-            await inTransition.AnimateTransitionIn(realTime);
-        }
-
-        public override async Task AnimateTransitionOut(bool realTime = false)
-        {
-            // Set the in transition state to false before starting the out transition
-            inTransition.SetTransitionState(false);
-
-            // Enable the transition camera if it exists
-            if (transitionCamera != null)
-            {
-                // Enable the transition camera
-                transitionCamera.gameObject.SetActive(true);
-
-                // Try to get the main camera, and if it exists, copy its position and rotation to the transition camera
-                var mainCamera = Camera.main;
-
-                // Copy the main camera position and rotation to the transition camera
-                if (mainCamera != null) CopyCameraSettings(Camera.main);
-            }
-
-            // Await the out transition animation
-            await outTransition.AnimateTransitionOut(realTime);
-
-            // Disable the transition camera if it exists
-            if (transitionCamera != null) transitionCamera.enabled = false;
-        }
-
-        public override void SetTransitionState(bool status) { }
-
-        public override float GetDuration() => Mathf.Max(inTransition.GetDuration(), outTransition.GetDuration());
+        public void Awake() => Transistor.controller = this;
 
         public void SetInTransition(TransitionAnimation transition) => inTransition = transition;
 
@@ -109,14 +52,61 @@ namespace WorldShaper
             return transition != null;
         }
 
-        public TransitionAnimation GetTransition(string name) => availableTransitions.Find(t => t.name.Equals(name));
+        public virtual async Task AnimateTransitionIn(bool realTime = false)
+        {
+            // Set the in transition state to true before starting the in transition
+            inTransition.SetTransitionState(true);
 
-        public TransitionAnimation GetTransition(int index) => availableTransitions[index];
+            // Enable the transition camera if it exists
+            if (transitionCamera != null)
+            {
+                // Enable the transition camera
+                transitionCamera.gameObject.SetActive(true);
+
+                // Try to get the main camera, and if it exists, copy its position and rotation to the transition camera
+                var mainCamera = Camera.main;
+
+                // Copy the main camera position and rotation to the transition camera
+                if (mainCamera != null) CopyCameraSettings(Camera.main);
+            }
+
+            // Await the in transition animation
+            await inTransition.AnimateTransitionIn(realTime);
+        }
+
+        public virtual async Task AnimateTransitionOut(bool realTime = false)
+        {
+            // Set the in transition state to false before starting the out transition
+            inTransition.SetTransitionState(false);
+
+            // Enable the transition camera if it exists
+            if (transitionCamera != null)
+            {
+                // Enable the transition camera
+                transitionCamera.gameObject.SetActive(true);
+
+                // Try to get the main camera, and if it exists, copy its position and rotation to the transition camera
+                var mainCamera = Camera.main;
+
+                // Copy the main camera position and rotation to the transition camera
+                if (mainCamera != null) CopyCameraSettings(Camera.main);
+            }
+
+            // Await the out transition animation
+            await outTransition.AnimateTransitionOut(realTime);
+
+            // Disable the transition camera if it exists
+            if (transitionCamera != null) transitionCamera.enabled = false;
+        }
+
+        public virtual float GetDuration() => Mathf.Max(inTransition.GetDuration(), outTransition.GetDuration());
 
         private void CopyCameraSettings(Camera camera)
         {
             transitionCamera.transform.SetPositionAndRotation(camera.transform.position, camera.transform.rotation);
             transitionCamera.fieldOfView = camera.fieldOfView;
         }
+
+        private void OnDestroy() => Transistor.controller = null;
     }
 }

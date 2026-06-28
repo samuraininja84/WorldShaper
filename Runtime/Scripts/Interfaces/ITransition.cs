@@ -7,5 +7,7 @@ namespace WorldShaper
         Task AnimateTransitionIn(bool realTime = false);
 
         Task AnimateTransitionOut(bool realTime = false);
+
+        float GetDuration();
     }
 }
