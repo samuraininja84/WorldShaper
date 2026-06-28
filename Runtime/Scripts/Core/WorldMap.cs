@@ -30,6 +30,11 @@ namespace WorldShaper
         [Header("Areas")]
         public List<AreaHandle> persistentAreas = new();
         public List<AreaHandle> registeredAreas = new();
+
+        /// <summary>
+        /// A list of persistent scenes associated with the persistent areas.
+        /// </summary>
+        /// <remarks>Used so that we don't have to iterate through the persistent areas every time we need to get the persistent scenes.</remarks>
         private List<SceneReference> persistentScenes = new();
 
         /// <summary>
