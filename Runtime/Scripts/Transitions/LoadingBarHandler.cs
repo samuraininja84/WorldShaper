@@ -13,14 +13,14 @@ namespace WorldShaper
 
         private void OnEnable()
         {
-            worldMap.transitionProgress.OnProgressUpdated += OnProgressed;
-            worldMap.transitionProgress.OnCompletion += OnCompletion;
+            Transistor.transitionProgress.OnProgressUpdated += OnProgressed;
+            Transistor.transitionProgress.OnCompletion += OnCompletion;
         }
 
         private void OnDisable()
         {
-            worldMap.transitionProgress.OnProgressUpdated -= OnProgressed;
-            worldMap.transitionProgress.OnCompletion -= OnCompletion;
+            Transistor.transitionProgress.OnProgressUpdated -= OnProgressed;
+            Transistor.transitionProgress.OnCompletion -= OnCompletion;
         }
 
         /// <summary>

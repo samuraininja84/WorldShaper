@@ -11,15 +11,15 @@ namespace WorldShaper
         private void OnEnable()
         {
             // Subscribe to transition events
-            WorldMap.OnTransitionStarted += OnTransitionStarted.Invoke;
-            WorldMap.OnTransitionCompleted += OnTransitionCompleted.Invoke;
+            Transistor.OnTransitionStarted += OnTransitionStarted.Invoke;
+            Transistor.OnTransitionCompleted += OnTransitionCompleted.Invoke;
         }
 
         private void OnDisable()
         {
             // Unsubscribe from transition
-            WorldMap.OnTransitionStarted -= OnTransitionStarted.Invoke;
-            WorldMap.OnTransitionCompleted -= OnTransitionCompleted.Invoke;
+            Transistor.OnTransitionStarted -= OnTransitionStarted.Invoke;
+            Transistor.OnTransitionCompleted -= OnTransitionCompleted.Invoke;
         }
     }
 }
