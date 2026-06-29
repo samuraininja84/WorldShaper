@@ -51,140 +51,10 @@ namespace WorldShaper
         /// </summary>
         public static WorldMap WorldMap => WorldMap.Instance;
 
-        // Default transition settings, to be overridden by the user if desired.
-        // These settings control the behavior of transitions between areas, including delay and whether to reload scenes or unload unused assets.
-
-        public const float TransitionDelay = 2f;
-        public const bool RealtimeTransitions = false;
-        public const bool ReloadActiveScene = false;
-        public const bool ReloadAdditiveScenes = false;
-        public const bool UnloadUnusedAssets = true;
-
-        #region Transition Animation Methods
-
-        /// <summary>
-        /// Initiates the "transition in" animation for the current state.
-        /// </summary>
-        /// <param name="realTime">A value indicating whether the animation should be performed in real-time.  If <see langword="true"/>, the animation will respect real-time constraints; otherwise, it may use scaled time.</param>
-        /// <returns>A <see cref="Task"/> that represents the asynchronous operation. The task completes when the transition animation finishes.</returns>
-        public static Task TransitionIn(bool realTime = false) => controller.AnimateTransitionIn(realTime);
-
-        /// <summary>
-        /// Initiates the transition-out animation.
-        /// </summary>
-        /// <param name="realTime">A value indicating whether the transition should be performed in real-time. If <see langword="true"/>, the transition respects real-time constraints; otherwise, it may use scaled time.</param>
-        /// <returns>A <see cref="Task"/> that represents the asynchronous operation of the transition-out animation.</returns>
-        public static Task TransitionOut(bool realTime = false) => controller.AnimateTransitionOut(realTime);
-
-        /// <summary>
-        /// Sets the transition-in animation to be used during area transitions.
-        /// </summary>
-        /// <param name="identifier">The identifier of the transition animation to set for the transition-in phase.</param>
-        public static void SetTransitionIn(TransitionIdentifier identifier) => controller.SetInTransition(identifier);
-
-        /// <summary>
-        /// Sets the transition-out animation to be used during area transitions.
-        /// </summary>
-        /// <param name="identifier">The identifier of the transition animation to set for the transition-out phase.</param>
-        public static void SetTransitionOut(TransitionIdentifier identifier) => controller.SetOutTransition(identifier);
-
-        #endregion
-
-        #region Transition Methods
-
-        /// <summary>
-        /// Switches to the endpoint area defined by the specified connection.
-        /// </summary>
-        /// <remarks>This method uses the provided <paramref name="connection"/> to determine the destination area and configures the necessary passage data before initiating the transition.</remarks>
-        /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
-        public static async Task SwitchToDestination(Connection connection) => await TransitionTo(TransitionInfo.Builder.FromDestination(connection));
-
-        /// <summary>
-        /// Switches the current scene to the specified area at the given connection index.
-        /// </summary>
-        /// <remarks>This method initiates a scene transition to the specified area. Ensure that the <paramref name="areaName"/> corresponds to a valid scene and that the connection index is within the valid range for the area's connections.</remarks>
-        /// <param name="areaName">The name of the area to switch to. This must match the name of an existing scene.</param>
-        /// <param name="connectionIndex">The index of the connection point to use when transitioning to the new area. Defaults to <see langword="0"/>.</param>
-        public static async Task SwitchToArea(string areaName, int connectionIndex = 0) => await TransitionTo(TransitionInfo.Builder.FromArea(WorldMap.GetArea(areaName).GetConnection(connectionIndex)));
-
-        /// <summary>
-        /// Centralized method to handle area switching logic based around a given connection.
-        /// </summary>
-        /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
-        /// <param name="useTransition">True to use transition animations; otherwise, false.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public static async Task SwitchToArea(Connection connection) => await TransitionTo(TransitionInfo.Builder.FromArea(connection));
-
-        /// <summary>
-        /// Performs an asynchronous transition to the specified area, including transition animations and event signaling.
-        /// </summary>
-        /// <remarks>
-        /// This method triggers transition animations and signals events before and after the area switch. 
-        /// It also supports optional delays and asset management during the transition. 
-        /// Await the returned task to ensure the transition is fully complete before proceeding.
-        /// </remarks>
-        /// <param name="area">The handle representing the target area to switch to. Cannot be null.</param>
-        /// <returns>A task that represents the asynchronous operation. The task completes when the area transition and all related events are finished.</returns>
-        public static async Task SwitchToArea(AreaHandle area) => await TransitionTo(TransitionInfo.Builder.FromArea(area));
-
-        /// <summary>
-        /// Reloads the current area using the current transition information.
-        /// </summary>
-        /// <returns>A task that represents the asynchronous operation. The task completes when the area reload and all related events are finished.</returns>
-        public static async Task ReloadArea() => await TransitionTo(currentTransition);
-
-        /// <summary>
-        /// Transitions to the specified area using the provided transition information.
-        /// </summary>
-        /// <param name="transition">The transition information to use for the area transition.</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        public static async Task TransitionTo(TransitionInfo transition) 
-        { 
-            // Invoke the OnTransitionStarted action to signal the start of the transition
-            OnTransitionStarted.Invoke();
-
-            // Wait for the specified delay before loading the new area
-            if (transition.Delays.x > 0f) await Task.Delay(TimeSpan.FromSeconds(transition.Delays.x));
-
-            // If there isn't a transition in animation specified, skip the transition in step
-            if (transition.TransitionIn != null)
-            {
-                // Set the transition in animation in the controller
-                SetTransitionIn(transition.TransitionIn);
-
-                // Perform the transition in animation with the specified real-time option
-                await TransitionIn(transition.Options.HasFlag(TransitionInfo.Settings.Realtime));
-            }
-
-            // Switch to the new area using the connection and transition settings
-            await Execute(transition);
-
-            // Wait for the specified delay before loading the new area
-            if (transition.Delays.y > 0f) await Task.Delay(TimeSpan.FromSeconds(transition.Delays.y));
-
-            // If there isn't a transition out animation specified, skip the transition out step
-            if (transition.TransitionOut != null)
-            {
-                // Set the transition out animation in the controller
-                SetTransitionOut(transition.TransitionOut);
-
-                // Perform the transition out animation with the specified real-time option
-                await TransitionOut(transition.Options.HasFlag(TransitionInfo.Settings.Realtime));
-            }   
-
-            // Await the OnEnter event of the world map after the transition is complete
-            await OnEnter(transition.Area, transition.Connection.Name);
-
-            // Invoke the OnTransitionCompleted action to signal the completion of the transition
-            OnTransitionCompleted.Invoke();
-        }
-
-        #endregion
-
         // To Do: Cleanup the handling for the ILocationPointer Methods, as they are currently too long and redundant.
         // Will also need to refactor the handling for the ILocationPointer methods to use a more flexible system, allowing for custom location management and interaction.
 
-        #region Location Management Methods
+        #region Location Management & Execution Methods
 
         /// <summary>
         /// Registers an <see cref="ILocationPointer"/> instance for tracking and management.
@@ -224,10 +94,6 @@ namespace WorldShaper
             // Returns false if no matching location is found
             return false;
         }
-
-        #endregion
-
-        #region Execution Methods
 
         /// <summary>
         /// Initializes all location objects in the specified area and prepares them for interaction.
@@ -351,6 +217,127 @@ namespace WorldShaper
 
             // Invoke the OnActivate method to handle activation logic
             await OnActivate(handle, transition.Connection.Name);
+        }
+
+        #endregion
+
+        #region Transition Animation Methods
+
+        /// <summary>
+        /// Initiates the "transition in" animation for the current state.
+        /// </summary>
+        /// <param name="realTime">A value indicating whether the animation should be performed in real-time.  If <see langword="true"/>, the animation will respect real-time constraints; otherwise, it may use scaled time.</param>
+        /// <returns>A <see cref="Task"/> that represents the asynchronous operation. The task completes when the transition animation finishes.</returns>
+        public static Task TransitionIn(bool realTime = false) => controller.AnimateTransitionIn(realTime);
+
+        /// <summary>
+        /// Initiates the transition-out animation.
+        /// </summary>
+        /// <param name="realTime">A value indicating whether the transition should be performed in real-time. If <see langword="true"/>, the transition respects real-time constraints; otherwise, it may use scaled time.</param>
+        /// <returns>A <see cref="Task"/> that represents the asynchronous operation of the transition-out animation.</returns>
+        public static Task TransitionOut(bool realTime = false) => controller.AnimateTransitionOut(realTime);
+
+        /// <summary>
+        /// Sets the transition-in animation to be used during area transitions.
+        /// </summary>
+        /// <param name="identifier">The identifier of the transition animation to set for the transition-in phase.</param>
+        public static void SetTransitionIn(TransitionIdentifier identifier) => controller.SetInTransition(identifier);
+
+        /// <summary>
+        /// Sets the transition-out animation to be used during area transitions.
+        /// </summary>
+        /// <param name="identifier">The identifier of the transition animation to set for the transition-out phase.</param>
+        public static void SetTransitionOut(TransitionIdentifier identifier) => controller.SetOutTransition(identifier);
+
+        #endregion
+
+        #region Transition Methods
+
+        /// <summary>
+        /// Switches to the endpoint area defined by the specified connection.
+        /// </summary>
+        /// <remarks>This method uses the provided <paramref name="connection"/> to determine the destination area and configures the necessary passage data before initiating the transition.</remarks>
+        /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
+        public static async Task SwitchToDestination(Connection connection) => await TransitionTo(TransitionInfo.Builder.FromDestination(connection));
+
+        /// <summary>
+        /// Switches the current scene to the specified area at the given connection index.
+        /// </summary>
+        /// <remarks>This method initiates a scene transition to the specified area. Ensure that the <paramref name="areaName"/> corresponds to a valid scene and that the connection index is within the valid range for the area's connections.</remarks>
+        /// <param name="areaName">The name of the area to switch to. This must match the name of an existing scene.</param>
+        /// <param name="connectionIndex">The index of the connection point to use when transitioning to the new area. Defaults to <see langword="0"/>.</param>
+        public static async Task SwitchToArea(string areaName, int connectionIndex = 0) => await TransitionTo(TransitionInfo.Builder.FromArea(WorldMap.GetArea(areaName).GetConnection(connectionIndex)));
+
+        /// <summary>
+        /// Centralized method to handle area switching logic based around a given connection.
+        /// </summary>
+        /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
+        /// <param name="useTransition">True to use transition animations; otherwise, false.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public static async Task SwitchToArea(Connection connection) => await TransitionTo(TransitionInfo.Builder.FromArea(connection));
+
+        /// <summary>
+        /// Performs an asynchronous transition to the specified area, including transition animations and event signaling.
+        /// </summary>
+        /// <remarks>
+        /// This method triggers transition animations and signals events before and after the area switch. 
+        /// It also supports optional delays and asset management during the transition. 
+        /// Await the returned task to ensure the transition is fully complete before proceeding.
+        /// </remarks>
+        /// <param name="area">The handle representing the target area to switch to. Cannot be null.</param>
+        /// <returns>A task that represents the asynchronous operation. The task completes when the area transition and all related events are finished.</returns>
+        public static async Task SwitchToArea(AreaHandle area) => await TransitionTo(TransitionInfo.Builder.FromArea(area));
+
+        /// <summary>
+        /// Reloads the current area using the current transition information.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation. The task completes when the area reload and all related events are finished.</returns>
+        public static async Task ReloadArea() => await TransitionTo(currentTransition);
+
+        /// <summary>
+        /// Transitions to the specified area using the provided transition information.
+        /// </summary>
+        /// <param name="transition">The transition information to use for the area transition.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public static async Task TransitionTo(TransitionInfo transition) 
+        { 
+            // Invoke the OnTransitionStarted action to signal the start of the transition
+            OnTransitionStarted.Invoke();
+
+            // Wait for the specified delay before loading the new area
+            if (transition.Delays.x > 0f) await Task.Delay(TimeSpan.FromSeconds(transition.Delays.x));
+
+            // If there isn't a transition in animation specified, skip the transition in step
+            if (transition.TransitionIn != null)
+            {
+                // Set the transition in animation in the controller
+                SetTransitionIn(transition.TransitionIn);
+
+                // Perform the transition in animation with the specified real-time option
+                await TransitionIn(transition.Options.HasFlag(TransitionInfo.Settings.Realtime));
+            }
+
+            // Switch to the new area using the connection and transition settings
+            await Execute(transition);
+
+            // Wait for the specified delay before loading the new area
+            if (transition.Delays.y > 0f) await Task.Delay(TimeSpan.FromSeconds(transition.Delays.y));
+
+            // If there isn't a transition out animation specified, skip the transition out step
+            if (transition.TransitionOut != null)
+            {
+                // Set the transition out animation in the controller
+                SetTransitionOut(transition.TransitionOut);
+
+                // Perform the transition out animation with the specified real-time option
+                await TransitionOut(transition.Options.HasFlag(TransitionInfo.Settings.Realtime));
+            }   
+
+            // Await the OnEnter event of the world map after the transition is complete
+            await OnEnter(transition.Area, transition.Connection.Name);
+
+            // Invoke the OnTransitionCompleted action to signal the completion of the transition
+            OnTransitionCompleted.Invoke();
         }
 
         #endregion
