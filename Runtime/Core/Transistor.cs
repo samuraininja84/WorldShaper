@@ -66,49 +66,6 @@ namespace WorldShaper
         public const bool ReloadAdditiveScenes = false;
         public const bool UnloadUnusedAssets = true;
 
-        #region Location Methods
-
-        /// <summary>
-        /// Registers an <see cref="ILocationPointer"/> instance for tracking and management.
-        /// </summary>
-        /// <remarks>If the specified <paramref name="location"/> is already registered, it will not be added again.</remarks>
-        /// <param name="location">The <see cref="ILocationPointer"/> instance to register. Cannot be null.</param>
-        public static void Register(ILocationPointer location) => locations.Add(InterfaceReference<ILocationPointer>.FromValue(location));
-
-        /// <summary>
-        /// Removes the specified location object from the collection of registered objects.
-        /// </summary>
-        /// <remarks>This method removes all references to the specified object from the collection. If the object is not found, no action is taken.</remarks>
-        /// <param name="location">The location object to deregister. Cannot be <see langword="null"/>.</param>
-        public static void Unregister(ILocationPointer location) => locations.RemoveAll(reference => reference.Value == location);
-
-        /// <summary>
-        /// Tries to retrieve a location object by its endpoint.
-        /// </summary>
-        /// <param name="endPoint">The endpoint string to search for.</param>
-        /// <param name="location">The output parameter that will hold the found location object if successful; otherwise, null.</param>
-        /// <returns>A boolean value indicating whether a matching location object was found.</returns>
-        private static bool TryGetLocation(string endPoint, out ILocationPointer location)
-        {
-            // Try to get the location from the collection, if successful set the out parameter and return true
-            if (locations.TryGetLocation(endPoint, out ILocationPointer reference))
-            {
-                // Get the location from the reference
-                location = reference;
-
-                // Return true if a matching location is found
-                return true;
-            }
-
-            // Set the out parameter to null if no matching location is found
-            location = default;
-
-            // Returns false if no matching location is found
-            return false;
-        }
-
-        #endregion
-
         #region Transition Animation Methods
 
         /// <summary>
@@ -141,144 +98,6 @@ namespace WorldShaper
 
         // To Do: Refactor the following methods to use a more flexible transition system, allowing for custom transition animations and effects.
         // Will also cut down on the number of methods in this class, as many of them are redundant or too lengthy.
-
-        #region Execution Methods
-
-        /// <summary>
-        /// Initializes all location objects in the specified area and prepares them for interaction.
-        /// </summary>
-        /// <remarks>This method retrieves all location objects in the scene associated with the specified area handle and initializes them asynchronously. 
-        /// If the area handle has no connections, the method logs a debug message and exits without performing any initialization. 
-        /// The connection matching the end point is disabled for interaction during this process.
-        /// </remarks>
-        /// <param name="handle">The <see cref="AreaHandle"/> representing the area to initialize. Must contain valid connections.</param>
-        /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
-        public static async Task Intialize(AreaHandle handle)
-        {
-            // If the area handle for the loaded scene has no connections, log a debug message and return, ignoring the scene
-            if (!handle.HasConnections())
-            {
-                // Log a debug message if debugging is enabled
-                Debug.Log("Area Handle has no connections, ignoring scene for player relocation.");
-
-                // Return early if the scene is ignored
-                return;
-            }
-
-            // Set the current area to the loaded handle
-            currentArea = handle;
-
-            // Clear the existing locations list
-            locations.Clear();
-
-            // Get all locations in the scene if not already set
-            locations = ILocationPointerExtensions.GetLocationPointers();
-
-            // Convert the locations to a list of initialization tasks
-            var operations = locations.Select(connectable => connectable.Value.Initialize());
-
-            // Await the completion of all initialization tasks
-            await operations.Combine();
-        }
-
-        /// <summary>
-        /// Activates the connection associated with the specified endpoint, disabling interaction during the activation
-        /// process.
-        /// </summary>
-        /// <remarks>This method retrieves the location object corresponding to the endpoint, disables its interaction, and then performs the activation asynchronously.</remarks>
-        /// <param name="handle">The <see cref="AreaHandle"/> representing the area being entered. Must contain valid connections.</param>
-        /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
-        public static async Task OnActivate(AreaHandle handle)
-        {
-            // If the area handle for the loaded scene has no connections ignore the scene for player relocation and return
-            if (!handle.HasConnections()) return;
-
-            // Find the connection in the area handle that matches the end point and disable interaction
-            if (TryGetLocation(EndPoint, out ILocationPointer connectable)) currentLocation.SetValue(connectable);
-
-            // Check if the location is not null
-            if (currentLocation.HasValue)
-            {
-                // Disable the location to prevent interaction
-                connectable.SetActive(false);
-
-                // Add the activation task for the matching location
-                await connectable.Activate();
-            }
-            else
-            {
-                // Return a completed task if no matching location is found
-                await Task.CompletedTask;
-            }
-        }
-
-        /// <summary>
-        /// Handles the logic for entering a connection point in the current area.
-        /// </summary>
-        /// <remarks>
-        /// This method locates the location object associated with the specified endpoint and triggers its entry logic asynchronously. 
-        /// If no matching location is found, the method completes without performing any action.
-        /// </remarks>
-        /// <param name="handle">The <see cref="AreaHandle"/> representing the area being entered. Must contain valid connections.</param>
-        /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
-        public static async Task OnEnter(AreaHandle handle)
-        {
-            // If the area handle for the loaded scene has no connections ignore the scene for player relocation and return
-            if (!handle.HasConnections()) return;
-
-            // Find the connection in the area handle that matches the end point and disable interaction
-            if (TryGetLocation(EndPoint, out ILocationPointer connectable)) currentLocation.SetValue(connectable);
-
-            // Check if the location is not null
-            if (currentLocation.HasValue)
-            {
-                // Await the OnEntry task for the matching location
-                await connectable.Enter();
-            }
-            else
-            {
-                // Return a completed task if no matching location is found
-                await Task.CompletedTask;
-            }
-        }
-
-        /// <summary>
-        /// Executes a transition between areas, including optional animations and a delay.
-        /// </summary>
-        /// <remarks>
-        /// This method performs the following steps in sequence:
-        /// <list type="number">
-        ///     <item>Invokes the <see cref="OnTransitionStarted"/> action to signal the start of the transition.</item>
-        ///     <item>Loads the new area using the <see cref="AreaHandleDispatcher"/>.</item>
-        ///     <item>Initializes locations for the loaded area.</item>
-        ///     <item>Invokes the <see cref="OnActivate"/> method to handle activation logic.</item>
-        ///     <item>Invokes the <see cref="OnTransitionCompleted"/> action to signal the completion of the transition.</item>
-        /// </list>
-        /// </remarks>
-        /// <param name="handle">The <see cref="AreaHandle"/> representing the area to be loaded.</param>
-        /// <param name="reloadActiveScene">Indicates whether to reload the active scene during the transition. Defaults to <see langword="false"/>.</param>
-        /// <param name="reloadAdditiveScenes">Indicates whether to reload additive scenes during the transition. Defaults to <see langword="false"/>.</param>
-        /// <param name="unloadUnusedAssets">Indicates whether to unload unused assets after the transition. Defaults to <see langword="false"/>.</param>
-        /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
-        public static async Task Execute(AreaHandle handle, bool reloadActiveScene = false, bool reloadAdditiveScenes = false, bool unloadUnusedAssets = false)
-        {
-            // Invoke the OnTransitionStarted action to signal the start of the transition
-            OnTransitionStarted.Invoke();
-
-            // Load the new area using the AreaHandleDispatcher
-            await AreaHandleDispatcher.LoadAreas(handle, transitionProgress, reloadActiveScene, reloadAdditiveScenes, unloadUnusedAssets);
-
-            // Initialize locations for the loaded area
-            await Intialize(handle);
-
-            // Invoke the OnActivate method to handle activation logic
-            await OnActivate(handle);
-
-            // Invoke the OnTransitionCompleted action to signal the completion of the transition
-            OnTransitionCompleted.Invoke();
-        }
-
-        #endregion
 
         #region Transition Methods
 
@@ -338,97 +157,6 @@ namespace WorldShaper
         #endregion
 
         #region Scene Switching Methods
-
-        /// <summary>
-        /// Switches to the endpoint area defined by the specified connection.
-        /// </summary>
-        /// <remarks>This method uses the provided <paramref name="connection"/> to determine the destination area and configures the necessary passage data before initiating the transition.</remarks>
-        /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
-        public static async void SwitchToDestination(Connection connection, bool useTransition = true) => await HandleDestinationSwitch(connection, useTransition);
-
-        /// <summary>
-        /// Switches to the endpoint area of the specified area handle and connection name.
-        /// </summary>
-        /// <remarks>This method retrieves the connection associated with the specified area name from the provided <paramref name="areaHandle"/>, configures the passage data for the transition, and initiates the transition.</remarks>
-        /// <param name="areaHandle">The handle representing the current area context. Must not be null.</param>
-        /// <param name="connectionName">The name of the target area to switch to. Must correspond to a valid connection within the <paramref name="areaHandle"/>.</param>
-        public static async void SwitchToDestination(AreaHandle areaHandle, string connectionName, bool useTransition = true) => await HandleDestinationSwitch(areaHandle.GetConnection(connectionName), useTransition);
-
-        /// <summary>
-        /// Switches the endpoint area of the specified area name and connection index.
-        /// </summary>
-        /// <remarks>This method initiates a scene transition to the specified area. Ensure that the <paramref name="areaName"/> corresponds to a valid scene and that the connection index is within the valid range for the area's connections.</remarks>
-        /// <param name="areaName">The name of the area to switch to. This must match the name of an existing scene.</param>
-        /// <param name="connectionIndex">The index of the connection point to use when transitioning to the new area. Defaults to <see langword="0"/>.</param>
-        public static async void SwitchToDestination(string areaName, int connectionIndex = 0, bool useTransition = true) => await HandleDestinationSwitch(WorldMap.GetArea(areaName).GetConnection(connectionIndex), useTransition);
-
-        /// <summary>
-        /// Switches to the endpoint area of the specified area index and connection index.
-        /// </summary>
-        /// <remarks>
-        /// This method initiates a scene transition to the specified area using the provided parameters. Ensure that <paramref name="areaIndex"/> corresponds to a valid area handle; otherwise, the behavior is undefined.</remarks>
-        /// <param name="areaIndex">The index of the area to switch to. Must correspond to a valid area handle.</param>
-        /// <param name="connectionIndex">The index of the connection point within the area. Defaults to <see langword="0"/>. Determines the starting and ending passage points for the transition.</param>
-        public static async void SwitchToDestination(int areaIndex, int connectionIndex = 0, bool useTransition = true) => await HandleDestinationSwitch(WorldMap.GetArea(areaIndex).GetConnection(connectionIndex), useTransition);
-
-        /// <summary>
-        /// Centralized method to handle destination switching logic based around a given connection.
-        /// </summary>
-        /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
-        /// <param name="useTransition">True to use transition animations; otherwise, false.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        private static async Task HandleDestinationSwitch(Connection connection, bool useTransition = true)
-        {
-            // Invoke the OnTransitionStarted action to signal the start of the transition
-            OnTransitionStarted.Invoke();
-
-            // Get the destination connection, which is the endpoint of the provided connection if it exists; otherwise, it defaults to the original connection
-            Connection destination = connection.GetEndpoint() ?? connection;
-
-            // Perform the transition in animation before switching areas, if specified
-            if (useTransition)
-            {
-                // Get the transition in animation from the connection
-                if (destination != connection) SetTransitionIn(connection.transitionOut);
-                else SetTransitionIn(connection.transitionIn);
-
-                // Wait for the transition in animation to complete
-                await TransitionIn(RealtimeTransitions);
-            }
-
-            // Get the target area handle by switching to the destination defined by the connection
-            AreaHandle targetArea = SwitchToDestination(connection);
-
-            // Switch to the new area using the specified connection and transition settings
-            await Execute(targetArea, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
-
-            // Wait for the specified delay before loading the new area
-            if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
-
-            // Perform the transition out animation after switching areas, if specified
-            if (useTransition)
-            {
-                // If the endpoint connection exists, use its transition in animation for the transition out phase; otherwise, use the original connection's transition out animation
-                if (destination != connection) SetTransitionOut(destination.transitionIn);
-                else SetTransitionOut(connection.transitionOut);
-
-                // Wait for the transition out animation to complete
-                await TransitionOut(RealtimeTransitions);
-            }
-
-            // Await the OnEnter event of the world map after the transition is complete
-            await OnEnter(targetArea);
-
-            // Invoke the OnTransitionCompleted action to signal the completion of the transition
-            OnTransitionCompleted.Invoke();
-        }
-
-        /// <summary>
-        /// Switches the current scene to the specified area using the provided connection.
-        /// </summary>
-        /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
-        /// <param name="useTransition">True to use transition animations; otherwise, false.</param>
-        public static async void SwitchToArea(Connection connection, bool useTransition = true) => await HandleAreaSwitch(connection, useTransition);
 
         /// <summary>
         /// Switches the current scene to the specified area at the given connection index.
@@ -587,6 +315,186 @@ namespace WorldShaper
 
             //// Invoke the OnTransitionCompleted action to signal the completion of the transition
             //OnTransitionCompleted.Invoke();
+        }
+
+        #endregion
+
+        // To Do: Cleanup the handling for the ILocationPointer Methods, as they are currently too long and redundant.
+        // Will also need to refactor the handling for the ILocationPointer methods to use a more flexible system, allowing for custom location management and interaction.
+
+        #region Execution Methods
+
+        /// <summary>
+        /// Registers an <see cref="ILocationPointer"/> instance for tracking and management.
+        /// </summary>
+        /// <remarks>If the specified <paramref name="location"/> is already registered, it will not be added again.</remarks>
+        /// <param name="location">The <see cref="ILocationPointer"/> instance to register. Cannot be null.</param>
+        public static void Register(ILocationPointer location) => locations.Add(InterfaceReference<ILocationPointer>.FromValue(location));
+
+        /// <summary>
+        /// Removes the specified location object from the collection of registered objects.
+        /// </summary>
+        /// <remarks>This method removes all references to the specified object from the collection. If the object is not found, no action is taken.</remarks>
+        /// <param name="location">The location object to deregister. Cannot be <see langword="null"/>.</param>
+        public static void Unregister(ILocationPointer location) => locations.RemoveAll(reference => reference.Value == location);
+
+        /// <summary>
+        /// Tries to retrieve a location object by its endpoint.
+        /// </summary>
+        /// <param name="endPoint">The endpoint string to search for.</param>
+        /// <param name="location">The output parameter that will hold the found location object if successful; otherwise, null.</param>
+        /// <returns>A boolean value indicating whether a matching location object was found.</returns>
+        private static bool TryGetLocation(string endPoint, out ILocationPointer location)
+        {
+            // Try to get the location from the collection, if successful set the out parameter and return true
+            if (locations.TryGetLocation(endPoint, out ILocationPointer reference))
+            {
+                // Get the location from the reference
+                location = reference;
+
+                // Return true if a matching location is found
+                return true;
+            }
+
+            // Set the out parameter to null if no matching location is found
+            location = default;
+
+            // Returns false if no matching location is found
+            return false;
+        }
+
+        /// <summary>
+        /// Initializes all location objects in the specified area and prepares them for interaction.
+        /// </summary>
+        /// <remarks>This method retrieves all location objects in the scene associated with the specified area handle and initializes them asynchronously. 
+        /// If the area handle has no connections, the method logs a debug message and exits without performing any initialization. 
+        /// The connection matching the end point is disabled for interaction during this process.
+        /// </remarks>
+        /// <param name="handle">The <see cref="AreaHandle"/> representing the area to initialize. Must contain valid connections.</param>
+        /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public static async Task Intialize(AreaHandle handle)
+        {
+            // If the area handle for the loaded scene has no connections, log a debug message and return, ignoring the scene
+            if (!handle.HasConnections())
+            {
+                // Log a debug message if debugging is enabled
+                Debug.Log("Area Handle has no connections, ignoring scene for player relocation.");
+
+                // Return early if the scene is ignored
+                return;
+            }
+
+            // Set the current area to the loaded handle
+            currentArea = handle;
+
+            // Clear the existing locations list
+            locations.Clear();
+
+            // Get all locations in the scene if not already set
+            locations = ILocationPointerExtensions.GetLocationPointers();
+
+            // Convert the locations to a list of initialization tasks
+            var operations = locations.Select(connectable => connectable.Value.Initialize());
+
+            // Await the completion of all initialization tasks
+            await operations.Combine();
+        }
+
+        /// <summary>
+        /// Activates the connection associated with the specified endpoint, disabling interaction during the activation
+        /// process.
+        /// </summary>
+        /// <remarks>This method retrieves the location object corresponding to the endpoint, disables its interaction, and then performs the activation asynchronously.</remarks>
+        /// <param name="handle">The <see cref="AreaHandle"/> representing the area being entered. Must contain valid connections.</param>
+        /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public static async Task OnActivate(AreaHandle handle)
+        {
+            // If the area handle for the loaded scene has no connections ignore the scene for player relocation and return
+            if (!handle.HasConnections()) return;
+
+            // Find the connection in the area handle that matches the end point and disable interaction
+            if (TryGetLocation(EndPoint, out ILocationPointer connectable)) currentLocation.SetValue(connectable);
+
+            // Check if the location is not null
+            if (currentLocation.HasValue)
+            {
+                // Disable the location to prevent interaction
+                connectable.SetActive(false);
+
+                // Add the activation task for the matching location
+                await connectable.Activate();
+            }
+            else
+            {
+                // Return a completed task if no matching location is found
+                await Task.CompletedTask;
+            }
+        }
+
+        /// <summary>
+        /// Handles the logic for entering a connection point in the current area.
+        /// </summary>
+        /// <remarks>
+        /// This method locates the location object associated with the specified endpoint and triggers its entry logic asynchronously. 
+        /// If no matching location is found, the method completes without performing any action.
+        /// </remarks>
+        /// <param name="handle">The <see cref="AreaHandle"/> representing the area being entered. Must contain valid connections.</param>
+        /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public static async Task OnEnter(AreaHandle handle)
+        {
+            // If the area handle for the loaded scene has no connections ignore the scene for player relocation and return
+            if (!handle.HasConnections()) return;
+
+            // Find the connection in the area handle that matches the end point and disable interaction
+            if (TryGetLocation(EndPoint, out ILocationPointer connectable)) currentLocation.SetValue(connectable);
+
+            // Check if the location is not null
+            if (currentLocation.HasValue)
+            {
+                // Await the OnEntry task for the matching location
+                await connectable.Enter();
+            }
+            else
+            {
+                // Return a completed task if no matching location is found
+                await Task.CompletedTask;
+            }
+        }
+
+        /// <summary>
+        /// Executes a transition between areas, including optional animations and a delay.
+        /// </summary>
+        /// <remarks>
+        /// This method performs the following steps in sequence:
+        /// <list type="number">
+        ///     <item>Invokes the <see cref="OnTransitionStarted"/> action to signal the start of the transition.</item>
+        ///     <item>Loads the new area using the <see cref="AreaHandleDispatcher"/>.</item>
+        ///     <item>Initializes locations for the loaded area.</item>
+        ///     <item>Invokes the <see cref="OnActivate"/> method to handle activation logic.</item>
+        ///     <item>Invokes the <see cref="OnTransitionCompleted"/> action to signal the completion of the transition.</item>
+        /// </list>
+        /// </remarks>
+        /// <param name="handle">The <see cref="AreaHandle"/> representing the area to be loaded.</param>
+        /// <param name="reloadActiveScene">Indicates whether to reload the active scene during the transition. Defaults to <see langword="false"/>.</param>
+        /// <param name="reloadAdditiveScenes">Indicates whether to reload additive scenes during the transition. Defaults to <see langword="false"/>.</param>
+        /// <param name="unloadUnusedAssets">Indicates whether to unload unused assets after the transition. Defaults to <see langword="false"/>.</param>
+        /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public static async Task Execute(AreaHandle handle, bool reloadActiveScene = false, bool reloadAdditiveScenes = false, bool unloadUnusedAssets = false)
+        {
+            // Invoke the OnTransitionStarted action to signal the start of the transition
+            OnTransitionStarted.Invoke();
+
+            // Load the new area using the AreaHandleDispatcher
+            await AreaHandleDispatcher.LoadAreas(handle, transitionProgress, reloadActiveScene, reloadAdditiveScenes, unloadUnusedAssets);
+
+            // Initialize locations for the loaded area
+            await Intialize(handle);
+
+            // Invoke the OnActivate method to handle activation logic
+            await OnActivate(handle);
+
+            // Invoke the OnTransitionCompleted action to signal the completion of the transition
+            OnTransitionCompleted.Invoke();
         }
 
         #endregion
