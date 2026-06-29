@@ -862,7 +862,7 @@ namespace WorldShaper.Editor
                     bool unfolded = foldouts[Connections.IndexOf(connection)];
 
                     // If the connection is closed and has no destination or endpoint, draw a smaller height
-                    return EditorGUIUtility.singleLineHeight * (unfolded ? connectionClosed ? hasEither ? 7 : 4 : 6 : 1) + (unfolded ? 12 : 5);
+                    return EditorGUIUtility.singleLineHeight * (unfolded ? connectionClosed ? hasEither ? 7 : 4 : 5 : 1) + (unfolded ? 12 : 5);
                 },
 
                 // Define how each element in the list should be drawn
@@ -912,10 +912,9 @@ namespace WorldShaper.Editor
 
                     // Get the properties of the Connection object
                     var type = element.FindProperty(nameof(Connection.connectionType));
-                    var destination = element.FindProperty(nameof(Connection.destinationArea));
+                    var destination = element.FindProperty(nameof(Connection.destination));
                     var transitionIn = element.FindProperty(nameof(Connection.transitionIn));
                     var transitionOut = element.FindProperty(nameof(Connection.transitionOut));
-                    var endpoint = element.FindProperty(nameof(Connection.endpoint));
 
                     #endregion
 
@@ -1028,7 +1027,6 @@ namespace WorldShaper.Editor
 
                         // If the connection is closed, do not allow editing of the destination and endpoint properties
                         if (!connectionClosed) EditorGUI.PropertyField(destinationRect, destination);
-                        if (!connectionClosed) EditorGUI.PropertyField(endpointRect, endpoint);
 
                         #region Connection Action Buttons
 
@@ -1036,7 +1034,7 @@ namespace WorldShaper.Editor
                         var buttonRect = new Rect(rect.x + indent + width + spacing, rect.y + EditorGUIUtility.singleLineHeight + spacing, buttonWidth, EditorGUIUtility.singleLineHeight);
 
                         // Draw a button to select the destination area for the connection, which will highlight the area in the World Traveler window
-                        if (GUI.Button(buttonRect, _selectContent, selectStyle)) SelectAreaHandle(AreaHandles.IndexOf(connection.destinationArea));
+                        if (GUI.Button(buttonRect, _selectContent, selectStyle)) SelectAreaHandle(AreaHandles.IndexOf(connection.destination.Area));
 
                         // Move the buttonRect down for the next button
                         buttonRect.y += EditorGUIUtility.singleLineHeight + spacing;
@@ -1120,13 +1118,10 @@ namespace WorldShaper.Editor
                             var clearButtonRect = new Rect(rect.x + indent, warningRect.y + warningRect.height + spacing, width, EditorGUIUtility.singleLineHeight);
 
                             // Display a button to clear the destination
-                            if (GUI.Button(clearButtonRect, "Clear Destination & Endpoint"))
+                            if (GUI.Button(clearButtonRect, "Clear Destination"))
                             {
                                 // Clear the destination in the connection
-                                connection.destinationArea = null;
-
-                                // Clear the endpoint in the connection
-                                connection.endpoint.Set("None");
+                                connection.destination = ConnectionReference.None;
 
                                 // Refresh the connection to update the destination and endpoint properties
                                 connection.Refresh();
@@ -1273,7 +1268,7 @@ namespace WorldShaper.Editor
             if (!Application.isPlaying)
             {
                 // Load the area for the destination area handle using the EditorAreaHandleDispatcher
-                await EditorLoad(connection.destinationArea, loadPersistentScenes, true);
+                await EditorLoad(connection.destination.Area, loadPersistentScenes, true);
 
                 // Find the location with the connection name
                 ILocationPointer[] pointers = ILocationPointerExtensions.GetAllLocations().ToArray();

@@ -316,12 +316,6 @@ namespace WorldShaper
 
                 // If the connection's name is null or empty, set it to the connection's connection name, otherwise do nothing
                 connection.RenameConnection(connection.connectionName);
-
-                // Refresh the connection to update the editor
-                connection.CreateConnectionList();
-
-                // Lock the connection's endpoint to prevent it from being changed
-                connection.endpoint.Lock();
             }
         }
 
@@ -350,9 +344,6 @@ namespace WorldShaper
 
                 // Set the connection's name as its connection name
                 connection.connectionName = connection.name;
-
-                // Lock the connection's endpoint to prevent it from being changed before the connection is added to the area handle
-                connection.endpoint.Lock();
 
                 // Add the connection to the area handle's list of connections and save it as a sub asset of the area handle
                 AddConnection(connection);
@@ -429,7 +420,7 @@ namespace WorldShaper
             connections = GetAllConnectionSubAssets();
 
             // Iterate through all connections and refresh them
-            connections.ForEach(c => c.Refresh(false));
+            connections.ForEach(c => c.Refresh());
         }
 
         /// <summary>

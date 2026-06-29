@@ -137,7 +137,7 @@ namespace WorldShaper
 
                 // Return a TransitionInfo object with the destination area, the endpoint connection in that area, default settings, and transitions set to the connection's transitionOut and the endpoint's transitionOut values.
                 return Create()
-                    .WithDestination(connection.destinationArea, destination)
+                    .WithDestination(connection.destination.Area, destination)
                     .WithSettings(Settings.Default)
                     .WithTransitions(connection.transitionOut, transitionOut)
                     .Build();

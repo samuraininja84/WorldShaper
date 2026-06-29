@@ -16,19 +16,15 @@ namespace WorldShaper
         public string connectionName = string.Empty;
         public ConnectionType connectionType = ConnectionType.Standard;
 
-        // [Header("Destination")]
-        public AreaHandle destinationArea;
-        public ConnectionReference destination;
-        public ExtendableEnum endpoint;
-
         // [Header("Transition Settings")]
+        public ConnectionReference destination;
         public TransitionIdentifier transitionIn;
         public TransitionIdentifier transitionOut;
 
         /// <summary>
         /// Gets the scene reference of the destination area.
         /// </summary>
-        public SceneReference Destination => destinationArea.activeScene;
+        public SceneReference Destination => destination.Area.activeScene;
 
         /// <summary>
         /// The name of the connection, which is either the connection name if it is not empty, or the default name of the connection object if the connection name is empty.
@@ -43,12 +39,12 @@ namespace WorldShaper
         /// <summary>
         /// Gets the name of the connection's endpoint, the passage name.
         /// </summary>
-        public string Endpoint => endpoint.value;
+        public string Endpoint => destination.Value;
 
         /// <summary>
         /// Gets a value indicating whether the current configuration is valid.
         /// </summary>
-        public bool IsValid => destinationArea != null && destinationArea.IsValid;
+        public bool IsValid => destination.Area != null && destination.Area.IsValid;
 
         /// <summary>
         /// Load the area associated with this connection.
@@ -88,19 +84,19 @@ namespace WorldShaper
         /// Gets the endpoint connection from the destination area.
         /// </summary>
         /// <returns>A <see cref="Connection"/> object representing the endpoint connection.</returns>
-        public Connection GetEndpoint() => destinationArea.GetConnection(Endpoint);
+        public Connection GetEndpoint() => destination.GetCurrent();
 
         /// <summary>
         /// Determines whether a destination area is currently set.
         /// </summary>
         /// <returns><see langword="true"/> if a destination area is set; otherwise, <see langword="false"/>.</returns>
-        public bool HasDestination() => destinationArea != null;
+        public bool HasDestination() => destination.Area != null;
 
         /// <summary>
         /// Checks if the destination area has a connection that matches the endpoint name.
         /// </summary>
         /// <returns><see langword="true"/> if the destination area has a connection that matches the endpoint name; otherwise, <see langword="false"/>.</returns>
-        public bool HasEndpoint() => destinationArea != null && destinationArea.ConnectionExists(Endpoint);
+        public bool HasEndpoint() => destination.Area != null && destination.Area.ConnectionExists(Endpoint);
 
         /// <summary>
         /// Sets the connection type for this connection.
@@ -122,11 +118,7 @@ namespace WorldShaper
 
         #region Validation
 
-        private void OnValidate()
-        {
-            RenameConnection(connectionName);
-            CreateConnectionList();
-        }
+        private void OnValidate() => RenameConnection(connectionName);
 
         /// <summary>
         /// Rename the connection to the new name.
@@ -147,58 +139,6 @@ namespace WorldShaper
             name = newName;
         }
 
-        /// <summary>
-        /// Create a list of passages from the area handle.
-        /// </summary>
-        /// <param name="refresh"></param>
-        public void CreateConnectionList(bool refresh = false)
-        {
-            // Retrieve the list of passages from the area handle and set it to the passage variable
-            if (!refresh)
-            {
-                // Initialize the passage list
-                endpoint.SetAll(GetPassagesFromAreaHandle(destinationArea));
-            }
-            else
-            {
-                // Refresh the passage list
-                endpoint = new ExtendableEnum(GetPassagesFromAreaHandle(destinationArea), false);
-            }
-        }
-
-        /// <summary>
-        /// Get the list of passages from the area handle.
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns>
-        /// A list of strings representing the passage names.
-        /// </returns>
-        private List<string> GetPassagesFromAreaHandle(AreaHandle handle)
-        {
-            // Create the list of connections
-            var connections = new List<string> { "None" };
-
-            // Check if the handle is null or if it has no connections
-            if (handle != null && handle.connections.Count > 0)
-            {
-                // Initialize the list of connections
-                connections = new List<string>();
-
-                // Add the connection names to the list
-                foreach (Connection connectionData in handle.connections)
-                {
-                    // Skip the connection if it is null or if its name is empty
-                    if (connectionData == null || string.IsNullOrEmpty(connectionData.connectionName)) continue;
-
-                    // Add the connection name to the list
-                    connections.Add(connectionData.connectionName);
-                }
-            }
-
-            // Return the list of connections
-            return connections;
-        }
-
         #endregion
 
         #region Editor Methods
@@ -215,19 +155,13 @@ namespace WorldShaper
         public void SyncEndpointLink()
         {
             // Check if the connection exists
-            if (destinationArea.ConnectionExists(Endpoint))
+            if (destination.Area.ConnectionExists(Endpoint))
             {
                 // Get the connection from the connected scene
-                Connection destination = destinationArea.GetConnection(Endpoint);
+                Connection endPoint = destination.GetCurrent();
 
                 // If the connection exists, set the passage name to the connection name and refresh the connection
-                if (destination != null)
-                {
-                    // Set the passage name to the connection name
-                    destination.destinationArea = destinationArea;
-                    destination.endpoint.Set(connectionName);
-                    destination.Refresh();
-                }
+                if (endPoint != null) endPoint.destination = ConnectionReference.Create(GetParent(), connectionName);
             }
         }
 
@@ -249,25 +183,10 @@ namespace WorldShaper
         /// Use this method to ensure the object reflects the latest data or configuration.
         /// </remarks>
         [ContextMenu("Refresh")]
-        public void Refresh() => Refresh(true);
-
-        /// <summary>
-        /// Refreshes the connection state and updates the connection list.
-        /// </summary>
-        /// <remarks>This method performs the following actions: <list type="bullet">
-        /// <item><description>Renames the current connection.</description></item> <item><description>Recreates the
-        /// connection list based on the specified <paramref name="status"/>.</description></item>
-        /// <item><description>Marks the object as modified to ensure changes are saved.</description></item>
-        /// <item><description>Saves the changes to the asset database and refreshes it.</description></item>
-        /// </list></remarks>
-        /// <param name="status">A boolean value indicating whether the connection list should be updated in an active or inactive state.</param>
-        public void Refresh(bool status)
+        public void Refresh()
         {
             // Rename the connection
             RenameConnection(connectionName);
-
-            // Refresh the connection list
-            CreateConnectionList(status);
 
             // Set the connection to dirty
             EditorUtility.SetDirty(this);

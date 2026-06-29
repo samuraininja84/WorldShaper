@@ -86,7 +86,7 @@ namespace WorldShaper.Editor
                 string endPointScene = connection.Destination.Name;
 
                 // Set the end point to the end point scene and the passage value
-                endPoint = endPointScene + " - " + connection.endpoint.value;
+                endPoint = endPointScene + " - " + connection.destination.Value;
             }
 
             // Return the passage name

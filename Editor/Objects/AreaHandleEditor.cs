@@ -141,7 +141,7 @@ namespace WorldShaper.Editor
                     bool hasEither = hasDestination || hasEndpoint;
 
                     // If the connection is closed and has no destination or endpoint, draw a smaller height
-                    return EditorGUIUtility.singleLineHeight * (closedConnection ? hasEither ? 7 : 4 : 6) + 10;
+                    return EditorGUIUtility.singleLineHeight * (closedConnection ? hasEither ? 7 : 4 : 5) + 10;
                 },
 
                 // Define how each element in the list should be drawn
@@ -173,18 +173,16 @@ namespace WorldShaper.Editor
                     // Get the properties of the Connection object
                     var name = element.FindProperty(nameof(Connection.connectionName));
                     var type = element.FindProperty(nameof(Connection.connectionType));
-                    var destination = element.FindProperty(nameof(Connection.destinationArea));
+                    var destination = element.FindProperty(nameof(Connection.destination));
                     var transitionIn = element.FindProperty(nameof(Connection.transitionIn));
                     var transitionOut = element.FindProperty(nameof(Connection.transitionOut));
-                    var endpoint = element.FindProperty(nameof(Connection.endpoint));
 
-                    // Draw the properties
+                    // Get the rects for the name, type, and destination properties
                     var nameRect = new Rect(rect.x, rect.y, width, EditorGUIUtility.singleLineHeight);
                     var typeRect = new Rect(rect.x, rect.y + EditorGUIUtility.singleLineHeight + spacing, width, EditorGUIUtility.singleLineHeight);
-                    var transitionInRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 2, width, EditorGUIUtility.singleLineHeight);
-                    var transitionOutRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 3, width, EditorGUIUtility.singleLineHeight);
-                    var destinationRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 4, width, EditorGUIUtility.singleLineHeight);
-                    var endpointRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 5, width, EditorGUIUtility.singleLineHeight);
+                    var destinationRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 2, width, EditorGUIUtility.singleLineHeight);
+                    var transitionInRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 3, width, EditorGUIUtility.singleLineHeight);
+                    var transitionOutRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 4, width, EditorGUIUtility.singleLineHeight);
 
                     // Check if the connection is closed
                     bool connectionClosed = connection.Closed();
@@ -192,12 +190,9 @@ namespace WorldShaper.Editor
                     // Draw the properties
                     EditorGUI.PropertyField(nameRect, name);
                     EditorGUI.PropertyField(typeRect, type);
+                    if (!connectionClosed) EditorGUI.PropertyField(destinationRect, destination);
                     EditorGUI.PropertyField(transitionInRect, transitionIn);
                     EditorGUI.PropertyField(transitionOutRect, transitionOut);
-
-                    // If the connection is closed, do not allow editing of the destination and endpoint properties
-                    if (!connectionClosed) EditorGUI.PropertyField(destinationRect, destination);
-                    if (!connectionClosed) EditorGUI.PropertyField(endpointRect, endpoint);
 
                     #endregion
 
@@ -284,13 +279,10 @@ namespace WorldShaper.Editor
                         var clearButtonRect = new Rect(rect.x, warningRect.y + warningRect.height + spacing, rect.width, EditorGUIUtility.singleLineHeight);
 
                         // Display a button to clear the destination
-                        if (GUI.Button(clearButtonRect, "Clear Destination & Endpoint"))
+                        if (GUI.Button(clearButtonRect, "Clear Destination"))
                         {
                             // Clear the destination in the connection
-                            connection.destinationArea = null;
-
-                            // Clear the endpoint in the connection
-                            connection.endpoint.Set("None");
+                            connection.destination = ConnectionReference.None;
 
                             // Refresh the connection to update the destination and endpoint properties
                             connection.Refresh();
