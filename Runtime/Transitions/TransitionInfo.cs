@@ -12,7 +12,7 @@ namespace WorldShaper
         public Settings Options;
         public Vector2 Delays;
 
-        TransitionInfo(AreaHandle area, Connection connection, Identifier transitionIn, Identifier transitionOut, Settings settings,Vector2 delays)
+        private TransitionInfo(AreaHandle area, Connection connection, Identifier transitionIn, Identifier transitionOut, Settings settings,Vector2 delays)
         {
             Area = area;
             Connection = connection;
@@ -22,7 +22,7 @@ namespace WorldShaper
             Delays = delays;
         }
 
-        public static TransitionInfo Create(AreaHandle area, Connection connection, Identifier @in, Identifier @out, Settings settings, Vector2 delays) => new(area, connection, @in, @out, settings, delays);
+        private static TransitionInfo Create(AreaHandle area, Connection connection, Identifier @in, Identifier @out, Settings settings, Vector2 delays) => new(area, connection, @in, @out, settings, delays);
 
         /// <summary>
         /// Flags that define the settings for a transition, such as whether to use real-time, reload scenes, or unload unused assets.
@@ -88,11 +88,21 @@ namespace WorldShaper
 
             public static ITransitionBuilder Create() => new Builder();
 
-            public static TransitionInfo CreateFromName(AreaHandle area, string connectionName, Identifier transitionIn, Identifier transitionOut, Settings settings = Settings.Default)
+            public static TransitionInfo CreateFromName(AreaHandle area, string name, Identifier transitionIn, Identifier transitionOut, Settings settings = Settings.Default)
             {
                 return Create()
                     .WithArea(area)
-                    .WithDestination(connectionName)
+                    .WithDestination(name)
+                    .WithSettings(settings)
+                    .WithTransitions(transitionIn, transitionOut)
+                    .Build();
+            }
+
+            public static TransitionInfo CreateFromIndex(AreaHandle area, int index, Identifier transitionIn, Identifier transitionOut, Settings settings = Settings.Default)
+            {
+                return Create()
+                    .WithArea(area)
+                    .WithDestination(index)
                     .WithSettings(settings)
                     .WithTransitions(transitionIn, transitionOut)
                     .Build();
