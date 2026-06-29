@@ -300,7 +300,10 @@ namespace WorldShaper
         /// <param name="transition">The transition information to use for the area transition.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
         public static async Task TransitionTo(TransitionInfo transition) 
-        { 
+        {
+            // Store the current transition information for potential future use
+            currentTransition = transition;
+
             // Invoke the OnTransitionStarted action to signal the start of the transition
             OnTransitionStarted.Invoke();
 

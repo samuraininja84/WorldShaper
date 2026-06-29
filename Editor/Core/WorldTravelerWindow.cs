@@ -60,9 +60,6 @@ namespace WorldShaper.Editor
 
         private static readonly bool loadPersistentScenes = false;
 
-        /// <summary>
-        /// Checks if the window is in horizontal layout mode.
-        /// </summary>
         private bool HorizontalLayout => Screen.width > Screen.height;
 
         [MenuItem("Window/World Shaper/World Traveler")]
@@ -530,6 +527,15 @@ namespace WorldShaper.Editor
 
             // End the scroll view for the connections
             EditorGUILayout.EndScrollView();
+
+            // Push the preview to the bottom of the area rect
+            GUILayout.FlexibleSpace();
+
+            // Create a transition preview for any transitions between areas, if applicable.
+            CreateTransitionPreview();
+
+            // Add a space for better UI spacing
+            EditorGUILayout.Separator();
         }
 
         private void DrawImpassableContent(AreaHandle handle, string handleName)
@@ -1143,6 +1149,40 @@ namespace WorldShaper.Editor
 
             // Apply the modified properties to the serialized object
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void CreateTransitionPreview()
+        {
+            // Get the current area and connection from the transition, if they exist
+            var area = Transistor.currentTransition.Area != null ? Transistor.currentTransition.Area : null;
+            var connection = Transistor.currentTransition.Connection != null ? Transistor.currentTransition.Connection : null;
+            Progress progress = Transistor.transitionProgress;
+
+            // Add a horizontal line to separate the transition preview from the rest of the UI
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+
+            // Start a vertical layout for the transition preview
+            EditorGUILayout.BeginVertical();
+
+            // Draw a label for the transition preview
+            EditorGUILayout.LabelField("Transition Preview", EditorStyles.boldLabel);
+
+            // Begin a disabled group for the transition preview, which will prevent the user from editing the fields in the transition preview
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Current Area / Connection");
+            EditorGUILayout.ObjectField(area, typeof(AreaHandle), false);
+            EditorGUILayout.ObjectField(connection, typeof(Connection), false);
+            EditorGUILayout.EndHorizontal();
+
+            // Draw the transition progress bar, which will show the progress of the transition between areas
+            EditorGUILayout.Slider("Transition Progress", progress.value, 0f, 1f);
+
+            // End the disabled group for the transition preview
+            EditorGUI.EndDisabledGroup();
+
+            // End the vertical layout for the transition preview
+            EditorGUILayout.EndVertical();
         }
 
         private void DrawWorldMapContent()
