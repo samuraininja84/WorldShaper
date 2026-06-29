@@ -88,8 +88,10 @@ namespace WorldShaper
 
             public static ITransitionBuilder Create() => new Builder();
 
+            #region Default TransitionInfo Creation
+
             /// <summary>
-            /// Creates a <see cref="TransitionInfo"/> object from an area handle, using default settings.
+            /// Creates a <see cref="TransitionInfo"/> object from an area handle, using default settings and to the first connection in that area.
             /// </summary>
             /// <param name="area">The handle representing the target area to switch to. Cannot be null.</param>
             /// <returns>A <see cref="TransitionInfo"/> object configured for the specified area.</returns>
@@ -140,6 +142,8 @@ namespace WorldShaper
                     .WithTransitions(connection.transitionOut, transitionOut)
                     .Build();
             }
+
+            #endregion
 
             #region Area Step
 
