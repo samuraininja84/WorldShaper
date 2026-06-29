@@ -231,7 +231,7 @@ namespace WorldShaper
                 return this;
             }
 
-            public ITransitionStep WithSettings(GlobalTransitionConfiguration config)
+            public ITransitionStep WithSettings(WorldTransitionConfiguration config)
             {
                 Settings = config.GetDefaultSettings();
                 return this;
@@ -273,7 +273,7 @@ namespace WorldShaper
 
             #region Delay Step
 
-            public IBuildStep WithDelay(GlobalTransitionConfiguration config)
+            public IBuildStep WithDelay(WorldTransitionConfiguration config)
             {
                 Delays = config.GetDefaultDelays();
                 return this;
@@ -337,7 +337,7 @@ namespace WorldShaper
     public interface ISettingsStep
     {
         ITransitionStep WithSettings(TransitionInfo.Settings settings);
-        ITransitionStep WithSettings(GlobalTransitionConfiguration config);
+        ITransitionStep WithSettings(WorldTransitionConfiguration config);
     }
 
     /// <summary>
@@ -363,7 +363,7 @@ namespace WorldShaper
     /// </remarks>
     public interface IDelayStep
     {
-        IBuildStep WithDelay(GlobalTransitionConfiguration config);
+        IBuildStep WithDelay(WorldTransitionConfiguration config);
         IBuildStep WithDelay(float startDelay, float endDelay);
         IBuildStep WithDelay(Vector2 delays);
     }

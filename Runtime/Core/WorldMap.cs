@@ -19,7 +19,7 @@ namespace WorldShaper
         public string worldName = "New World";
 
         [Header("Transition Settings")]
-        public GlobalTransitionConfiguration config;
+        public WorldTransitionConfiguration config;
 
         [Header("Areas")]
         public List<AreaHandle> persistentAreas = new();
