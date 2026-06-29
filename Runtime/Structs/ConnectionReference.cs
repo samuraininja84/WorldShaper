@@ -30,7 +30,7 @@ namespace WorldShaper
         /// </summary>
         public readonly bool Empty => Area == null || string.IsNullOrEmpty(Value);
 
-        public ConnectionReference(AreaHandle area)
+        private ConnectionReference(AreaHandle area)
         {
             Area = area;
             ID = SerializableGuid.NewGuid();
@@ -38,7 +38,7 @@ namespace WorldShaper
             Index = 0;
         }
 
-        public ConnectionReference(AreaHandle area, string value)
+        private ConnectionReference(AreaHandle area, string value)
         {
             Area = area;
             ID = area.GetConnection(value)?.connectionId ?? SerializableGuid.NewGuid();
@@ -46,7 +46,7 @@ namespace WorldShaper
             Index = area.GetConnectionIndex(value);
         }
 
-        public ConnectionReference(AreaHandle area, int index)
+        private ConnectionReference(AreaHandle area, int index)
         {
             Area = area;
             ID = area.GetConnection(index)?.connectionId ?? SerializableGuid.NewGuid();
@@ -58,6 +58,13 @@ namespace WorldShaper
         /// Gets a default instance of <see cref="ConnectionReference"/> representing a "none" state.
         /// </summary>
         public static ConnectionReference None => new(null, string.Empty);
+
+        /// <summary>
+        /// Creates a new instance of <see cref="ConnectionReference"/> using the specified area.
+        /// </summary>
+        /// <param name="area">The <see cref="AreaHandle"/> representing the area to associate with the data. Cannot be null.</param>
+        /// <returns>A new <see cref="ConnectionReference"/> instance initialized with the specified area.</returns>
+        public static ConnectionReference Create(AreaHandle area) => new(area);
 
         /// <summary>
         /// Creates a new instance of <see cref="ConnectionReference"/> using the specified area and value.
@@ -74,25 +81,6 @@ namespace WorldShaper
         /// <param name="index">The index within the specified area to associate with the data.</param>
         /// <returns>A new <see cref="ConnectionReference"/> instance associated with the specified area and index.</returns>
         public static ConnectionReference Create(AreaHandle area, int index) => new(area, index);
-
-        /// <summary>
-        /// Associates the specified value with the given area handle.
-        /// </summary>
-        /// <remarks>This method creates a new connection between the provided area handle and the
-        /// specified value. Ensure that both parameters are valid and meet the required constraints before calling this
-        /// method.</remarks>
-        /// <param name="area">The handle representing the area to associate the value with. Cannot be null.</param>
-        /// <param name="value">The value to associate with the specified area. Cannot be null or empty.</param>
-        public readonly void Set(AreaHandle area, string value) => new ConnectionReference(area, value);
-
-        /// <summary>
-        /// Associates the specified area and index with a new instance of <see cref="ConnectionReference"/>.
-        /// </summary>
-        /// <remarks>This method creates a new instance of <see cref="ConnectionReference"/> using the
-        /// provided area and index.</remarks>
-        /// <param name="area">The <see cref="AreaHandle"/> representing the area to associate with the data.</param>
-        /// <param name="index">The index within the area to associate with the data.</param>
-        public readonly void Set(AreaHandle area, int index) => new ConnectionReference(area, index);
 
         /// <summary>
         /// Retrieves the connection associated with the current value.

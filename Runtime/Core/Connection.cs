@@ -18,6 +18,7 @@ namespace WorldShaper
 
         // [Header("Destination")]
         public AreaHandle destinationArea;
+        public ConnectionReference destination;
         public ExtendableEnum endpoint;
 
         // [Header("Transition Settings")]
@@ -118,6 +119,16 @@ namespace WorldShaper
         /// </summary>
         /// <returns>true if the connection is closed; otherwise, false.</returns>
         public bool Closed() => connectionType == ConnectionType.Closed;
+
+        public void ValidateDestination()
+        {
+            // Set the destination connection reference with the destination area and endpoint name
+            destination = ConnectionReference.Create(destinationArea, Endpoint);
+
+            // Check if the destination matches the endpoint name and log a warning if they do not match
+            if (destination.Value != Endpoint) Debug.LogWarning($"Destination connection reference does not match the endpoint name. Destination: {destination.Value}, Endpoint: {Endpoint}", this);
+            else Debug.Log($"Destination connection reference matches the endpoint name. Destination: {destination.Value}, Endpoint: {Endpoint}", this);
+        }
 
         #region Validation
 
