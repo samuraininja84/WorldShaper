@@ -88,23 +88,56 @@ namespace WorldShaper
 
             public static ITransitionBuilder Create() => new Builder();
 
-            public static TransitionInfo CreateFromName(AreaHandle area, string name, Identifier transitionIn, Identifier transitionOut, Settings settings = Settings.Default)
+            /// <summary>
+            /// Creates a <see cref="TransitionInfo"/> object from an area handle, using default settings.
+            /// </summary>
+            /// <param name="area">The handle representing the target area to switch to. Cannot be null.</param>
+            /// <returns>A <see cref="TransitionInfo"/> object configured for the specified area.</returns>
+            public static TransitionInfo FromArea(AreaHandle area)
             {
+                // Assumes that the area has at least one connection and retrieves the first connection in that area.
+                var connection = area.GetConnection(0);
+
+                // Return a TransitionInfo object with the specified area, the first connection in that area, default settings, and transitions set to the connection's transitionIn and transitionOut values.
                 return Create()
-                    .WithArea(area)
-                    .WithDestination(name)
-                    .WithSettings(settings)
-                    .WithTransitions(transitionIn, transitionOut)
+                    .WithDestination(area, connection)
+                    .WithSettings(Settings.Default)
+                    .WithTransitions(connection.transitionIn, connection.transitionOut)
                     .Build();
             }
 
-            public static TransitionInfo CreateFromIndex(AreaHandle area, int index, Identifier transitionIn, Identifier transitionOut, Settings settings = Settings.Default)
+            /// <summary>
+            /// Creates a <see cref="TransitionInfo"/> object from a connection that goes to the parent area of this connection, using default settings.
+            /// </summary>
+            /// <param name="connection">The connection object that is used to determine the parent area to switch to. Cannot be null.</param>
+            /// <returns>A <see cref="TransitionInfo"/> object configured for the specified connection.</returns>
+            public static TransitionInfo FromArea(Connection connection)
             {
                 return Create()
-                    .WithArea(area)
-                    .WithDestination(index)
-                    .WithSettings(settings)
-                    .WithTransitions(transitionIn, transitionOut)
+                    .WithDestination(WorldMap.Instance.GetArea(connection), connection)
+                    .WithSettings(Settings.Default)
+                    .WithTransitions(connection.transitionIn, connection.transitionOut)
+                    .Build();
+            }
+
+            /// <summary>
+            /// Creates a <see cref="TransitionInfo"/> object from a connection that goes to the destination area of this connection, using default settings.
+            /// </summary>
+            /// <param name="connection">The connection object that is used to determine the destination area to switch to. Cannot be null.</param>
+            /// <returns>A <see cref="TransitionInfo"/> object configured for the specified connection.</returns>
+            public static TransitionInfo FromDestination(Connection connection)
+            {
+                // Assumes that the connection has a valid destination area and retrieves the endpoint connection in that area.
+                var destination = connection.GetEndpoint();
+
+                // If the destination connection is not found, fall back to using the connection's transitionOut value.
+                var transitionOut = destination != null ? destination.transitionOut : connection.transitionOut;
+
+                // Return a TransitionInfo object with the destination area, the endpoint connection in that area, default settings, and transitions set to the connection's transitionOut and the endpoint's transitionOut values.
+                return Create()
+                    .WithDestination(connection.destinationArea, destination)
+                    .WithSettings(Settings.Default)
+                    .WithTransitions(connection.transitionOut, transitionOut)
                     .Build();
             }
 

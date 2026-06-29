@@ -52,12 +52,12 @@ namespace WorldShaper
         /// <summary>
         /// Load the area associated with this connection.
         /// </summary>
-        public void LoadArea() => Transistor.SwitchToArea(this);
+        public async void LoadArea() => await Transistor.SwitchToArea(this);
 
         /// <summary>
         /// Loads the destination area associated with this connection.
         /// </summary>
-        public void LoadDestination()
+        public async void LoadDestination()
         {
             // Check if the connection type is closed
             if (connectionType == ConnectionType.Closed)
@@ -80,7 +80,7 @@ namespace WorldShaper
             }
 
             // Load the destination area
-            Transistor.SwitchToDestination(this);
+            await Transistor.SwitchToDestination(this);
         }
 
         /// <summary>

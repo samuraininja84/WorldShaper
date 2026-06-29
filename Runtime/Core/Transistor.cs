@@ -97,10 +97,10 @@ namespace WorldShaper
 
         #endregion
 
-        // To Do: Refactor the following methods to use a more flexible transition system, allowing for custom transition animations and effects.
-        // Will also cut down on the number of methods in this class, as many of them are redundant or too lengthy.
-
         #region Transition Methods
+
+        // To Do: Replace this method with something more flexible, allowing for custom transition handling and animation control.
+        // This method is currently too rigid and does not allow for user-defined transition behavior.
 
         /// <summary>
         /// Configures passage data by setting the current area, start point, and optional end point.
@@ -124,99 +124,11 @@ namespace WorldShaper
         }
 
         /// <summary>
-        /// Switches the current context to the specified area based on the provided connection.
-        /// </summary>
-        /// <remarks>This method retrieves the destination area from the provided connection, configures the passage data using the connection details, and returns the corresponding area handle.</remarks>
-        /// <param name="connection">The connection object containing the destination area, connection name, and endpoint information.</param>
-        /// <returns>An <see cref="AreaHandle"/> representing the destination area specified in the connection.</returns>
-        public static AreaHandle ConfigureForDestination(Connection connection)
-        {
-            // Configure the passage data with the area handle and passage name
-            ConfigurePassageData(connection.destinationArea, connection.Endpoint);
-
-            // Return the area handle
-            return connection.destinationArea;
-        }
-
-        /// <summary>
-        /// Switches to the specified area based on the provided connection.
-        /// </summary>
-        /// <param name="connection">The connection object containing the destination area and connection name.</param>
-        /// <returns>An <see cref="AreaHandle"/> representing the area that was switched to.</returns>
-        public static AreaHandle ConfigureForArea(Connection connection)
-        {
-            // Get the area handle from the world map using the connection's destination area
-            var areaHandle = WorldMap.GetArea(connection);
-
-            // Set the passage data to prepare for the transition
-            ConfigurePassageData(areaHandle, connection.connectionName);
-
-            // Return the area handle
-            return areaHandle;
-        }
-
-        #endregion
-
-        #region Scene Switching Methods
-
-        /// <summary>
         /// Switches to the endpoint area defined by the specified connection.
         /// </summary>
         /// <remarks>This method uses the provided <paramref name="connection"/> to determine the destination area and configures the necessary passage data before initiating the transition.</remarks>
         /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
-        public static async void SwitchToDestination(Connection connection, bool useTransition = true) => await HandleDestinationSwitch(connection, useTransition);
-
-        /// <summary>
-        /// Centralized method to handle destination switching logic based around a given connection.
-        /// </summary>
-        /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
-        /// <param name="useTransition">True to use transition animations; otherwise, false.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        private static async Task HandleDestinationSwitch(Connection connection, bool useTransition = true)
-        {
-            // Invoke the OnTransitionStarted action to signal the start of the transition
-            OnTransitionStarted.Invoke();
-
-            // Get the destination connection, which is the endpoint of the provided connection if it exists; otherwise, it defaults to the original connection
-            Connection destination = connection.GetEndpoint() ?? connection;
-
-            // Perform the transition in animation before switching areas, if specified
-            if (useTransition)
-            {
-                // Get the transition in animation from the connection
-                if (destination != connection) SetTransitionIn(connection.transitionOut);
-                else SetTransitionIn(connection.transitionIn);
-
-                // Wait for the transition in animation to complete
-                await TransitionIn(RealtimeTransitions);
-            }
-
-            // Get the target area handle by switching to the destination defined by the connection
-            AreaHandle targetArea = ConfigureForDestination(connection);
-
-            // Switch to the new area using the specified connection and transition settings
-            await Execute(targetArea, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
-
-            // Wait for the specified delay before loading the new area
-            if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
-
-            // Perform the transition out animation after switching areas, if specified
-            if (useTransition)
-            {
-                // If the endpoint connection exists, use its transition in animation for the transition out phase; otherwise, use the original connection's transition out animation
-                if (destination != connection) SetTransitionOut(destination.transitionIn);
-                else SetTransitionOut(connection.transitionOut);
-
-                // Wait for the transition out animation to complete
-                await TransitionOut(RealtimeTransitions);
-            }
-
-            // Await the OnEnter event of the world map after the transition is complete
-            await OnEnter(targetArea);
-
-            // Invoke the OnTransitionCompleted action to signal the completion of the transition
-            OnTransitionCompleted.Invoke();
-        }
+        public static async Task SwitchToDestination(Connection connection) => await ToDestination(TransitionInfo.Builder.FromDestination(connection));
 
         /// <summary>
         /// Switches the current scene to the specified area at the given connection index.
@@ -224,20 +136,7 @@ namespace WorldShaper
         /// <remarks>This method initiates a scene transition to the specified area. Ensure that the <paramref name="areaName"/> corresponds to a valid scene and that the connection index is within the valid range for the area's connections.</remarks>
         /// <param name="areaName">The name of the area to switch to. This must match the name of an existing scene.</param>
         /// <param name="connectionIndex">The index of the connection point to use when transitioning to the new area. Defaults to <see langword="0"/>.</param>
-        public static async Task SwitchToArea(string areaName, int connectionIndex = 0) => await HandleAreaSwitch(WorldMap.GetArea(areaName).GetConnection(connectionIndex));
-
-        /// <summary>
-        /// Switches the current scene to the specified area
-        /// </summary>
-        /// <param name="area">The handle representing the target area to switch to. Cannot be null.</param>
-        public static async void SwitchToArea(AreaHandle area) => await HandleAreaSwitch(area);
-
-        /// <summary>
-        /// Switches the current scene to the specified area using the provided connection.
-        /// </summary>
-        /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
-        /// <param name="useTransition">True to use transition animations; otherwise, false.</param>
-        public static async void SwitchToArea(Connection connection, bool useTransition = true) => await HandleAreaSwitch(connection, useTransition);
+        public static async Task SwitchToArea(string areaName, int connectionIndex = 0) => await ToArea(TransitionInfo.Builder.FromArea(WorldMap.GetArea(areaName).GetConnection(connectionIndex)));
 
         /// <summary>
         /// Centralized method to handle area switching logic based around a given connection.
@@ -245,49 +144,7 @@ namespace WorldShaper
         /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
         /// <param name="useTransition">True to use transition animations; otherwise, false.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        private static async Task HandleAreaSwitch(Connection connection, bool useTransition = true)
-        {
-            // Invoke the OnTransitionStarted action to signal the start of the transition
-            OnTransitionStarted.Invoke();
-
-            // Get the transition in animation from the connection's endpoint
-            SetTransitionIn(connection.transitionIn);
-
-            // Perform the transition in animation before switching areas, if specified
-            if (useTransition)
-            {
-                // Get the transition in animation from the connection's endpoint
-                SetTransitionIn(connection.transitionIn);
-
-                // Wait for the transition in animation to complete
-                await TransitionIn(RealtimeTransitions);
-            }
-
-            // Get the target area handle by switching to the destination defined by the connection
-            AreaHandle targetArea = ConfigureForArea(connection);
-
-            // Switch to the new area using the connection and transition settings
-            await Execute(targetArea, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
-
-            // Wait for the specified delay before loading the new area
-            if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
-
-            // Perform the transition out animation after switching areas, if specified
-            if (useTransition)
-            {
-                // Get the transition out animation from the connection
-                SetTransitionOut(connection.transitionOut);
-
-                // Wait for the transition out animation to complete
-                await TransitionOut(RealtimeTransitions);
-            }
-
-            // Await the OnEnter event of the world map after the transition is complete
-            await OnEnter(targetArea);
-
-            // Invoke the OnTransitionCompleted action to signal the completion of the transition
-            OnTransitionCompleted.Invoke();
-        }
+        public static async Task SwitchToArea(Connection connection) => await ToArea(TransitionInfo.Builder.FromArea(connection));
 
         /// <summary>
         /// Performs an asynchronous transition to the specified area, including transition animations and event signaling.
@@ -299,25 +156,102 @@ namespace WorldShaper
         /// </remarks>
         /// <param name="area">The handle representing the target area to switch to. Cannot be null.</param>
         /// <returns>A task that represents the asynchronous operation. The task completes when the area transition and all related events are finished.</returns>
-        public static async Task HandleAreaSwitch(AreaHandle area)
+        public static async Task SwitchToArea(AreaHandle area) => await ToArea(TransitionInfo.Builder.FromArea(area));
+
+        /// <summary>
+        /// Centralized method to handle destination switching logic based around a given connection.
+        /// </summary>
+        /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
+        /// <param name="useTransition">True to use transition animations; otherwise, false.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        public static async Task ToDestination(TransitionInfo transition)
         {
             // Invoke the OnTransitionStarted action to signal the start of the transition
             OnTransitionStarted.Invoke();
 
-            // Perform the transition in animation before switching areas, if specified
-            await TransitionIn(RealtimeTransitions);
+            // Wait for the specified delay before loading the new area
+            if (transition.Delays.x > 0f) await Task.Delay(TimeSpan.FromSeconds(transition.Delays.x));
+
+            // If there isn't a transition in animation specified, skip the transition in step
+            if (transition.TransitionIn != null)
+            {
+                // Set the transition in animation in the controller
+                SetTransitionIn(transition.TransitionIn);
+
+                // Perform the transition in animation with the specified real-time option
+                await TransitionIn(transition.Options.HasFlag(TransitionInfo.Settings.Realtime));
+            }
+
+            // Configure the passage data with the area handle and passage name
+            ConfigurePassageData(transition.Connection.destinationArea, transition.Connection.Endpoint);
 
             // Switch to the new area using the connection and transition settings
-            await Execute(area, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
+            await Execute(transition.Area, transition.Options);
 
             // Wait for the specified delay before loading the new area
-            if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
+            if (transition.Delays.y > 0f) await Task.Delay(TimeSpan.FromSeconds(transition.Delays.y));
 
-            // Perform the transition out animation after switching areas, if specified
-            await TransitionOut(RealtimeTransitions);
+            // If there isn't a transition out animation specified, skip the transition out step
+            if (transition.TransitionOut != null)
+            {
+                // Set the transition out animation in the controller
+                SetTransitionOut(transition.TransitionOut);
+
+                // Perform the transition out animation with the specified real-time option
+                await TransitionOut(transition.Options.HasFlag(TransitionInfo.Settings.Realtime));
+            }
 
             // Await the OnEnter event of the world map after the transition is complete
-            await OnEnter(area);
+            await OnEnter(transition.Area);
+
+            // Invoke the OnTransitionCompleted action to signal the completion of the transition
+            OnTransitionCompleted.Invoke();
+        }
+
+        /// <summary>
+        /// Transitions to the specified area using the provided transition information.
+        /// </summary>
+        /// <param name="transition">The transition information to use for the area transition.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public static async Task ToArea(TransitionInfo transition) 
+        { 
+            // Invoke the OnTransitionStarted action to signal the start of the transition
+            OnTransitionStarted.Invoke();
+
+            // Wait for the specified delay before loading the new area
+            if (transition.Delays.x > 0f) await Task.Delay(TimeSpan.FromSeconds(transition.Delays.x));
+
+            // If there isn't a transition in animation specified, skip the transition in step
+            if (transition.TransitionIn != null)
+            {
+                // Set the transition in animation in the controller
+                SetTransitionIn(transition.TransitionIn);
+
+                // Perform the transition in animation with the specified real-time option
+                await TransitionIn(transition.Options.HasFlag(TransitionInfo.Settings.Realtime));
+            }
+
+            // Configure the passage data for the transition using the area and endpoint from the transition information
+            ConfigurePassageData(transition.Area, transition.Connection.Name);
+
+            // Switch to the new area using the connection and transition settings
+            await Execute(transition.Area, transition.Options);
+
+            // Wait for the specified delay before loading the new area
+            if (transition.Delays.y > 0f) await Task.Delay(TimeSpan.FromSeconds(transition.Delays.y));
+
+            // If there isn't a transition out animation specified, skip the transition out step
+            if (transition.TransitionOut != null)
+            {
+                // Set the transition out animation in the controller
+                SetTransitionOut(transition.TransitionOut);
+
+                // Perform the transition out animation with the specified real-time option
+                await TransitionOut(transition.Options.HasFlag(TransitionInfo.Settings.Realtime));
+            }   
+
+            // Await the OnEnter event of the world map after the transition is complete
+            await OnEnter(transition.Area);
 
             // Invoke the OnTransitionCompleted action to signal the completion of the transition
             OnTransitionCompleted.Invoke();
@@ -523,6 +457,20 @@ namespace WorldShaper
 
             // Return a completed task if no matching location is found
             await Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Executes a transition to the specified area using the provided settings.
+        /// </summary>
+        /// <param name="handle">The <see cref="AreaHandle"/> representing the area to be loaded.</param>
+        /// <param name="settings">The <see cref="TransitionInfo.Settings"/> specifying the transition options.</param>
+        /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public static async Task Execute(AreaHandle handle, TransitionInfo.Settings settings)
+        {
+            bool reloadActiveScene = settings.HasFlag(TransitionInfo.Settings.ReloadActiveScene);
+            bool reloadAdditiveScenes = settings.HasFlag(TransitionInfo.Settings.ReloadAdditiveScenes);
+            bool unloadUnusedAssets = settings.HasFlag(TransitionInfo.Settings.UnloadUnusedAssets);
+            await Execute(handle, reloadActiveScene, reloadAdditiveScenes, unloadUnusedAssets);
         }
 
         /// <summary>

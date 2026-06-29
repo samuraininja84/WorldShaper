@@ -904,8 +904,13 @@ namespace WorldShaper.Editor
                     // Calculate the width for the property fields, leaving space for buttons and arrow icon
                     float width = rect.width - buttonWidth - indent - spacing;
 
-                    // Get the properties of the Connection object
+                    // Get the serialized property for the current connection at the specified index
                     var current = connectionsList.serializedProperty.GetArrayElementAtIndex(index);
+
+                    // Check if the current property is null, if so, skip to the next connection
+                    if (current == null) return;
+
+                    // Get the properties of the Connection object
                     var type = element.FindProperty(nameof(Connection.connectionType));
                     var destination = element.FindProperty(nameof(Connection.destinationArea));
                     var transitionIn = element.FindProperty(nameof(Connection.transitionIn));
