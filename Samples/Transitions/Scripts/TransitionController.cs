@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WorldShaper
+namespace WorldShaper.Samples
 {
     [AddComponentMenu("World Shaper/Transitions/Transition Controller")]
     public class TransitionController : PersistentSingleton<TransitionController>, ITransitionController

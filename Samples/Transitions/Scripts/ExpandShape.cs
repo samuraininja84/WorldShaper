@@ -3,8 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 
-namespace WorldShaper
+namespace WorldShaper.Samples
 {
+    [AddComponentMenu("World Shaper/Transitions/Expand Shape")]
     public class ExpandShape : TransitionAnimation
     {
         [Header("Canvas Settings")]

@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 14b3ea605b9169c489337d4dbeeadff8, type: 3}
-  m_Name: Transition Controller
+  m_Name: Screen Wipe
   m_EditorClassIdentifier: WorldShaper::WorldShaper.TransitionIdentifier
   transitionID:
-    Part1: 678390199
-    Part2: 1130111324
-    Part3: 1382112697
-    Part4: 2540699452
+    Part1: 3049395532
+    Part2: 1175659445
+    Part3: 2159981965
+    Part4: 1429299180

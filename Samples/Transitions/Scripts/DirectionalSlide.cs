@@ -2,9 +2,9 @@ using System.Threading.Tasks;
 using UnityEngine;
 using DG.Tweening;
 
-namespace WorldShaper
+namespace WorldShaper.Samples
 {
-    [System.Serializable]
+    [AddComponentMenu("World Shaper/Transitions/Directional Slide")]
     public class DirectionalSlide : TransitionAnimation
     {
         [Header("UI Elements")]

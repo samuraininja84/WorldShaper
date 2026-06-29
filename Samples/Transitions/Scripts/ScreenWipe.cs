@@ -3,8 +3,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
 
-namespace WorldShaper
+namespace WorldShaper.Samples
 {
+    [AddComponentMenu("World Shaper/Transitions/Screen Wipe")]
     public class ScreenWipe : TransitionAnimation
     {
         [Header("UI Elements")]

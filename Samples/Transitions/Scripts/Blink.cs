@@ -2,8 +2,9 @@ using System.Threading.Tasks;
 using UnityEngine;
 using DG.Tweening;
 
-namespace WorldShaper
+namespace WorldShaper.Samples
 {
+    [AddComponentMenu("World Shaper/Transitions/Blink")]
     public class Blink : TransitionAnimation
     {
         [Header("UI Elements")]

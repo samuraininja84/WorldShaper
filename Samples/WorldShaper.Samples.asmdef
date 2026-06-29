@@ -1,0 +1,17 @@
+{
+    "name": "WorldShaper.Samples",
+    "rootNamespace": "",
+    "references": [
+        "GUID:8f53c8c02acef5e42bd74f953fb349e8",
+        "GUID:46ffc172a9c82a540b678e79b6b0d0f6"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

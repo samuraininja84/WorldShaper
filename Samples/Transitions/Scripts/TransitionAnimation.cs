@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace WorldShaper
+namespace WorldShaper.Samples
 {
     public abstract class TransitionAnimation : MonoBehaviour, ITransition
     {

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace WorldShaper
+namespace WorldShaper.Samples
 {
     public class LoadingBarHandler : MonoBehaviour
     {

@@ -32,7 +32,7 @@ namespace WorldShaper
         /// <remarks>
         /// Must be assigned before using the AreaHandleDispatcher.
         /// </remarks>
-        public static WorldMap WorldMapInstance;
+        public static WorldMap WorldMap => WorldMap.Instance;
 
         /// <summary>
         /// Event triggered when a scene is loaded.
@@ -121,7 +121,7 @@ namespace WorldShaper
             ActiveAreaHandle = handle;
 
             // Unload all scenes that are not part of the active area handle
-            await UnloadAreas(reloadActiveScene, reloadAdditiveScenes, unloadUnusedAssets);
+            await UnloadAreas(reloadAdditiveScenes, unloadUnusedAssets);
 
             // Invoke the OnAreaLoadingStarted event
             OnAreaLoadingStarted.Invoke();
@@ -207,11 +207,10 @@ namespace WorldShaper
         /// </list> 
         /// The method waits for all asynchronous operations to complete before signaling that the unloading process is finished.
         /// </remarks>
-        /// <param name="reloadActiveScene">A boolean value indicating whether to reload the active scene after unloading. The default value is <see langword="false"/>.</param>
         /// <param name="reloadAdditiveScenes">A boolean value indicating whether to reload additive scenes after unloading. The default value is <see langword="false"/>.</param>
         /// <param name="unloadUnusedAssets">A boolean value indicating whether to unload unused assets after unloading scenes. The default value is <see langword="false"/>.</param>
         /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
-        public static async Task UnloadAreas(bool reloadActiveScene = false, bool reloadAdditiveScenes = false, bool unloadUnusedAssets = false)
+        public static async Task UnloadAreas(bool reloadAdditiveScenes = false, bool unloadUnusedAssets = false)
         {
             // Invoke the OnAreaUnloadingStarted event
             OnAreaUnloadingStarted.Invoke();
@@ -305,7 +304,7 @@ namespace WorldShaper
             if (ActiveAreaHandle == null) return;
 
             // Unload the current area handle
-            await UnloadAreas(true, true, unloadUnusedAssets);
+            await UnloadAreas(true, unloadUnusedAssets);
 
             // Load the active area handle again
             await LoadAreas(ActiveAreaHandle, null, true, true, unloadUnusedAssets);
@@ -357,6 +356,6 @@ namespace WorldShaper
         /// </summary>
         /// <param name="name">The name of the scene to check.</param>
         /// <returns><see langword="true"/> if the specified scene name matches the persistent scene name; otherwise, <see langword="false"/>.</returns>
-        public static bool IsPersistent(string name) => WorldMapInstance.IsPersistentScene(name);
+        public static bool IsPersistent(string name) => WorldMap.IsPersistentScene(name);
     }
 }
