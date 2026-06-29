@@ -1,9 +1,8 @@
 using System;
 using System.Linq;
-using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace WorldShaper
 {
@@ -42,11 +41,6 @@ namespace WorldShaper
         /// Action invoked when a transition is completed.
         /// </summary>
         public static Action OnTransitionCompleted = delegate { };
-
-        /// <summary>
-        /// Action invoked when the start point changes.
-        /// </summary>
-        public static Action<string> OnStartPointChanged = delegate { };
 
         /// <summary>
         /// Action invoked when the start point changes.
@@ -297,16 +291,13 @@ namespace WorldShaper
         /// <param name="areaHandle">The handle representing the area to be set as the current area.</param>
         /// <param name="startPoint">The name of the start point for the passage. Cannot be null.</param>
         /// <param name="endPoint">The name of the end point for the passage. If null, the end point will be set to an empty string.</param>
-        private static void ConfigurePassageData(AreaHandle areaHandle, string startPoint, string endPoint)
+        private static void ConfigurePassageData(AreaHandle areaHandle, string endPoint)
         {
             // Set the current area to the area handle
             currentArea = areaHandle;
 
             // If the end passage name is null, set the end point to an empty string
             EndPoint = endPoint ?? string.Empty;
-
-            // Invoke the OnStartPointChanged action to signal the start point has changed
-            OnStartPointChanged.Invoke(startPoint);
 
             // Invoke the OnEndPointChanged action to signal the end point has changed
             OnEndPointChanged.Invoke(EndPoint);
@@ -318,23 +309,13 @@ namespace WorldShaper
         /// <remarks>This method retrieves the destination area from the provided connection, configures the passage data using the connection details, and returns the corresponding area handle.</remarks>
         /// <param name="connection">The connection object containing the destination area, connection name, and endpoint information.</param>
         /// <returns>An <see cref="AreaHandle"/> representing the destination area specified in the connection.</returns>
-        public static AreaHandle SwitchToDestination(Connection connection) => SwitchToDestination(connection.destinationArea, connection.connectionName, connection.Endpoint);
-
-        /// <summary>
-        /// Switches the current context to the specified area and configures the passage data using the provided start and end points.
-        /// </summary>
-        /// <remarks>This method configures the passage data for the specified area using the provided start and end points. The caller is responsible for ensuring that the area handle and passage points are valid.</remarks>
-        /// <param name="areaHandle">The handle representing the area to switch to.</param>
-        /// <param name="startPoint">The starting point of the passage within the area. Cannot be null or empty.</param>
-        /// <param name="endPoint">The ending point of the passage within the area. Cannot be null or empty.</param>
-        /// <returns>The <see cref="AreaHandle"/> representing the area that was switched to.</returns>
-        public static AreaHandle SwitchToDestination(AreaHandle areaHandle, string startPoint, string endPoint)
+        public static AreaHandle SwitchToDestination(Connection connection)
         {
             // Configure the passage data with the area handle and passage name
-            ConfigurePassageData(areaHandle, startPoint, endPoint);
+            ConfigurePassageData(connection.destinationArea, connection.Endpoint);
 
             // Return the area handle
-            return areaHandle;
+            return connection.destinationArea;
         }
 
         /// <summary>
@@ -342,20 +323,13 @@ namespace WorldShaper
         /// </summary>
         /// <param name="connection">The connection object containing the destination area and connection name.</param>
         /// <returns>An <see cref="AreaHandle"/> representing the area that was switched to.</returns>
-        public static AreaHandle SwitchToArea(Connection connection) => SwitchToArea(WorldMap.GetArea(connection), connection.connectionName);
-
-        /// <summary>
-        /// Switches to the specified area and prepares the passage data for the transition.
-        /// </summary>
-        /// <remarks>This method retrieves the specified area and connection, configures the passage data
-        /// for the transition, and returns the handle to the area. Ensure that the provided indices are valid to avoid unexpected behavior.</remarks>
-        /// <param name="areaHandle">The handle of the area to switch to. Must correspond to a valid area.</param>
-        /// <param name="connectionName">The name of the connection within the specified area. Must correspond to a valid connection in the area.</param>
-        /// <returns>An <see cref="AreaHandle"/> representing the area that was switched to.</returns>
-        public static AreaHandle SwitchToArea(AreaHandle areaHandle, string connectionName)
+        public static AreaHandle SwitchToArea(Connection connection)
         {
+            // Get the area handle from the world map using the connection's destination area
+            var areaHandle = WorldMap.GetArea(connection);
+
             // Set the passage data to prepare for the transition
-            ConfigurePassageData(areaHandle, string.Empty, connectionName);
+            ConfigurePassageData(areaHandle, connection.connectionName);
 
             // Return the area handle
             return areaHandle;
