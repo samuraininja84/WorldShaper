@@ -18,7 +18,6 @@ namespace WorldShaper
         public static TransitionInfo currentTransition;
         public static InterfaceReference<ILocationPointer> currentLocation;
         public static List<InterfaceReference<ILocationPointer>> locations;
-        public static ConnectionState connection = ConnectionState.Empty;
         public static Progress transitionProgress = Progress.Empty;
 
         /// <summary>
