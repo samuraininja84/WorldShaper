@@ -90,14 +90,6 @@ namespace WorldShaper
         /// </summary>
         public string Name => worldName != string.Empty ? worldName : name;
 
-        private void OnEnable()
-        {
-            // If there is no existing instance, assign this instance to the static instance variable.
-            if (!HasInstance) instance = this;
-        }
-
-        #region Area Methods
-
         /// <summary>
         /// Gets the number of registered areas.
         /// </summary>
@@ -115,6 +107,34 @@ namespace WorldShaper
         /// <returns>The <see cref="AreaHandle"/> at the specified index.</returns>
         public AreaHandle this[int index] => GetArea(index);
 
+        private void OnEnable()
+        {
+            // If there is no existing instance, assign this instance to the static instance variable.
+            if (!HasInstance) instance = this;
+        }
+
+        #region Connection Methods
+
+        public Connection GetConnection(SerializableGuid id) => registeredAreas.Find(area => area.ConnectionExists(id)).GetConnection(id);
+
+        public Connection GetConnection(string name) => registeredAreas.Find(area => area.ConnectionExists(name)).GetConnection(name);
+
+        public bool TryGetConnection(SerializableGuid id, out Connection connection)
+        {
+            connection = GetConnection(id);
+            return connection != null;
+        }
+
+        public bool TryGetConnection(string name, out Connection connection)
+        {
+            connection = GetConnection(name);
+            return connection != null;
+        }
+
+        #endregion
+
+        #region Area Methods
+
         /// <summary>
         /// Creates a lookup dictionary that maps each registered area to its list of connections.
         /// </summary>
@@ -124,6 +144,52 @@ namespace WorldShaper
             var worldLookup = new Dictionary<AreaHandle, List<Connection>>();
             foreach (var area in registeredAreas) worldLookup.Add(area,  area.connections);
             return worldLookup;
+        }
+
+        /// <summary>
+        /// Retrieves all registered areas.
+        /// </summary>
+        /// <returns>
+        /// A list of all registered AreaHandle instances.
+        /// </returns>
+        public List<AreaHandle> RetrieveAll() => registeredAreas;
+
+        /// <summary>
+        /// Attempts to retrieve an area associated with a specific connection. Returns true if found, false otherwise.
+        /// </summary>
+        /// <param name="connection">The connection to search for.</param>
+        /// <param name="area">When this method returns, contains the AreaHandle associated with the specified connection, if found; otherwise, null.</param>
+        /// <returns>True if the area is found; otherwise, false.</returns>
+        public bool TryGetArea(Connection connection, out AreaHandle area)
+        {
+            area = GetArea(connection);
+            return area != null;
+        }
+
+        /// <summary>
+        /// Attempts to retrieve an area by its name. Returns true if found, false otherwise.
+        /// </summary>
+        /// <param name="name">The name of the area to retrieve.</param>
+        /// <param name="area">When this method returns, contains the AreaHandle associated with the specified name, if found; otherwise, null.</param>
+        /// <returns>True if the area is found; otherwise, false.</returns>
+        public bool TryGetArea(string name, out AreaHandle area)
+        {
+            area = GetArea(name);
+            return area != null;
+        }
+
+        /// <summary>
+        /// Attempts to retrieve an area by its index. Returns true if found, false otherwise.
+        /// </summary>
+        /// <param name="index">The index of the area to retrieve.</param>
+        /// <param name="area">When this method returns, contains the AreaHandle associated with the specified index, if found; otherwise, null.</param>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when the index is out of range of the registered areas list.</exception>"
+        /// <returns>True if the area is found; otherwise, false.</returns>
+        public bool TryGetArea(int index, out AreaHandle area)
+        {
+            if (index < 0 || index >= registeredAreas.Count) throw new ArgumentOutOfRangeException($"The index {index} is out of range of the registered areas list.");
+            area = GetArea(index);
+            return area != null;
         }
 
         /// <summary>
@@ -150,14 +216,6 @@ namespace WorldShaper
         public AreaHandle GetArea(int index) => registeredAreas[index];
 
         /// <summary>
-        /// Retrieves all registered areas.
-        /// </summary>
-        /// <returns>
-        /// A list of all registered AreaHandle instances.
-        /// </returns>
-        public List<AreaHandle> RetrieveAll() => registeredAreas;
-
-        /// <summary>
         /// Checks if the map contains a specific area.
         /// </summary>
         /// <param name="area">The AreaHandle to check for.</param>
@@ -177,6 +235,10 @@ namespace WorldShaper
         /// <param name="sceneName">The name of the scene to check.</param>
         /// <returns><see langword="true"/> if the specified scene is a persistent scene; otherwise, <see langword="false"/>.</returns>
         public bool IsPersistentScene(string sceneName) => PersistentScenes.Exists(scene => scene.Name == sceneName);
+
+        #endregion
+
+        #region Registration Methods
 
         /// <summary>
         /// Searches the project for all AreaHandle instances and registers them.
@@ -281,16 +343,6 @@ namespace WorldShaper
             // Clear the registered areas list.
             registeredAreas.Clear();
         }
-
-        #endregion
-
-        #region Connection Methods
-
-        public Connection GetConnection(string connectionName) => registeredAreas.Find(area => area.ConnectionExists(connectionName)).GetConnection(connectionName);
-
-        public Connection GetConnection(SerializableGuid id) => registeredAreas.Find(area => area.ConnectionExists(id)).GetConnection(id);
-
-        public (string name, int index) GetConnectionInfo(SerializableGuid id) => registeredAreas.Find(area => area.ConnectionExists(id)).GetConnectionInfo(id);
 
         #endregion
     }
