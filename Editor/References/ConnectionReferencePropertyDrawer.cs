@@ -178,8 +178,10 @@ namespace WorldShaper.Editor
                     position,
                     new DatabaseTreePopup(new DatabaseTreeView(null, selection => 
                     {
-                        // Get the area from the selection and set the area property
+                        // Get the area from the selection
                         area = WorldMap.Instance.GetArea(selection);
+
+                        // Set the area property to the selected area
                         areaProperty.objectReferenceValue = area;
 
                         // Get the connection from the area using the selection and set the connection ID
