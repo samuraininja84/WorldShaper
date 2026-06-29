@@ -437,7 +437,7 @@ namespace WorldShaper.Editor
             #endregion
         }
 
-        #region Show Connection Area Content
+        #region Show Area Content
 
         private void ShowConnections(AreaHandle handle)
         {
@@ -699,10 +699,12 @@ namespace WorldShaper.Editor
             var searchField = new GUIStyle(EditorStyles.toolbarSearchField) { fixedHeight = EditorGUIUtility.singleLineHeight };
 
             // Get the button style for the connection
-            var buttonStyle = new GUIStyle(EditorStyles.miniButton);
-            buttonStyle.padding = new RectOffset(1, 1, 1, 1);
-            buttonStyle.fixedHeight = EditorGUIUtility.singleLineHeight;
-            buttonStyle.fixedWidth = 25;
+            var buttonStyle = new GUIStyle(EditorStyles.miniButton)
+            {
+                padding = new RectOffset(1, 1, 1, 1),
+                fixedHeight = EditorGUIUtility.singleLineHeight,
+                fixedWidth = 25
+            };
 
             // Begin a horizontal layout for the action buttons
             EditorGUILayout.BeginHorizontal();
@@ -714,12 +716,12 @@ namespace WorldShaper.Editor
             searchString = EditorGUILayout.TextField(searchString, searchField);
 
             // Display a button to create a new connection for the area handle
-            GUIContent plusContent = EditorGUIUtility.IconContent("d_Toolbar Plus");
+            var plusContent = EditorGUIUtility.IconContent("d_Toolbar Plus");
             plusContent.tooltip = $"Create New Connection for the {handleName} area";
             if (GUILayout.Button(plusContent, buttonStyle)) handle.CreateConnection();
 
             // Display a button to load the area for the area handle
-            GUIContent loadContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("LoadArea")), $"Load the area for the {handleName} area");
+            var loadContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("LoadArea")), $"Load the area for the {handleName} area");
 
             // Check if the handle is valid before allowing us to load the scene
             if (!handle.IsValid) GUI.contentColor = InvalidColor;
@@ -733,14 +735,8 @@ namespace WorldShaper.Editor
             // Check if there are any connections in the area handle, then display a button to clear all connections
             if (handle.HasConnections())
             {
-                // Get the button content for the clear all connections button
-                GUIContent clearContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("ClearAll")), $"Clear All Connections for the {handleName} area");
-
-                // Draw the button to clear all connections
-                if (GUILayout.Button(clearContent, buttonStyle)) handle.ClearConnections();
-
                 // Get the button content for the check for missing passages button
-                GUIContent checkContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Check")), $"Check for missing passages in the current scene for the {handleName} area");
+                var checkContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("Check")), $"Check for missing passages in the current scene for the {handleName} area");
 
                 // If the active scene isn't the same as the area handle's active scene, hide the button
                 if (handle.activeScene.LoadedScene.IsValid())
@@ -748,6 +744,12 @@ namespace WorldShaper.Editor
                     // Add a button to check for missing passages
                     if (GUILayout.Button(checkContent, buttonStyle)) CheckForMissing(handle);
                 }
+
+                // Get the button content for the clear all connections button
+                var clearContent = new GUIContent(EditorGUIUtility.FindTexture(ToImagePath("ClearAll")), $"Clear All Connections for the {handleName} area");
+
+                // Draw the button to clear all connections
+                if (GUILayout.Button(clearContent, buttonStyle)) handle.ClearConnections();
             }
 
             // End the horizontal layout for the action buttons
