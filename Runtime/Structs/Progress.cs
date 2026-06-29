@@ -33,12 +33,12 @@ namespace WorldShaper
         /// <summary>
         /// Indicates whether the progress is finished (i.e., has reached the maximum value).
         /// </summary>
-        public bool Finished => value == ratio;
+        public readonly bool Finished => value == ratio;
 
         /// <summary>
         /// Gets an instance of <see cref="Progress"/> representing no progress.
         /// </summary>
-        public static Progress Empty => new Progress(0f);
+        public static Progress Empty => new(0f);
 
         /// <summary>
         /// Constructor for the progress state.
@@ -84,7 +84,7 @@ namespace WorldShaper
         /// <returns>
         /// A float representing the progress value, which is a value between 0 and 1.
         /// </returns>
-        public float GetProgress() => value;
+        public readonly float GetProgress() => value;
 
         /// <summary>
         /// Clear the progress value, resetting it to 0.
