@@ -21,6 +21,16 @@ namespace WorldShaper
         public static List<InterfaceReference<ILocationPointer>> locations;
         public static ConnectionState connection = ConnectionState.Empty;
         public static Progress transitionProgress = Progress.Empty;
+
+        /// <summary>
+        /// The transition controller responsible for managing transition animations and effects.
+        /// </summary>
+        /// <remarks>
+        /// <list type="bullet">
+        /// <item>This controller handles the visual and functional aspects of transitions between areas, ensuring a smooth experience for the player.</item>
+        /// <item>Left ambiguous to allow for user-defined transition controllers, enabling customization of transition behavior and appearance.</item>
+        /// </list>
+        /// </remarks>
         public static ITransitionController controller;
 
         /// <summary>
@@ -49,25 +59,18 @@ namespace WorldShaper
         public static WorldMap WorldMap => WorldMap.Instance;
 
         /// <summary>
-        /// The name of the start point for the current connection.
-        /// </summary>
-        public static string StartPoint { get => connection.startPoint; set => connection.SetStart(value); }
-
-        /// <summary>
         /// The name of the end point for the current connection.
         /// </summary>
         public static string EndPoint { get => connection.endPoint; set => connection.SetEnd(value); }
 
-        // To Do: Remove the following properties and methods in a future update, as they will be replaced by method chains and a more flexible transition system.
+        // Default transition settings, to be overridden by the user if desired.
+        // These settings control the behavior of transitions between areas, including delay and whether to reload scenes or unload unused assets.
 
-        public static float TransitionDelay => WorldMap.transitionDelay;
-        public static bool RealtimeTransitions => WorldMap.realtimeTransitions;
-        public static bool ReloadActiveScene => WorldMap.reloadActiveScene;
-        public static bool ReloadAdditiveScenes => WorldMap.reloadAdditiveScenes;
-        public static bool UnloadUnusedAssets => WorldMap.unloadUnusedAssets;
-
-        // To Do: Refactor the following methods to use a more flexible transition system, allowing for custom transition animations and effects.
-        // Will also cut down on the number of methods in this class, as many of them are redundant or too lengthy.
+        public const float TransitionDelay = 2f;
+        public const bool RealtimeTransitions = false;
+        public const bool ReloadActiveScene = false;
+        public const bool ReloadAdditiveScenes = false;
+        public const bool UnloadUnusedAssets = true;
 
         #region Location Methods
 
@@ -112,144 +115,40 @@ namespace WorldShaper
 
         #endregion
 
-        #region Transition Methods
+        #region Transition Animation Methods
 
         /// <summary>
-        /// Configures passage data by setting the current area, start point, and optional end point.
+        /// Initiates the "transition in" animation for the current state.
         /// </summary>
-        /// <remarks>This method updates the current area and passage points based on the provided
-        /// parameters. The <paramref name="endPoint"/> parameter is optional; if not provided, it defaults to an empty
-        /// string.</remarks>
-        /// <param name="areaHandle">The handle representing the area to be set as the current area.</param>
-        /// <param name="startPoint">The name of the start point for the passage. Cannot be null.</param>
-        /// <param name="endPoint">The name of the end point for the passage. If null, the end point will be set to an empty string.</param>
-        private static void ConfigurePassageData(AreaHandle areaHandle, string startPoint, string endPoint)
-        {
-            // Set the current area to the area handle
-            currentArea = areaHandle;
-
-            // Set the start point name to the passage name
-            StartPoint = startPoint;
-
-            // If the end passage name is null, set the end point to an empty string
-            EndPoint = endPoint ?? string.Empty;
-
-            // Invoke the OnStartPointChanged action to signal the start point has changed
-            OnStartPointChanged.Invoke(StartPoint);
-
-            // Invoke the OnEndPointChanged action to signal the end point has changed
-            OnEndPointChanged.Invoke(EndPoint);
-        }
+        /// <param name="realTime">A value indicating whether the animation should be performed in real-time.  If <see langword="true"/>, the animation will respect real-time constraints; otherwise, it may use scaled time.</param>
+        /// <returns>A <see cref="Task"/> that represents the asynchronous operation. The task completes when the transition animation finishes.</returns>
+        public static Task TransitionIn(bool realTime = false) => controller.AnimateTransitionIn(realTime);
 
         /// <summary>
-        /// Switches the current context to the specified area based on the provided connection.
+        /// Initiates the transition-out animation.
         /// </summary>
-        /// <remarks>This method retrieves the destination area from the provided connection, configures the passage data using the connection details, and returns the corresponding area handle.</remarks>
-        /// <param name="connection">The connection object containing the destination area, connection name, and endpoint information.</param>
-        /// <returns>An <see cref="AreaHandle"/> representing the destination area specified in the connection.</returns>
-        public static AreaHandle SwitchToDestination(Connection connection) => SwitchToDestination(connection.destinationArea, connection.connectionName, connection.Endpoint);
+        /// <param name="realTime">A value indicating whether the transition should be performed in real-time. If <see langword="true"/>, the transition respects real-time constraints; otherwise, it may use scaled time.</param>
+        /// <returns>A <see cref="Task"/> that represents the asynchronous operation of the transition-out animation.</returns>
+        public static Task TransitionOut(bool realTime = false) => controller.AnimateTransitionOut(realTime);
 
         /// <summary>
-        /// Switches the current context to the specified area and configures the passage data using the provided start and end points.
+        /// Sets the transition-in animation to be used during area transitions.
         /// </summary>
-        /// <remarks>This method configures the passage data for the specified area using the provided start and end points. The caller is responsible for ensuring that the area handle and passage points are valid.</remarks>
-        /// <param name="areaHandle">The handle representing the area to switch to.</param>
-        /// <param name="startPoint">The starting point of the passage within the area. Cannot be null or empty.</param>
-        /// <param name="endPoint">The ending point of the passage within the area. Cannot be null or empty.</param>
-        /// <returns>The <see cref="AreaHandle"/> representing the area that was switched to.</returns>
-        public static AreaHandle SwitchToDestination(AreaHandle areaHandle, string startPoint, string endPoint)
-        {
-            // Configure the passage data with the area handle and passage name
-            ConfigurePassageData(areaHandle, startPoint, endPoint);
-
-            // Return the area handle
-            return areaHandle;
-        }
+        /// <param name="identifier">The identifier of the transition animation to set for the transition-in phase.</param>
+        public static void SetTransitionIn(TransitionIdentifier identifier) => controller.SetInTransition(identifier);
 
         /// <summary>
-        /// Switches to the specified area and retrieves the associated connection by name.
+        /// Sets the transition-out animation to be used during area transitions.
         /// </summary>
-        /// <remarks>This method retrieves the connection associated with the specified <paramref name="connectionName"/>  from the provided <paramref name="areaHandle"/>. The returned <see cref="AreaHandle"/> remains unchanged.</remarks>
-        /// <param name="areaHandle">The handle representing the area to switch to.</param>
-        /// <param name="connectionName">The name of the connection to retrieve within the specified area. Cannot be null or empty.</param>
-        /// <returns>The same <see cref="AreaHandle"/> instance provided as input.</returns>
-        public static AreaHandle SwitchToDestination(AreaHandle areaHandle, string connectionName)
-        {
-            // Get the connection from the area handle by name
-            Connection connection = areaHandle.GetConnection(connectionName);
-
-            // Return the area handle
-            return SwitchToDestination(areaHandle, connection.connectionName, connection.Endpoint);
-        }
-
-        /// <summary>
-        /// Switches to the specified area based on the provided connection.
-        /// </summary>
-        /// <param name="connection">The connection object containing the destination area and connection name.</param>
-        /// <returns>An <see cref="AreaHandle"/> representing the area that was switched to.</returns>
-        public static AreaHandle SwitchToArea(Connection connection) => SwitchToArea(WorldMap.GetArea(connection), connection.connectionName);
-
-        /// <summary>
-        /// Switches to the specified area and prepares the transition using the given connection index.
-        /// </summary>
-        /// <remarks>This method initializes the transition to the specified area by configuring the passage data based on the selected connection. The caller is responsible for ensuring that the area name and connection index are valid.</remarks>
-        /// <param name="areaHandle">The handle of the area to switch to. This must match the handle of an existing area.</param>
-        /// <param name="connectionIndex">The index of the connection within the area to use for the transition. Must be a valid index within the area's connections.</param>
-        /// <returns>An <see cref="AreaHandle"/> representing the area that was switched to.</returns>
-        public static AreaHandle SwitchToArea(AreaHandle areaHandle, int connectionIndex) => SwitchToArea(areaHandle, areaHandle.GetConnection(connectionIndex).connectionName);
-
-        /// <summary>
-        /// Switches to the specified area and prepares the passage data for the transition.
-        /// </summary>
-        /// <remarks>This method retrieves the specified area and connection, configures the passage data
-        /// for the transition, and returns the handle to the area. Ensure that the provided indices are valid to avoid unexpected behavior.</remarks>
-        /// <param name="areaHandle">The handle of the area to switch to. Must correspond to a valid area.</param>
-        /// <param name="connectionName">The name of the connection within the specified area. Must correspond to a valid connection in the area.</param>
-        /// <returns>An <see cref="AreaHandle"/> representing the area that was switched to.</returns>
-        public static AreaHandle SwitchToArea(AreaHandle areaHandle, string connectionName)
-        {
-            // Set the passage data to prepare for the transition
-            ConfigurePassageData(areaHandle, string.Empty, connectionName);
-
-            // Return the area handle
-            return areaHandle;
-        }
+        /// <param name="identifier">The identifier of the transition animation to set for the transition-out phase.</param>
+        public static void SetTransitionOut(TransitionIdentifier identifier) => controller.SetOutTransition(identifier);
 
         #endregion
 
+        // To Do: Refactor the following methods to use a more flexible transition system, allowing for custom transition animations and effects.
+        // Will also cut down on the number of methods in this class, as many of them are redundant or too lengthy.
+
         #region Execution Methods
-
-        /// <summary>
-        /// Executes a transition between areas, including optional animations and a delay.
-        /// </summary>
-        /// <remarks>
-        /// This method performs the following steps in sequence: 
-        /// <param name="handle">The <see cref="AreaHandle"/> representing the area to be loaded.</param>
-        /// <paramref name="reloadActiveScene"/>>Indicates whether to reload the active scene during the transition. Defaults to <see langword="false"/>.</paramref>
-        /// <param name="reloadAdditiveScenes">A value indicating whether to reload additive scenes during the transition. Defaults to <see langword="false"/>.</param>
-        /// <param name="unloadUnusedAssets">A value indicating whether to unload unused assets after the transition. Defaults to <see langword="false"/>.</param>
-        /// </remarks>
-        /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
-        public static async Task ExecuteTransition(AreaHandle handle, bool reloadActiveScene = false, bool reloadAdditiveScenes = false, bool unloadUnusedAssets = false)
-        {
-            // Invoke the OnTransitionStarted action to signal the start of the transition
-            OnTransitionStarted.Invoke();
-
-            // Set the WorldMap instance in the AreaHandleDispatcher
-            AreaHandleDispatcher.WorldMapInstance = WorldMap;
-
-            // Load the new area using the AreaHandleDispatcher
-            await AreaHandleDispatcher.LoadAreas(handle, transitionProgress, reloadActiveScene, reloadAdditiveScenes, unloadUnusedAssets);
-
-            // Initialize locations for the loaded area
-            await Intialize(handle);
-
-            // Invoke the OnActivate method to handle activation logic
-            await OnActivate(handle);
-
-            // Invoke the OnTransitionCompleted action to signal the completion of the transition
-            OnTransitionCompleted.Invoke();
-        }
 
         /// <summary>
         /// Initializes all location objects in the specified area and prepares them for interaction.
@@ -349,35 +248,118 @@ namespace WorldShaper
             }
         }
 
+        /// <summary>
+        /// Executes a transition between areas, including optional animations and a delay.
+        /// </summary>
+        /// <remarks>
+        /// This method performs the following steps in sequence:
+        /// <list type="number">
+        ///     <item>Invokes the <see cref="OnTransitionStarted"/> action to signal the start of the transition.</item>
+        ///     <item>Loads the new area using the <see cref="AreaHandleDispatcher"/>.</item>
+        ///     <item>Initializes locations for the loaded area.</item>
+        ///     <item>Invokes the <see cref="OnActivate"/> method to handle activation logic.</item>
+        ///     <item>Invokes the <see cref="OnTransitionCompleted"/> action to signal the completion of the transition.</item>
+        /// </list>
+        /// </remarks>
+        /// <param name="handle">The <see cref="AreaHandle"/> representing the area to be loaded.</param>
+        /// <param name="reloadActiveScene">Indicates whether to reload the active scene during the transition. Defaults to <see langword="false"/>.</param>
+        /// <param name="reloadAdditiveScenes">Indicates whether to reload additive scenes during the transition. Defaults to <see langword="false"/>.</param>
+        /// <param name="unloadUnusedAssets">Indicates whether to unload unused assets after the transition. Defaults to <see langword="false"/>.</param>
+        /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public static async Task Execute(AreaHandle handle, bool reloadActiveScene = false, bool reloadAdditiveScenes = false, bool unloadUnusedAssets = false)
+        {
+            // Invoke the OnTransitionStarted action to signal the start of the transition
+            OnTransitionStarted.Invoke();
+
+            // Load the new area using the AreaHandleDispatcher
+            await AreaHandleDispatcher.LoadAreas(handle, transitionProgress, reloadActiveScene, reloadAdditiveScenes, unloadUnusedAssets);
+
+            // Initialize locations for the loaded area
+            await Intialize(handle);
+
+            // Invoke the OnActivate method to handle activation logic
+            await OnActivate(handle);
+
+            // Invoke the OnTransitionCompleted action to signal the completion of the transition
+            OnTransitionCompleted.Invoke();
+        }
+
         #endregion
 
-        #region Transition Animation Methods
+        #region Transition Methods
 
         /// <summary>
-        /// Initiates the "transition in" animation for the current state.
+        /// Configures passage data by setting the current area, start point, and optional end point.
         /// </summary>
-        /// <param name="realTime">A value indicating whether the animation should be performed in real-time.  If <see langword="true"/>, the animation will respect real-time constraints; otherwise, it may use scaled time.</param>
-        /// <returns>A <see cref="Task"/> that represents the asynchronous operation. The task completes when the transition animation finishes.</returns>
-        public static Task TransitionIn(bool realTime = false) => controller.AnimateTransitionIn(realTime);
+        /// <remarks>This method updates the current area and passage points based on the provided
+        /// parameters. The <paramref name="endPoint"/> parameter is optional; if not provided, it defaults to an empty
+        /// string.</remarks>
+        /// <param name="areaHandle">The handle representing the area to be set as the current area.</param>
+        /// <param name="startPoint">The name of the start point for the passage. Cannot be null.</param>
+        /// <param name="endPoint">The name of the end point for the passage. If null, the end point will be set to an empty string.</param>
+        private static void ConfigurePassageData(AreaHandle areaHandle, string startPoint, string endPoint)
+        {
+            // Set the current area to the area handle
+            currentArea = areaHandle;
+
+            // If the end passage name is null, set the end point to an empty string
+            EndPoint = endPoint ?? string.Empty;
+
+            // Invoke the OnStartPointChanged action to signal the start point has changed
+            OnStartPointChanged.Invoke(startPoint);
+
+            // Invoke the OnEndPointChanged action to signal the end point has changed
+            OnEndPointChanged.Invoke(EndPoint);
+        }
 
         /// <summary>
-        /// Initiates the transition-out animation.
+        /// Switches the current context to the specified area based on the provided connection.
         /// </summary>
-        /// <param name="realTime">A value indicating whether the transition should be performed in real-time. If <see langword="true"/>, the transition respects real-time constraints; otherwise, it may use scaled time.</param>
-        /// <returns>A <see cref="Task"/> that represents the asynchronous operation of the transition-out animation.</returns>
-        public static Task TransitionOut(bool realTime = false) => controller.AnimateTransitionOut(realTime);
+        /// <remarks>This method retrieves the destination area from the provided connection, configures the passage data using the connection details, and returns the corresponding area handle.</remarks>
+        /// <param name="connection">The connection object containing the destination area, connection name, and endpoint information.</param>
+        /// <returns>An <see cref="AreaHandle"/> representing the destination area specified in the connection.</returns>
+        public static AreaHandle SwitchToDestination(Connection connection) => SwitchToDestination(connection.destinationArea, connection.connectionName, connection.Endpoint);
 
         /// <summary>
-        /// Sets the transition-in animation to be used during area transitions.
+        /// Switches the current context to the specified area and configures the passage data using the provided start and end points.
         /// </summary>
-        /// <param name="identifier">The identifier of the transition animation to set for the transition-in phase.</param>
-        public static void SetTransitionIn(TransitionIdentifier identifier) => controller.SetInTransition(identifier);
+        /// <remarks>This method configures the passage data for the specified area using the provided start and end points. The caller is responsible for ensuring that the area handle and passage points are valid.</remarks>
+        /// <param name="areaHandle">The handle representing the area to switch to.</param>
+        /// <param name="startPoint">The starting point of the passage within the area. Cannot be null or empty.</param>
+        /// <param name="endPoint">The ending point of the passage within the area. Cannot be null or empty.</param>
+        /// <returns>The <see cref="AreaHandle"/> representing the area that was switched to.</returns>
+        public static AreaHandle SwitchToDestination(AreaHandle areaHandle, string startPoint, string endPoint)
+        {
+            // Configure the passage data with the area handle and passage name
+            ConfigurePassageData(areaHandle, startPoint, endPoint);
+
+            // Return the area handle
+            return areaHandle;
+        }
 
         /// <summary>
-        /// Sets the transition-out animation to be used during area transitions.
+        /// Switches to the specified area based on the provided connection.
         /// </summary>
-        /// <param name="identifier">The identifier of the transition animation to set for the transition-out phase.</param>
-        public static void SetTransitionOut(TransitionIdentifier identifier) => controller.SetOutTransition(identifier);
+        /// <param name="connection">The connection object containing the destination area and connection name.</param>
+        /// <returns>An <see cref="AreaHandle"/> representing the area that was switched to.</returns>
+        public static AreaHandle SwitchToArea(Connection connection) => SwitchToArea(WorldMap.GetArea(connection), connection.connectionName);
+
+        /// <summary>
+        /// Switches to the specified area and prepares the passage data for the transition.
+        /// </summary>
+        /// <remarks>This method retrieves the specified area and connection, configures the passage data
+        /// for the transition, and returns the handle to the area. Ensure that the provided indices are valid to avoid unexpected behavior.</remarks>
+        /// <param name="areaHandle">The handle of the area to switch to. Must correspond to a valid area.</param>
+        /// <param name="connectionName">The name of the connection within the specified area. Must correspond to a valid connection in the area.</param>
+        /// <returns>An <see cref="AreaHandle"/> representing the area that was switched to.</returns>
+        public static AreaHandle SwitchToArea(AreaHandle areaHandle, string connectionName)
+        {
+            // Set the passage data to prepare for the transition
+            ConfigurePassageData(areaHandle, string.Empty, connectionName);
+
+            // Return the area handle
+            return areaHandle;
+        }
 
         #endregion
 
@@ -444,7 +426,7 @@ namespace WorldShaper
             AreaHandle targetArea = SwitchToDestination(connection);
 
             // Switch to the new area using the specified connection and transition settings
-            await ExecuteTransition(targetArea, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
+            await Execute(targetArea, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
 
             // Wait for the specified delay before loading the new area
             if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
@@ -516,7 +498,7 @@ namespace WorldShaper
             AreaHandle targetArea = SwitchToArea(connection);
 
             // Switch to the new area using the connection and transition settings
-            await ExecuteTransition(targetArea, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
+            await Execute(targetArea, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
 
             // Wait for the specified delay before loading the new area
             if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
@@ -557,7 +539,7 @@ namespace WorldShaper
             await TransitionIn(RealtimeTransitions);
 
             // Switch to the new area using the connection and transition settings
-            await ExecuteTransition(area, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
+            await Execute(area, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
 
             // Wait for the specified delay before loading the new area
             if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
@@ -581,55 +563,56 @@ namespace WorldShaper
         /// A delay may occur during the reload process, depending on the configuration.
         /// </remarks>
         /// <param name="useTransition">A value indicating whether to perform transition animations before and after reloading the area. <see langword="true"/> to use transitions; otherwise, <see langword="false"/>.</param>
+        [Obsolete("This method is deprecated. Use SwitchToArea or SwitchToDestination methods for area transitions instead.")]
         public static async void ReloadArea(bool useTransition = true)
         {
-            // Invoke the OnTransitionStarted action to signal the start of the transition
-            OnTransitionStarted.Invoke();
+            //// Invoke the OnTransitionStarted action to signal the start of the transition
+            //OnTransitionStarted.Invoke();
 
-            // Perform the transition in animation before switching areas, if specified
-            if (useTransition) await TransitionIn(RealtimeTransitions);
+            //// Perform the transition in animation before switching areas, if specified
+            //if (useTransition) await TransitionIn(RealtimeTransitions);
 
-            // Get the area name from the area handle
-            string areaName = SceneManager.GetActiveScene().name;
+            //// Get the area name from the area handle
+            //string areaName = SceneManager.GetActiveScene().name;
 
-            // If the current area is null, get the current area from the scene name and set it to the current area
-            if (currentArea == null || currentArea.activeScene.Name != areaName) currentArea = WorldMap.GetArea(areaName);
+            //// If the current area is null, get the current area from the scene name and set it to the current area
+            //if (currentArea == null || currentArea.activeScene.Name != areaName) currentArea = WorldMap.GetArea(areaName);
 
-            // Get the end passage name from the current area connections as the first connection
-            if (EndPoint == string.Empty && currentArea.HasConnections())
-            {
-                // Set the start passage name to the first connection endpoint
-                StartPoint = currentArea.First.Endpoint;
+            //// Get the end passage name from the current area connections as the first connection
+            //if (EndPoint == string.Empty && currentArea.HasConnections())
+            //{
+            //    // Set the start passage name to the first connection endpoint
+            //    StartPoint = currentArea.First.Endpoint;
 
-                // Set the end passage name to the first connection name
-                EndPoint = currentArea.First.connectionName;
+            //    // Set the end passage name to the first connection name
+            //    EndPoint = currentArea.First.connectionName;
 
-                // Invoke the OnEndPointChanged action to signal the end point has changed
-                OnEndPointChanged.Invoke(EndPoint);
-            }
-            else if (EndPoint != string.Empty && currentArea.ConnectionExists(EndPoint))
-            {
-                // Get the start passage name from the current area connections based on the end passage name
-                StartPoint = currentArea.GetConnection(EndPoint).Endpoint;
-            }
+            //    // Invoke the OnEndPointChanged action to signal the end point has changed
+            //    OnEndPointChanged.Invoke(EndPoint);
+            //}
+            //else if (EndPoint != string.Empty && currentArea.ConnectionExists(EndPoint))
+            //{
+            //    // Get the start passage name from the current area connections based on the end passage name
+            //    StartPoint = currentArea.GetConnection(EndPoint).Endpoint;
+            //}
 
-            // Invoke the OnStartPointChanged action to signal the start point has changed
-            OnStartPointChanged.Invoke(StartPoint);
+            //// Invoke the OnStartPointChanged action to signal the start point has changed
+            //OnStartPointChanged.Invoke(StartPoint);
 
-            // Start the area transition with the area name and default transition name
-            await ExecuteTransition(currentArea);
+            //// Start the area transition with the area name and default transition name
+            //await ExecuteTransition(currentArea);
 
-            // Wait for the specified delay before loading the new area
-            if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
+            //// Wait for the specified delay before loading the new area
+            //if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
 
-            // Perform the transition out animation after switching areas, if specified
-            if (useTransition) await TransitionOut(RealtimeTransitions);
+            //// Perform the transition out animation after switching areas, if specified
+            //if (useTransition) await TransitionOut(RealtimeTransitions);
 
-            // Await the OnEnter event of the world map after the transition is complete
-            await OnEnter(currentArea);
+            //// Await the OnEnter event of the world map after the transition is complete
+            //await OnEnter(currentArea);
 
-            // Invoke the OnTransitionCompleted action to signal the completion of the transition
-            OnTransitionCompleted.Invoke();
+            //// Invoke the OnTransitionCompleted action to signal the completion of the transition
+            //OnTransitionCompleted.Invoke();
         }
 
         #endregion

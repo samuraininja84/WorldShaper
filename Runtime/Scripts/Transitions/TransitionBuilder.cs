@@ -162,9 +162,9 @@ namespace WorldShaper
         (
             Area,
             Connection,
-            Settings,
             TransitionIn,
             TransitionOut,
+            Settings,
             Delays
         );
     }

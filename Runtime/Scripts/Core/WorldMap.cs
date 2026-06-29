@@ -19,11 +19,7 @@ namespace WorldShaper
         public string worldName = "New World";
 
         [Header("Transition Settings")]
-        public float transitionDelay = 2f;
-        public bool realtimeTransitions = false;
-        public bool reloadActiveScene = false;
-        public bool reloadAdditiveScenes = false;
-        public bool unloadUnusedAssets = true;
+        public TransitionInfo.Settings defaultTransitionSettings = TransitionInfo.Settings.Default;
 
         [Header("Areas")]
         public List<AreaHandle> persistentAreas = new();
