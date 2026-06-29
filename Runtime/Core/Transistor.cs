@@ -16,6 +16,7 @@ namespace WorldShaper
     public static class Transistor
     {
         public static AreaHandle currentArea;
+        // public static Connection currentConnection;
         public static InterfaceReference<ILocationPointer> currentLocation;
         public static List<InterfaceReference<ILocationPointer>> locations;
         public static ConnectionState connection = ConnectionState.Empty;
@@ -128,7 +129,7 @@ namespace WorldShaper
         /// <remarks>This method retrieves the destination area from the provided connection, configures the passage data using the connection details, and returns the corresponding area handle.</remarks>
         /// <param name="connection">The connection object containing the destination area, connection name, and endpoint information.</param>
         /// <returns>An <see cref="AreaHandle"/> representing the destination area specified in the connection.</returns>
-        public static AreaHandle SwitchToDestination(Connection connection)
+        public static AreaHandle ConfigureForDestination(Connection connection)
         {
             // Configure the passage data with the area handle and passage name
             ConfigurePassageData(connection.destinationArea, connection.Endpoint);
@@ -142,7 +143,7 @@ namespace WorldShaper
         /// </summary>
         /// <param name="connection">The connection object containing the destination area and connection name.</param>
         /// <returns>An <see cref="AreaHandle"/> representing the area that was switched to.</returns>
-        public static AreaHandle SwitchToArea(Connection connection)
+        public static AreaHandle ConfigureForArea(Connection connection)
         {
             // Get the area handle from the world map using the connection's destination area
             var areaHandle = WorldMap.GetArea(connection);
@@ -159,6 +160,65 @@ namespace WorldShaper
         #region Scene Switching Methods
 
         /// <summary>
+        /// Switches to the endpoint area defined by the specified connection.
+        /// </summary>
+        /// <remarks>This method uses the provided <paramref name="connection"/> to determine the destination area and configures the necessary passage data before initiating the transition.</remarks>
+        /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
+        public static async void SwitchToDestination(Connection connection, bool useTransition = true) => await HandleDestinationSwitch(connection, useTransition);
+
+        /// <summary>
+        /// Centralized method to handle destination switching logic based around a given connection.
+        /// </summary>
+        /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
+        /// <param name="useTransition">True to use transition animations; otherwise, false.</param>
+        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+        private static async Task HandleDestinationSwitch(Connection connection, bool useTransition = true)
+        {
+            // Invoke the OnTransitionStarted action to signal the start of the transition
+            OnTransitionStarted.Invoke();
+
+            // Get the destination connection, which is the endpoint of the provided connection if it exists; otherwise, it defaults to the original connection
+            Connection destination = connection.GetEndpoint() ?? connection;
+
+            // Perform the transition in animation before switching areas, if specified
+            if (useTransition)
+            {
+                // Get the transition in animation from the connection
+                if (destination != connection) SetTransitionIn(connection.transitionOut);
+                else SetTransitionIn(connection.transitionIn);
+
+                // Wait for the transition in animation to complete
+                await TransitionIn(RealtimeTransitions);
+            }
+
+            // Get the target area handle by switching to the destination defined by the connection
+            AreaHandle targetArea = ConfigureForDestination(connection);
+
+            // Switch to the new area using the specified connection and transition settings
+            await Execute(targetArea, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
+
+            // Wait for the specified delay before loading the new area
+            if (TransitionDelay > 0f) await Task.Delay(TimeSpan.FromSeconds(TransitionDelay));
+
+            // Perform the transition out animation after switching areas, if specified
+            if (useTransition)
+            {
+                // If the endpoint connection exists, use its transition in animation for the transition out phase; otherwise, use the original connection's transition out animation
+                if (destination != connection) SetTransitionOut(destination.transitionIn);
+                else SetTransitionOut(connection.transitionOut);
+
+                // Wait for the transition out animation to complete
+                await TransitionOut(RealtimeTransitions);
+            }
+
+            // Await the OnEnter event of the world map after the transition is complete
+            await OnEnter(targetArea);
+
+            // Invoke the OnTransitionCompleted action to signal the completion of the transition
+            OnTransitionCompleted.Invoke();
+        }
+
+        /// <summary>
         /// Switches the current scene to the specified area at the given connection index.
         /// </summary>
         /// <remarks>This method initiates a scene transition to the specified area. Ensure that the <paramref name="areaName"/> corresponds to a valid scene and that the connection index is within the valid range for the area's connections.</remarks>
@@ -171,6 +231,13 @@ namespace WorldShaper
         /// </summary>
         /// <param name="area">The handle representing the target area to switch to. Cannot be null.</param>
         public static async void SwitchToArea(AreaHandle area) => await HandleAreaSwitch(area);
+
+        /// <summary>
+        /// Switches the current scene to the specified area using the provided connection.
+        /// </summary>
+        /// <param name="connection">The connection object that defines the destination area and associated metadata.</param>
+        /// <param name="useTransition">True to use transition animations; otherwise, false.</param>
+        public static async void SwitchToArea(Connection connection, bool useTransition = true) => await HandleAreaSwitch(connection, useTransition);
 
         /// <summary>
         /// Centralized method to handle area switching logic based around a given connection.
@@ -197,7 +264,7 @@ namespace WorldShaper
             }
 
             // Get the target area handle by switching to the destination defined by the connection
-            AreaHandle targetArea = SwitchToArea(connection);
+            AreaHandle targetArea = ConfigureForArea(connection);
 
             // Switch to the new area using the connection and transition settings
             await Execute(targetArea, ReloadActiveScene, ReloadAdditiveScenes, UnloadUnusedAssets);
@@ -322,7 +389,7 @@ namespace WorldShaper
         // To Do: Cleanup the handling for the ILocationPointer Methods, as they are currently too long and redundant.
         // Will also need to refactor the handling for the ILocationPointer methods to use a more flexible system, allowing for custom location management and interaction.
 
-        #region Execution Methods
+        #region Location Management Methods
 
         /// <summary>
         /// Registers an <see cref="ILocationPointer"/> instance for tracking and management.
@@ -363,6 +430,10 @@ namespace WorldShaper
             return false;
         }
 
+        #endregion
+
+        #region Execution Methods
+
         /// <summary>
         /// Initializes all location objects in the specified area and prepares them for interaction.
         /// </summary>
@@ -387,9 +458,6 @@ namespace WorldShaper
             // Set the current area to the loaded handle
             currentArea = handle;
 
-            // Clear the existing locations list
-            locations.Clear();
-
             // Get all locations in the scene if not already set
             locations = ILocationPointerExtensions.GetLocationPointers();
 
@@ -413,22 +481,20 @@ namespace WorldShaper
             if (!handle.HasConnections()) return;
 
             // Find the connection in the area handle that matches the end point and disable interaction
-            if (TryGetLocation(EndPoint, out ILocationPointer connectable)) currentLocation.SetValue(connectable);
-
-            // Check if the location is not null
-            if (currentLocation.HasValue)
+            if (TryGetLocation(EndPoint, out ILocationPointer connectable))
             {
+                // Set the current location to the matching location
+                currentLocation.SetValue(connectable);
+
                 // Disable the location to prevent interaction
                 connectable.SetActive(false);
 
                 // Add the activation task for the matching location
                 await connectable.Activate();
             }
-            else
-            {
-                // Return a completed task if no matching location is found
-                await Task.CompletedTask;
-            }
+
+            // Return a completed task if no matching location is found
+            await Task.CompletedTask;
         }
 
         /// <summary>
@@ -446,19 +512,17 @@ namespace WorldShaper
             if (!handle.HasConnections()) return;
 
             // Find the connection in the area handle that matches the end point and disable interaction
-            if (TryGetLocation(EndPoint, out ILocationPointer connectable)) currentLocation.SetValue(connectable);
-
-            // Check if the location is not null
-            if (currentLocation.HasValue)
+            if (TryGetLocation(EndPoint, out ILocationPointer connectable))
             {
+                // Set the current location to the matching location
+                currentLocation.SetValue(connectable);
+
                 // Await the OnEntry task for the matching location
                 await connectable.Enter();
             }
-            else
-            {
-                // Return a completed task if no matching location is found
-                await Task.CompletedTask;
-            }
+
+            // Return a completed task if no matching location is found
+            await Task.CompletedTask;
         }
 
         /// <summary>

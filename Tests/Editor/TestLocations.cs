@@ -91,6 +91,9 @@ namespace WorldShaper.Tests
                 // Load the area using the EditorLoad method, which will load all scenes associated with the area handle
                 await EditorLoad(area, loadPersistentScenes: true, unloadUnusedAssets: true);
 
+                    // Get all location pointers in the loaded scenes to test connections against
+                    ILocationPointer[] pointers = ILocationPointerExtensions.GetAllLocations().ToArray();
+
                 // Iterate through each connection in the area and test if it is valid and can be found in the loaded scenes
                 for (int j = 0; j < area.connections.Count; j++)
                 {
@@ -102,9 +105,6 @@ namespace WorldShaper.Tests
 
                     // Log the connection information for debugging purposes
                     Debug.Log($"Testing connection: {connection.Endpoint} in area: {area.Name}");
-
-                    // Get all location pointers in the loaded scenes to test connections against
-                    ILocationPointer[] pointers = ILocationPointerExtensions.GetAllLocations().ToArray();
 
                     // Find the location with the connection name
                     ILocationPointer target = pointers.FirstOrDefault(c => c.GetEndpoint() == connection.Endpoint);
