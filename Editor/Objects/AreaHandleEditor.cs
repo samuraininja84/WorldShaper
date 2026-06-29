@@ -177,15 +177,15 @@ namespace WorldShaper.Editor
                     var transitionIn = element.FindProperty(nameof(Connection.transitionIn));
                     var transitionOut = element.FindProperty(nameof(Connection.transitionOut));
 
-                    // Get the rects for the name, type, and destination properties
-                    var nameRect = new Rect(rect.x, rect.y, width, EditorGUIUtility.singleLineHeight);
-                    var typeRect = new Rect(rect.x, rect.y + EditorGUIUtility.singleLineHeight + spacing, width, EditorGUIUtility.singleLineHeight);
-                    var destinationRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 2, width, EditorGUIUtility.singleLineHeight);
-                    var transitionInRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 3, width, EditorGUIUtility.singleLineHeight);
-                    var transitionOutRect = new Rect(rect.x, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 4, width, EditorGUIUtility.singleLineHeight);
-
                     // Check if the connection is closed
                     bool connectionClosed = connection.Closed();
+
+                    // Get the rects for the name, type, destination, transitionIn, and transitionOut properties, positioned vertically with spacing
+                    var nameRect = new Rect(rect.x, rect.y, width, EditorGUIUtility.singleLineHeight);
+                    var typeRect = nameRect.AddY(EditorGUIUtility.singleLineHeight + spacing);
+                    var destinationRect = typeRect.AddY(EditorGUIUtility.singleLineHeight + spacing);
+                    var transitionInRect = destinationRect.AddY(connectionClosed ? 0 : EditorGUIUtility.singleLineHeight + spacing);
+                    var transitionOutRect = transitionInRect.AddY(EditorGUIUtility.singleLineHeight + spacing);
 
                     // Draw the properties
                     EditorGUI.PropertyField(nameRect, name);

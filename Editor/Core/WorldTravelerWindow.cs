@@ -1014,11 +1014,11 @@ namespace WorldShaper.Editor
                     // Draw the foldout properties if the connection is unfolded
                     if (foldouts[foldoutIndex])
                     {
+                        // Create rects for the connection type, transition in, transition out, and destination properties, positioned below the foldout
                         var typeRect = new Rect(rect.x + indent, rect.y + EditorGUIUtility.singleLineHeight + spacing, width, EditorGUIUtility.singleLineHeight);
-                        var transitionInRect = new Rect(rect.x + indent, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 2, width, EditorGUIUtility.singleLineHeight);
-                        var transitionOutRect = new Rect(rect.x + indent, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 3, width, EditorGUIUtility.singleLineHeight);
-                        var destinationRect = new Rect(rect.x + indent, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 4, width, EditorGUIUtility.singleLineHeight);
-                        var endpointRect = new Rect(rect.x + indent, rect.y + (EditorGUIUtility.singleLineHeight + spacing) * 5, width, EditorGUIUtility.singleLineHeight);
+                        var destinationRect = typeRect.AddY(EditorGUIUtility.singleLineHeight + spacing);
+                        var transitionInRect = destinationRect.AddY(connectionClosed ? 0 : EditorGUIUtility.singleLineHeight + spacing);
+                        var transitionOutRect = transitionInRect.AddY(EditorGUIUtility.singleLineHeight + spacing);
 
                         // Draw the connection type, transition in, and transition out properties
                         EditorGUI.PropertyField(typeRect, type);
