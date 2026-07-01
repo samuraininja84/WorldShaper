@@ -1,14 +1,14 @@
-using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
-using UnityEditor.SceneManagement;
-using UnityEditorInternal;
+using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
+using UnityEditor;
+using UnityEditorInternal;
+using UnityEditor.SceneManagement;
+using Task = System.Threading.Tasks.Task;
 using BackgroundProgress = UnityEditor.Progress;
 using Scene = UnityEngine.SceneManagement.Scene;
 using SceneManager = UnityEngine.SceneManagement.SceneManager;
-using Task = System.Threading.Tasks.Task;
+
 
 namespace WorldShaper.Editor
 {
@@ -87,9 +87,6 @@ namespace WorldShaper.Editor
             // Get the current mouse position
             Vector2 globalMousePosition = Event.current.mousePosition;
 
-            // Additional spacing for the scroll rect
-            float scrollRectSpacing = 5f;
-
             // Get the window rect
             Rect windowRect = position;
 
@@ -99,25 +96,13 @@ namespace WorldShaper.Editor
             #region Handles Menu Area
 
             // If using horizontal layout, draw the actions section on the left side
-            if (HorizontalLayout)
-            {
-                // Get the rect for the right side of the window
-                Rect actionMenuRect = new Rect(-3, -3, sectionSplit.x + scrollRectSpacing, position.height + 6);
+            Rect actionMenuRect = HorizontalLayout ? new Rect(0, -3, sectionSplit.x, position.height + 5) : new Rect(0, -3, position.width, sectionSplit.y);
 
-                // Draw a rect for the actions section
-                GUILayout.BeginArea(actionMenuRect, GUI.skin.FindStyle("TE BoxBackground"));
-            }
-            else
-            {
-                // Get the rect for the top of the window
-                Rect actionMenuRect = new Rect(-3, -3, position.width + scrollRectSpacing, sectionSplit.y);
-
-                // Draw a rect for the actions section
-                GUILayout.BeginArea(actionMenuRect, GUI.skin.FindStyle("TE BoxBackground"));
-            }
+            // Draw a rect for the actions section
+            GUILayout.BeginArea(actionMenuRect, GUI.skin.FindStyle("TE BoxBackground"));
 
             // Add a separator for better UI spacing
-            EditorGUILayout.Separator();
+            EditorGUILayout.Space(10);
 
             // Draw the header for the window
             EditorGUILayout.LabelField("World Traveler", HeaderStyle(Color.gold));
@@ -225,10 +210,10 @@ namespace WorldShaper.Editor
             if (HorizontalLayout)
             {
                 // Calculate the starting position for the right section
-                float startPos = Mathf.Max(sectionSplit.x, minSectionSplit.x) + scrollRectSpacing;
+                float startPos = Mathf.Max(sectionSplit.x, minSectionSplit.x);
 
                 // Define the rect for the right section
-                dataSectionRect = new Rect(startPos + 1, 3, (position.width - startPos - 1), position.height - 3);
+                dataSectionRect = new Rect(startPos, 3, position.width - startPos, position.height + 5);
 
                 // Begin the area for the right section
                 GUILayout.BeginArea(dataSectionRect);
@@ -239,7 +224,7 @@ namespace WorldShaper.Editor
                 float startPos = Mathf.Max(sectionSplit.y, minSectionSplit.y);
 
                 // Define the rect for the bottom section
-                dataSectionRect = new Rect(3, startPos, position.width - 6, position.height - startPos - 5);
+                dataSectionRect = new Rect(0, startPos, position.width, position.height - startPos + 10);
 
                 // Begin the area for the bottom section
                 GUILayout.BeginArea(dataSectionRect);
@@ -1158,25 +1143,35 @@ namespace WorldShaper.Editor
             var connection = Transistor.currentTransition.Connection != null ? Transistor.currentTransition.Connection : null;
             Progress progress = Transistor.transitionProgress;
 
-            // Add a horizontal line to separate the transition preview from the rest of the UI
-            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            // Create a GUIStyle for the transition preview box, which will be used to visually separate the transition preview from the rest of the UI
+            var skin = new GUIStyle(GUI.skin.FindStyle("ShurikenEffectBg"))
+            {
+                padding = new RectOffset(10, 10, 10, 10),
+                margin = new RectOffset(0, 0, 5, 0)
+            };
 
-            // Start a vertical layout for the transition preview
-            EditorGUILayout.BeginVertical();
+            // Start a vertical layout for the transition preview with a window style to visually separate it from the rest of the UI
+            EditorGUILayout.BeginVertical(skin);
 
             // Draw a label for the transition preview
             EditorGUILayout.LabelField("Transition Preview", EditorStyles.boldLabel);
 
             // Begin a disabled group for the transition preview, which will prevent the user from editing the fields in the transition preview
-            EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Current Area / Connection");
+            EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.ObjectField(area, typeof(AreaHandle), false);
             EditorGUILayout.ObjectField(connection, typeof(Connection), false);
+            EditorGUI.EndDisabledGroup();
             EditorGUILayout.EndHorizontal();
 
             // Draw the transition progress bar, which will show the progress of the transition between areas
-            EditorGUILayout.Slider("Transition Progress", progress.value, 0f, 1f);
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Transition Progress");
+            EditorGUI.BeginDisabledGroup(true);
+            EditorGUILayout.Slider(progress.value, 0f, 1f);
+            EditorGUI.EndDisabledGroup();
+            EditorGUILayout.EndHorizontal();
 
             // End the disabled group for the transition preview
             EditorGUI.EndDisabledGroup();
@@ -1209,7 +1204,7 @@ namespace WorldShaper.Editor
             DrawEditorButtons();
 
             // Add a space for better UI spacing
-            EditorGUILayout.Space(2);
+            EditorGUILayout.Space(5);
         }
 
         #endregion
