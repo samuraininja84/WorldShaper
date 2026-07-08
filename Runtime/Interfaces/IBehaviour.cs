@@ -3,12 +3,8 @@ using System.Threading.Tasks;
 namespace WorldShaper
 {
     /// <summary>
-    /// Defines a contract for behaviors that can be connected to an <see cref="ILocationPointer"/>.
+    /// Defines a contract for behavior interfaces that can be implemented by classes to provide specific behavior logic.
     /// </summary>
-    /// <remarks>
-    /// Implement this interface to define custom behavior that executes during the entry and exit phases of an <see cref="ILocationPointer"/>.
-    /// The <see cref="OnEnter"/> method is invoked when the behavior is activated, and the <see cref="OnExit"/> method is invoked when the behavior is deactivated.
-    /// </remarks>
     public interface IBehaviour
     {
         /// <summary>

@@ -17,6 +17,14 @@ namespace WorldShaper
 
         public virtual async Task Exit() => await Task.CompletedTask;
 
+        public virtual void AddInitializeBehaviour(IInitializeBehaviour behaviour) { }
+
+        public virtual void AddActivateBehaviour(IActivateBehaviour behaviour) { }
+
+        public virtual void AddEnterBehaviour(IEnterBehaviour behaviour) { }
+
+        public virtual void AddExitBehaviour(IExitBehaviour behaviour) { }
+
         public virtual Vector3 GetPosition() => transform.position;
 
         public abstract string GetEndpoint();

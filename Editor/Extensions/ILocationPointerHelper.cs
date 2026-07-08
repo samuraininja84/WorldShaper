@@ -10,11 +10,11 @@ namespace WorldShaper.Editor
         [MenuItem(MenuItemPath + "Show Tree")]
         public static void ShowTree(MenuCommand command)
         {
-            // Get the Passage component from the context of the menu command
-            Passage passage = command.context as Passage;
+            // Get the BaseLocationPointer component from the context of the menu command
+            BaseLocationPointer pointer = command.context as BaseLocationPointer;
 
-            // Return if the Passage is null
-            if (passage == null) return;
+            // Return if the BaseLocationPointer is null
+            if (pointer == null) return;
 
             // Get the current position of the mouse in the editor window
             var mousePosition = Event.current != null ? Event.current.mousePosition : Vector2.zero;
@@ -29,25 +29,25 @@ namespace WorldShaper.Editor
                 if (selection != null)
                 {
                     // Create a new instance of the selected behaviour type and add it to the passage's game object
-                    IBehaviour newBehaviour = (IBehaviour)passage.gameObject.AddComponent(selection);
+                    IBehaviour newBehaviour = (IBehaviour)pointer.gameObject.AddComponent(selection);
 
                     // Switch on the type of the new behaviour and add it to the appropriate array in the passage
                     switch (groupId)
                     {
                         case 0:
-                            AddAsInitializeBehaviour(passage, (IInitializeBehaviour)newBehaviour);
+                            AddAsInitializeBehaviour(pointer, (IInitializeBehaviour)newBehaviour);
                             break;
                         case 1:
-                            AddAsActivateBehaviour(passage, (IActivateBehaviour)newBehaviour);
+                            AddAsActivateBehaviour(pointer, (IActivateBehaviour)newBehaviour);
                             break;
                         case 2:
-                            AddAsEnterBehaviour(passage, (IEnterBehaviour)newBehaviour);
+                            AddAsEnterBehaviour(pointer, (IEnterBehaviour)newBehaviour);
                             break;
                         case 3:
-                            AddAsExitBehaviour(passage, (IExitBehaviour)newBehaviour);
+                            AddAsExitBehaviour(pointer, (IExitBehaviour)newBehaviour);
                             break;
                         case 4:
-                            AddAsMultipleBehaviours(passage, newBehaviour);
+                            AddAsMultipleBehaviours(pointer, newBehaviour);
                             break;
                         // This should never happen, because behaviour types are sorted into groups in the tree view, but just in case, log a warning if the behaviour type does not implement any of the expected interfaces
                         default:
@@ -63,61 +63,49 @@ namespace WorldShaper.Editor
             });
         }
 
-        public static void AddAsInitializeBehaviour(Passage passage, IInitializeBehaviour newInitializeBehaviour)
+        public static void AddAsInitializeBehaviour(BaseLocationPointer pointer, IInitializeBehaviour newInitializeBehaviour)
         {
-            // If the onInitializeMethods array of the passage is null, initialize it as an empty array
-            passage.onInitializeMethods ??= new InterfaceReference<IInitializeBehaviour>[0];
+            // If the onInitializeMethods array of the pointer is null, initialize it as an empty array
+            pointer.AddInitializeBehaviour(newInitializeBehaviour);
 
-            // Add the new IInitializeBehaviour to the onInitializeMethods array of the passage
-            ArrayUtility.Add(ref passage.onInitializeMethods, InterfaceReference<IInitializeBehaviour>.FromValue(newInitializeBehaviour));
-
-            // Mark the passage as dirty to save the changes
-            EditorUtility.SetDirty(passage);
+            // Mark the pointer as dirty to save the changes
+            EditorUtility.SetDirty(pointer);
         }
 
-        public static void AddAsActivateBehaviour(Passage passage, IActivateBehaviour newActivateBehaviour)
+        public static void AddAsActivateBehaviour(BaseLocationPointer pointer, IActivateBehaviour newActivateBehaviour)
         {
-            // If the onActivateMethods array of the passage is null, initialize it as an empty array
-            passage.onActivateMethods ??= new InterfaceReference<IActivateBehaviour>[0];
+            // If the onActivateMethods array of the pointer is null, initialize it as an empty array
+            pointer.AddActivateBehaviour(newActivateBehaviour);
 
-            // Add the new IActivateBehaviour to the onActivateMethods array of the passage
-            ArrayUtility.Add(ref passage.onActivateMethods, InterfaceReference<IActivateBehaviour>.FromValue(newActivateBehaviour));
-
-            // Mark the passage as dirty to save the changes
-            EditorUtility.SetDirty(passage);
+            // Mark the pointer as dirty to save the changes
+            EditorUtility.SetDirty(pointer);
         }
 
-        public static void AddAsEnterBehaviour(Passage passage, IEnterBehaviour newEnterBehaviour)
+        public static void AddAsEnterBehaviour(BaseLocationPointer pointer, IEnterBehaviour newEnterBehaviour)
         {
-            // If the onEnterMethods array of the passage is null, initialize it as an empty array
-            passage.onEnterMethods ??= new InterfaceReference<IEnterBehaviour>[0];
+            // If the onEnterMethods array of the pointer is null, initialize it as an empty array
+            pointer.AddEnterBehaviour(newEnterBehaviour);
 
-            // Add the new IEnterBehaviour to the onEnterMethods array of the passage
-            ArrayUtility.Add(ref passage.onEnterMethods, InterfaceReference<IEnterBehaviour>.FromValue(newEnterBehaviour));
-
-            // Mark the passage as dirty to save the changes
-            EditorUtility.SetDirty(passage);
+            // Mark the pointer as dirty to save the changes
+            EditorUtility.SetDirty(pointer);
         }
 
-        public static void AddAsExitBehaviour(Passage passage, IExitBehaviour newExitBehaviour)
+        public static void AddAsExitBehaviour(BaseLocationPointer pointer, IExitBehaviour newExitBehaviour)
         {
-            // If the onExitMethods array of the passage is null, initialize it as an empty array
-            passage.onExitMethods ??= new InterfaceReference<IExitBehaviour>[0];
+            // If the onExitMethods array of the pointer is null, initialize it as an empty array
+            pointer.AddExitBehaviour(newExitBehaviour);
 
-            // Add the new IExitBehaviour to the onExitMethods array of the passage
-            ArrayUtility.Add(ref passage.onExitMethods, InterfaceReference<IExitBehaviour>.FromValue(newExitBehaviour));
-
-            // Mark the passage as dirty to save the changes
-            EditorUtility.SetDirty(passage);
+            // Mark the pointer as dirty to save the changes
+            EditorUtility.SetDirty(pointer);
         }
 
-        public static void AddAsMultipleBehaviours(Passage passage, IBehaviour newBehaviour)
+        public static void AddAsMultipleBehaviours(BaseLocationPointer pointer, IBehaviour newBehaviour)
         {
-            // Check if the new behaviour implements any of the expected interfaces and add it to the appropriate array in the passage
-            if (newBehaviour is IInitializeBehaviour initializeBehaviour) AddAsInitializeBehaviour(passage, initializeBehaviour);
-            if (newBehaviour is IActivateBehaviour activateBehaviour) AddAsActivateBehaviour(passage, activateBehaviour);
-            if (newBehaviour is IEnterBehaviour enterBehaviour) AddAsEnterBehaviour(passage, enterBehaviour);
-            if (newBehaviour is IExitBehaviour exitBehaviour) AddAsExitBehaviour(passage, exitBehaviour);
+            // Check if the new behaviour implements any of the expected interfaces and add it to the appropriate array in the pointer
+            if (newBehaviour is IInitializeBehaviour initializeBehaviour) AddAsInitializeBehaviour(pointer, initializeBehaviour);
+            if (newBehaviour is IActivateBehaviour activateBehaviour) AddAsActivateBehaviour(pointer, activateBehaviour);
+            if (newBehaviour is IEnterBehaviour enterBehaviour) AddAsEnterBehaviour(pointer, enterBehaviour);
+            if (newBehaviour is IExitBehaviour exitBehaviour) AddAsExitBehaviour(pointer, exitBehaviour);
         }
     }
 }

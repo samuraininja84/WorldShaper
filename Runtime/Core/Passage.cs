@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -14,10 +15,10 @@ namespace WorldShaper
         public Vector3 positionOffset;
 
         [Header("Behaviours")]
-        public InterfaceReference<IInitializeBehaviour>[] onInitializeMethods = null;
-        public InterfaceReference<IActivateBehaviour>[] onActivateMethods = null;
-        public InterfaceReference<IEnterBehaviour>[] onEnterMethods = null;
-        public InterfaceReference<IExitBehaviour>[] onExitMethods = null;
+        public List<InterfaceReference<IInitializeBehaviour>> onInitializeMethods;
+        public List<InterfaceReference<IActivateBehaviour>> onActivateMethods;
+        public List<InterfaceReference<IEnterBehaviour>> onEnterMethods;
+        public List<InterfaceReference<IExitBehaviour>> onExitMethods;
 
         public AreaHandle Area => passage.Area;
 
@@ -28,7 +29,7 @@ namespace WorldShaper
         public async override Task Initialize()
         {
             // Check if there are no methods to initialize
-            if (onInitializeMethods == null || onInitializeMethods.Length == 0)
+            if (onInitializeMethods == null || onInitializeMethods.Count == 0)
             {
                 // Return a completed task
                 await Task.CompletedTask;
@@ -54,7 +55,7 @@ namespace WorldShaper
             target.Set(GetPosition());
 
             // Check if there are no methods to activate
-            if (onActivateMethods == null || onActivateMethods.Length == 0)
+            if (onActivateMethods == null || onActivateMethods.Count == 0)
             {
                 // Return a completed task
                 await Task.CompletedTask;
@@ -74,7 +75,7 @@ namespace WorldShaper
         public async override Task Enter()
         {
             // Check if there are no methods to enter
-            if (onEnterMethods == null || onEnterMethods.Length == 0)
+            if (onEnterMethods == null || onEnterMethods.Count == 0)
             {
                 // Return a completed task
                 await Task.CompletedTask;
@@ -94,7 +95,7 @@ namespace WorldShaper
         public async override Task Exit()
         {
             // Check if there are no methods to exit
-            if (onExitMethods == null || onExitMethods.Length == 0)
+            if (onExitMethods == null || onExitMethods.Count == 0)
             {
                 // Return a completed task
                 await Task.CompletedTask;
@@ -109,6 +110,26 @@ namespace WorldShaper
                 // Await each method's OnExit if it has a value
                 if (method.HasValue) await method.Value.OnExit();
             }
+        }
+
+        public override void AddInitializeBehaviour(IInitializeBehaviour behaviour)
+        {
+            onInitializeMethods.Add(InterfaceReference<IInitializeBehaviour>.FromValue(behaviour));
+        }
+
+        public override void AddActivateBehaviour(IActivateBehaviour behaviour)
+        {
+            onActivateMethods.Add(InterfaceReference<IActivateBehaviour>.FromValue(behaviour));
+        }
+
+        public override void AddEnterBehaviour(IEnterBehaviour behaviour)
+        {
+            onEnterMethods.Add(InterfaceReference<IEnterBehaviour>.FromValue(behaviour));
+        }
+
+        public override void AddExitBehaviour(IExitBehaviour behaviour)
+        {
+            onExitMethods.Add(InterfaceReference<IExitBehaviour>.FromValue(behaviour));
         }
 
         public override Vector3 GetPosition() => transform.position + positionOffset;
