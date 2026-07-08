@@ -78,4 +78,3 @@ namespace WorldShaper
         string GetEndpoint();
     }
 }
-

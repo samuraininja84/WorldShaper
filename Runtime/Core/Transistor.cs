@@ -177,6 +177,9 @@ namespace WorldShaper
 
                 // Await the OnEntry task for the matching location
                 await connectable.Enter();
+
+                // Enable the location after entry to allow interaction
+                connectable.SetActive(true);
             }
 
             // Return a completed task if no matching location is found
