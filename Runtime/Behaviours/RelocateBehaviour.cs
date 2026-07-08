@@ -30,5 +30,7 @@ namespace WorldShaper
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireSphere(Position, sphereRadius);
         }
+
+        private void Reset() => target.FindIfNull();
     }
 }

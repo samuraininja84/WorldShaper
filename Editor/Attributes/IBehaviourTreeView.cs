@@ -36,10 +36,11 @@ namespace WorldShaper.Editor
             // Create a dictionary to hold the groups of IBehaviour types. The key is the group name, and the value is the corresponding TreeViewItem.
             var groups = new Dictionary<int, TreeViewItem<EntityId>>()
             {
-                 { 0, new TreeViewItem<EntityId>(id++, 0) { displayName = "Initialize Behaviours" } },
-                 { 1, new TreeViewItem<EntityId>(id++, 0) { displayName = "Activate Behaviours" } },
-                 { 2, new TreeViewItem<EntityId>(id++, 0) { displayName = "Enter Behaviours" } },
-                 { 3, new TreeViewItem<EntityId>(id++, 0) { displayName = "Exit Behaviours" } }
+                 { 0, new TreeViewItem<EntityId>(id++, 0) { displayName = "On Initialize Behaviours" } },
+                 { 1, new TreeViewItem<EntityId>(id++, 0) { displayName = "On Activate Behaviours" } },
+                 { 2, new TreeViewItem<EntityId>(id++, 0) { displayName = "On Enter Behaviours" } },
+                 { 3, new TreeViewItem<EntityId>(id++, 0) { displayName = "On Exit Behaviours" } },
+                 { 4, new TreeViewItem<EntityId>(id++, 0) { displayName = "Multiple Behaviours" } }
             };
 
             // This variable will hold the first IBehaviour found across all assemblies. This will be used to show the "None" option if there are no behaviours.
@@ -51,11 +52,17 @@ namespace WorldShaper.Editor
                 // If the first entry is null, set it to the current IBehaviour type. This will be used to show the "None" option if there are no behaviours.
                 firstEntry ??= behaviourType;
 
+                // Add a counter to keep track of how many groups the current behaviour type belongs to. This will be used to determine if it should be added to the "Multiple Behaviours" group.
+                int groupCount = 0;
+
                 // Add the child to the appropriate group based on the implemented interface. If the behaviour implements multiple interfaces, it will be added to each matching group as each interface is checked in order.
-                if (typeof(IInitializeBehaviour).IsAssignableFrom(behaviourType)) groups[0].AddChild(IBehaviourTreeViewItem.Create(behaviourType, 0, id++));
-                if (typeof(IActivateBehaviour).IsAssignableFrom(behaviourType)) groups[1].AddChild(IBehaviourTreeViewItem.Create(behaviourType, 1, id++));
-                if (typeof(IEnterBehaviour).IsAssignableFrom(behaviourType)) groups[2].AddChild(IBehaviourTreeViewItem.Create(behaviourType, 2, id++));
-                if (typeof(IExitBehaviour).IsAssignableFrom(behaviourType)) groups[3].AddChild(IBehaviourTreeViewItem.Create(behaviourType, 3, id++));
+                if (typeof(IInitializeBehaviour).IsAssignableFrom(behaviourType)) { groups[0].AddChild(IBehaviourTreeViewItem.Create(behaviourType, 0, id++)); groupCount++; }
+                if (typeof(IActivateBehaviour).IsAssignableFrom(behaviourType)) { groups[1].AddChild(IBehaviourTreeViewItem.Create(behaviourType, 1, id++)); groupCount++; }
+                if (typeof(IEnterBehaviour).IsAssignableFrom(behaviourType)) { groups[2].AddChild(IBehaviourTreeViewItem.Create(behaviourType, 2, id++)); groupCount++; }
+                if (typeof(IExitBehaviour).IsAssignableFrom(behaviourType)) { groups[3].AddChild(IBehaviourTreeViewItem.Create(behaviourType, 3, id++)); groupCount++; }
+
+                // If the behaviour implements multiple interfaces, add it to the "Multiple Behaviours" group as well.
+                if (groupCount > 1) groups[4].AddChild(IBehaviourTreeViewItem.Create(behaviourType, 4, id++));
             }
 
             // Add all the groups to the root of the tree

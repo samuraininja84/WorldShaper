@@ -46,6 +46,9 @@ namespace WorldShaper.Editor
                         case 3:
                             AddAsExitBehaviour(passage, (IExitBehaviour)newBehaviour);
                             break;
+                        case 4:
+                            AddAsMultipleBehaviours(passage, newBehaviour);
+                            break;
                         // This should never happen, because behaviour types are sorted into groups in the tree view, but just in case, log a warning if the behaviour type does not implement any of the expected interfaces
                         default:
                             Debug.LogWarning($"The selected behaviour type '{selection.Name}' does not implement any of the expected interfaces " +
@@ -106,6 +109,15 @@ namespace WorldShaper.Editor
 
             // Mark the passage as dirty to save the changes
             EditorUtility.SetDirty(passage);
+        }
+
+        public static void AddAsMultipleBehaviours(Passage passage, IBehaviour newBehaviour)
+        {
+            // Check if the new behaviour implements any of the expected interfaces and add it to the appropriate array in the passage
+            if (newBehaviour is IInitializeBehaviour initializeBehaviour) AddAsInitializeBehaviour(passage, initializeBehaviour);
+            if (newBehaviour is IActivateBehaviour activateBehaviour) AddAsActivateBehaviour(passage, activateBehaviour);
+            if (newBehaviour is IEnterBehaviour enterBehaviour) AddAsEnterBehaviour(passage, enterBehaviour);
+            if (newBehaviour is IExitBehaviour exitBehaviour) AddAsExitBehaviour(passage, exitBehaviour);
         }
     }
 }
