@@ -4,13 +4,23 @@ using UnityEngine.Events;
 
 namespace WorldShaper
 {
-    public class UnityEventBehaviour : MonoBehaviour, IBehaviour
+    public sealed class UnityEventBehaviour : MonoBehaviour, IInitializeBehaviour, IActivateBehaviour, IEnterBehaviour, IExitBehaviour
     {
+        public UnityEvent onInitialize;
         public UnityEvent onActivate;
         public UnityEvent onEnter;
         public UnityEvent onExit;
 
-        public virtual Task OnActivate()
+        public Task OnInitialize()
+        {
+            // Invoke the OnInitialize UnityEvent
+            onInitialize?.Invoke();
+
+            // Return a completed task
+            return Task.CompletedTask;
+        }
+
+        public Task OnActivate()
         {
             // Invoke the OnActivate UnityEvent
             onActivate?.Invoke();
@@ -19,7 +29,7 @@ namespace WorldShaper
             return Task.CompletedTask;
         }
 
-        public virtual Task OnEnter()
+        public Task OnEnter()
         {
             // Invoke the OnEnter UnityEvent
             onEnter?.Invoke();
@@ -28,7 +38,7 @@ namespace WorldShaper
             return Task.CompletedTask;
         }
 
-        public virtual Task OnExit()
+        public Task OnExit()
         {
             // Invoke the OnExit UnityEvent
             onExit?.Invoke();

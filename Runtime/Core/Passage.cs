@@ -14,10 +14,10 @@ namespace WorldShaper
         public Vector3 positionOffset;
 
         [Header("Behaviours")]
-        public InterfaceReference<IBehaviour>[] onInitializeMethods = null;
-        public InterfaceReference<IBehaviour>[] onActivateMethods = null;
-        public InterfaceReference<IBehaviour>[] onEnterMethods = null;
-        public InterfaceReference<IBehaviour>[] onExitMethods = null;
+        public InterfaceReference<IInitializeBehaviour>[] onInitializeMethods = null;
+        public InterfaceReference<IActivateBehaviour>[] onActivateMethods = null;
+        public InterfaceReference<IEnterBehaviour>[] onEnterMethods = null;
+        public InterfaceReference<IExitBehaviour>[] onExitMethods = null;
 
         public AreaHandle Area => passage.Area;
 

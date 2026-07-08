@@ -33,6 +33,9 @@ namespace WorldShaper.Editor
             // Create an empty child item to represent the "None" option when there are no connections available.
             var emptyChild = new IBehaviourTreeViewItem(null, id++) { displayName = "None" };
 
+            // Create a dictionary to hold the groups of IBehaviour types. The key is the group name, and the value is the corresponding TreeViewItem.
+            var groups = new Dictionary<string, TreeViewItem<EntityId>>();
+
             // This variable will hold the first IBehaviour found across all assemblies. This will be used to show the "None" option if there are no behaviours.
             Type firstEntry = null;
 

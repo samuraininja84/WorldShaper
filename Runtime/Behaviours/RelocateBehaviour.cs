@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace WorldShaper
 {
-    public class RelocateBehaviour : MonoBehaviour, IBehaviour
+    public class RelocateBehaviour : MonoBehaviour, IActivateBehaviour
     {
         [Header("Intialization")]
         public ObjectLocator target = ObjectLocator.Default;
