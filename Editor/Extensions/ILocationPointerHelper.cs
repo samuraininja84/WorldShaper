@@ -26,7 +26,7 @@ public static class ILocationPointerHelper
         PopupWindow.Show
         (
             position,
-            new DatabaseTreePopup<IBehaviourTreeView>(new(selection =>
+            new DatabaseTreePopup<IBehaviourTreeView>(new((selection, groupId) =>
             {
                 // If the selected behaviour type is not null, add it to the onActivateMethods array of the passage and log the selected behaviour type
                 if (selection != null)
@@ -34,24 +34,23 @@ public static class ILocationPointerHelper
                     // Create a new instance of the selected behaviour type and add it to the passage's game object
                     IBehaviour newBehaviour = (IBehaviour)passage.gameObject.AddComponent(selection);
 
-                    // To Do: Handle cases where the behaviour implements multiple interfaces (e.g., IInitializeBehaviour and IActivateBehaviour). For now, we will only add it to the first matching interface.
-
                     // Switch on the type of the new behaviour and add it to the appropriate array in the passage
-                    switch (newBehaviour)
+                    switch (groupId)
                     {
-                        case IInitializeBehaviour initializeBehaviour:
-                            AddAsInitializeBehaviour(passage, initializeBehaviour);
+                        case 0:
+                            AddAsInitializeBehaviour(passage, (IInitializeBehaviour)newBehaviour);
                             break;
-                        case IActivateBehaviour activateBehaviour:
-                            AddAsActivateBehaviour(passage, activateBehaviour);
+                        case 1:
+                            AddAsActivateBehaviour(passage, (IActivateBehaviour)newBehaviour);
                             break;
-                        case IEnterBehaviour enterBehaviour:
-                            AddAsEnterBehaviour(passage, enterBehaviour);
+                        case 2:
+                            AddAsEnterBehaviour(passage, (IEnterBehaviour)newBehaviour);
                             break;
-                        case IExitBehaviour exitBehaviour:
-                            AddAsExitBehaviour(passage, exitBehaviour);
+                        case 3:
+                            AddAsExitBehaviour(passage, (IExitBehaviour)newBehaviour);
                             break;
-                        case IBehaviour behaviour:
+                        // This should never happen, because behaviour types are sorted into groups in the tree view, but just in case, log a warning if the behaviour type does not implement any of the expected interfaces
+                        default:
                             Debug.LogWarning($"The selected behaviour type '{selection.Name}' does not implement any of the expected interfaces " +
                                 $"(IInitializeBehaviour, IActivateBehaviour, IEnterBehaviour, IExitBehaviour). It will not be added to the passage.");
                             break;
