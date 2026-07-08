@@ -74,10 +74,10 @@ namespace WorldShaper.Editor
             if (handle == null) GUI.enabled = false;
 
             // Create the load area button content
-            GUIContent loadAreaContent = new GUIContent(EditorGUIUtility.FindTexture(IconPathExtensions.ToImagePath("LoadArea")), "Load the area for this connection");
+            var loadAreaContent = new GUIContent(EditorGUIUtility.FindTexture(IconPathExtensions.ToImagePath("LoadArea")), "Load the area for this connection");
 
             // Create the load destination button content
-            GUIContent loadDestinationContent = new GUIContent(EditorGUIUtility.FindTexture(IconPathExtensions.ToImagePath("LoadDestination")), "Load the destination area for this connection");
+            var loadDestinationContent = new GUIContent(EditorGUIUtility.FindTexture(IconPathExtensions.ToImagePath("LoadDestination")), "Load the destination area for this connection");
 
             // Draw the load area button
             if (GUI.Button(loadAreaRect, loadAreaContent, buttonStyle)) LoadArea(handle, connectionNameProperty.stringValue);
@@ -176,7 +176,7 @@ namespace WorldShaper.Editor
                 PopupWindow.Show
                 (
                     position,
-                    new DatabaseTreePopup<ConnectionDatabaseTreeView>(new ConnectionDatabaseTreeView(selection => 
+                    new DatabaseTreePopup<ConnectionDatabaseTreeView>(new(selection => 
                     {
                         // Get the area from the selection
                         area = WorldMap.Instance.GetArea(selection);

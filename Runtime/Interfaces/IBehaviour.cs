@@ -55,4 +55,3 @@ namespace WorldShaper
         virtual Task<bool> IsActive(bool status) => Task.FromResult(status);
     }
 }
-
