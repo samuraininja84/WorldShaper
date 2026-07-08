@@ -128,19 +128,9 @@ namespace WorldShaper
             }
         }
 
-        private void TriggerExit(GameObject gameObject)
-        {
-            // Check if the target matches, then set the player to be able to interact again
-            if (target.Matching(gameObject)) canInteract = true;
-        }
-
         private void OnTriggerEnter(Collider collision) => TriggerEnter(collision.gameObject);
 
-        private void OnTriggerExit(Collider collision) => TriggerExit(collision.gameObject);
-
         private void OnTriggerEnter2D(Collider2D collision) => TriggerEnter(collision.gameObject);
-
-        private void OnTriggerExit2D(Collider2D collision) => TriggerExit(collision.gameObject);
 
         private void OnDrawGizmos()
         {
