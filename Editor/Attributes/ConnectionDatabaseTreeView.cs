@@ -5,27 +5,25 @@ using UnityEditor.IMGUI.Controls;
 
 namespace WorldShaper.Editor
 {
-    public class DatabaseTreeView : TreeView
+    public class ConnectionDatabaseTreeView : TreeView<EntityId>
     {
-        private readonly Connection _currentEntry;
         private readonly Action<Connection> _selectionHandler;
         private int _selectedId = -1;
 
-        private TreeViewItem Root { get; set; }
+        private TreeViewItem<EntityId> Root { get; set; }
 
-        public DatabaseTreeView(Connection currentEntry, Action<Connection> selectionHandler) : base(new TreeViewState())
+        public ConnectionDatabaseTreeView(Action<Connection> selectionHandler) : base(new TreeViewState<EntityId>())
         {
-            _currentEntry = currentEntry;
             _selectionHandler = selectionHandler;
             showAlternatingRowBackgrounds = true;
             showBorder = true;
             Reload();
         }
 
-        protected override TreeViewItem BuildRoot()
+        protected override TreeViewItem<EntityId> BuildRoot()
         {
             // Create the root of the tree with a unique ID of -1.
-            Root = new TreeViewItem(-1, -1);
+            Root = new TreeViewItem<EntityId>(-1, -1);
 
             // This ID will be used to assign unique IDs to each tree item.
             var id = 1;
@@ -34,7 +32,7 @@ namespace WorldShaper.Editor
             var emptyChild = new CollectionTreeViewItem(null, id++) { displayName = "None" };
 
             // This list will hold the groups for each area handle, which will be added to the root at the end.
-            var groups = new List<TreeViewItem>();
+            var groups = new List<TreeViewItem<EntityId>>();
 
             // This variable will hold the first connection found across all area handles.
             Connection firstEntry = null;
@@ -43,7 +41,7 @@ namespace WorldShaper.Editor
             foreach (var handle in WorldMap.Instance.registeredAreas)
             {
                 // Create a group for the area handle
-                var group = new TreeViewItem(id++) { displayName = $"{FormatForLabel(handle.Name)}" };
+                var group = new TreeViewItem<EntityId>(id++) { displayName = $"{FormatForLabel(handle.Name)}" };
 
                 // For each connection in the area, add it as a subchild
                 for (var index = 0; index < handle.GetConnectionCount(); index++)
@@ -100,9 +98,9 @@ namespace WorldShaper.Editor
             base.OnGUI(rect);
         }
 
-        protected override bool CanMultiSelect(TreeViewItem item) => false;
+        protected override bool CanMultiSelect(TreeViewItem<EntityId> item) => false;
 
-        protected override void SelectionChanged(IList<int> selectedIds)
+        protected override void SelectionChanged(IList<EntityId> selectedIds)
         {
             // If no selection, do nothing
             if (FindItem(selectedIds[0], rootItem) is CollectionTreeViewItem item)
@@ -116,20 +114,17 @@ namespace WorldShaper.Editor
                 SetExpanded(selectedIds[0], !IsExpanded(selectedIds[0]));
 
                 // Clear selection when clicking on a group
-                SetSelection(new int[] { });
+                SetSelection(new EntityId[] { });
             }
         }
 
         protected string FormatForLabel(string text) => text.Replace("_", " ").Replace("-", " ").Trim();
 
-        private class CollectionTreeViewItem : TreeViewItem
+        private class CollectionTreeViewItem : TreeViewItem<EntityId>
         {
             public readonly Connection Entry;
 
-            public CollectionTreeViewItem(Connection entry, int id) : base(id, 0)
-            {
-                Entry = entry;
-            }
+            public CollectionTreeViewItem(Connection entry, int id) : base(id, 0) => Entry = entry;
         }
     }
 }

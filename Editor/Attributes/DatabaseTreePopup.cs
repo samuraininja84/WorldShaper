@@ -4,15 +4,15 @@ using UnityEditor.IMGUI.Controls;
 
 namespace WorldShaper.Editor
 {
-    public class DatabaseTreePopup : PopupWindowContent
+    public class DatabaseTreePopup<T> : PopupWindowContent where T : TreeView<EntityId>
     {
         private readonly SearchField _searchField;
-        private readonly DatabaseTreeView _treeView;
+        private readonly T _treeView;
         private bool _shouldClose;
 
         public float Width { get; set; }
 
-        public DatabaseTreePopup(DatabaseTreeView contents)
+        public DatabaseTreePopup(T contents)
         {
             _searchField = new SearchField();
             _treeView = contents;

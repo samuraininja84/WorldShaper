@@ -65,7 +65,7 @@ namespace WorldShaper.Editor
             ValidateGUID(areaProperty, connectionIdProperty, connectionNameProperty);
 
             // Draw the connection selector
-            DrawConnectionSelector(connectionRect, areaProperty, connectionIdProperty, connectionNameProperty, connectionIndexProperty);
+            DrawSelector(connectionRect, areaProperty, connectionIdProperty, connectionNameProperty, connectionIndexProperty);
 
             // Get the area handle from the area property
             AreaHandle handle = areaProperty.objectReferenceValue as AreaHandle;
@@ -126,7 +126,7 @@ namespace WorldShaper.Editor
             }
         }
 
-        private static void DrawConnectionSelector(Rect position, SerializedProperty areaProperty, SerializedProperty idProperty, SerializedProperty nameProperty, SerializedProperty indexProperty)
+        private static void DrawSelector(Rect position, SerializedProperty areaProperty, SerializedProperty idProperty, SerializedProperty nameProperty, SerializedProperty indexProperty)
         {
             // Get the label
             var label = new GUIContent();
@@ -176,7 +176,7 @@ namespace WorldShaper.Editor
                 PopupWindow.Show
                 (
                     position,
-                    new DatabaseTreePopup(new DatabaseTreeView(null, selection => 
+                    new DatabaseTreePopup<ConnectionDatabaseTreeView>(new ConnectionDatabaseTreeView(selection => 
                     {
                         // Get the area from the selection
                         area = WorldMap.Instance.GetArea(selection);
@@ -206,7 +206,7 @@ namespace WorldShaper.Editor
             }
         }
 
-        private async void LoadArea(AreaHandle handle, string connectionName)
+        private static void LoadArea(AreaHandle handle, string connectionName)
         {
             // Get the handle name for logging purposes, replacing any underscores with spaces
             string handleName = handle.Name.Replace("_", " ");
@@ -261,7 +261,7 @@ namespace WorldShaper.Editor
             }
         }
 
-        private void LoadDestination(AreaHandle handle, string connectionName)
+        private static void LoadDestination(AreaHandle handle, string connectionName)
         {
             // Get the connection using the selected endPoint name
             Connection connection = handle.GetConnection(connectionName);
@@ -313,19 +313,7 @@ namespace WorldShaper.Editor
             }
         }
 
-        private List<AreaHandle> FilteredAreas()
-        {
-            // Get all area handles
-            List<AreaHandle> areas = WorldMap.Instance.registeredAreas;
-
-            // Make sure to remove areas that have an invalid scene reference
-            areas.RemoveAll(handle => InvalidScene(handle));
-
-            // Return the filtered list of area handles
-            return areas;
-        }
-
-        private AreaHandle FindMatchingAreaHandle()
+        private static AreaHandle FindMatchingAreaHandle()
         {
             // Create a new area handle
             AreaHandle area = null;
@@ -343,7 +331,19 @@ namespace WorldShaper.Editor
             return area;
         }
 
-        private bool InvalidScene(AreaHandle handle)
+        private static List<AreaHandle> FilteredAreas()
+        {
+            // Get all area handles
+            List<AreaHandle> areas = WorldMap.Instance.registeredAreas;
+
+            // Make sure to remove areas that have an invalid scene reference
+            areas.RemoveAll(handle => InvalidScene(handle));
+
+            // Return the filtered list of area handles
+            return areas;
+        }
+
+        private static bool InvalidScene(AreaHandle handle)
         {
             // Check if the current scene is null or has an unsafe state
             bool invalidScene = handle.activeScene == null || handle.activeScene.State == SceneReferenceState.Unsafe;
