@@ -13,7 +13,7 @@ namespace WorldShaper.Editor
         private bool isAreaValid;
         private bool isConnectionValid;
 
-        private readonly float invalidHeight = (EditorGUIUtility.singleLineHeight * 3) + EditorGUIUtility.standardVerticalSpacing;
+        private readonly float invalidHeight = (EditorGUIUtility.singleLineHeight * 2) + EditorGUIUtility.standardVerticalSpacing;
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label) => isAreaValid ? EditorGUIUtility.singleLineHeight : invalidHeight;
 
@@ -109,17 +109,17 @@ namespace WorldShaper.Editor
             isConnectionValid = isAreaValid && handle.GetConnection(connectionNameProperty.stringValue) != null;
 
             // If the area handle is null, display a help box warning
-            if (handle == null)
+            if (!isAreaValid)
             {
                 var yOffset = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
-                Rect helpBoxRect = new(labelPosition.x, labelPosition.y + yOffset, labelPosition.width, EditorGUIUtility.singleLineHeight * 2);
-                EditorGUI.HelpBox(helpBoxRect, "Area Handle is null. Please assign an Area Handle to the Connection Reference.", MessageType.Warning);
+                Rect helpBoxRect = new(labelPosition.x, labelPosition.y + yOffset, labelPosition.width, EditorGUIUtility.singleLineHeight);
+                EditorGUI.HelpBox(helpBoxRect, "Area Handle is null. Please assign an Area Handle.", MessageType.Warning);
             }
             else if (!isConnectionValid)
             {
                 var yOffset = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
-                Rect helpBoxRect = new(labelPosition.x, labelPosition.y + yOffset, labelPosition.width, EditorGUIUtility.singleLineHeight * 2);
-                EditorGUI.HelpBox(helpBoxRect, "Connection is invalid. Please assign a valid Connection to the Connection Reference.", MessageType.Warning);
+                Rect helpBoxRect = new(labelPosition.x, labelPosition.y + yOffset, labelPosition.width, EditorGUIUtility.singleLineHeight);
+                EditorGUI.HelpBox(helpBoxRect, "Connection is invalid. Please assign a valid Connection.", MessageType.Warning);
             }
 
             // Check if changes were made
