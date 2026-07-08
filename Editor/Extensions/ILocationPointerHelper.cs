@@ -1,32 +1,29 @@
 using UnityEngine;
 using UnityEditor;
-using WorldShaper;
-using WorldShaper.Editor;
 
-public static class ILocationPointerHelper
+namespace WorldShaper.Editor
 {
-    private const string MenuItemPath = "CONTEXT/BaseLocationPointer/Add Behaviour/";
-
-    [MenuItem(MenuItemPath + "Show Tree")]
-    public static void ShowTree(MenuCommand command)
+    public static class ILocationPointerHelper
     {
-        // Get the Passage component from the context of the menu command
-        Passage passage = command.context as Passage;
+        private const string MenuItemPath = "CONTEXT/BaseLocationPointer/Add Behaviour/";
 
-        // Return if the Passage is null
-        if (passage == null) return;
+        [MenuItem(MenuItemPath + "Show Tree")]
+        public static void ShowTree(MenuCommand command)
+        {
+            // Get the Passage component from the context of the menu command
+            Passage passage = command.context as Passage;
 
-        // Get the current position of the mouse in the editor window
-        var mousePosition = Event.current != null ? Event.current.mousePosition : Vector2.zero;
+            // Return if the Passage is null
+            if (passage == null) return;
 
-        // Create a new Rect to define the position and size of the popup window
-        var position = new Rect(mousePosition.x, mousePosition.y, 200, 300);
+            // Get the current position of the mouse in the editor window
+            var mousePosition = Event.current != null ? Event.current.mousePosition : Vector2.zero;
 
-        // Create a new instance of the IBehaviourTreeView class, passing in a selection handler that logs the selected behaviour type
-        PopupWindow.Show
-        (
-            position,
-            new DatabaseTreePopup<IBehaviourTreeView>(new((selection, groupId) =>
+            // Create a new Rect to define the position and size of the popup window
+            var position = new Rect(mousePosition.x, mousePosition.y, 200, 300);
+
+            // Create a new instance of the IBehaviourTreeView class, passing in a selection handler that logs the selected behaviour type
+            PopupWindow.Show(position, new DatabaseTreePopup<IBehaviourTreeView>(new((selection, groupId) =>
             {
                 // If the selected behaviour type is not null, add it to the onActivateMethods array of the passage and log the selected behaviour type
                 if (selection != null)
@@ -58,56 +55,57 @@ public static class ILocationPointerHelper
                 }
             }))
             {
+                // Set the minimum width of the popup window to 200 and the maximum width to 300
                 Width = Mathf.Max(200, 300)
-            }
-        );
-    }
+            });
+        }
 
-    public static void AddAsInitializeBehaviour(Passage passage, IInitializeBehaviour newInitializeBehaviour)
-    {
-        // If the onInitializeMethods array of the passage is null, initialize it as an empty array
-        passage.onInitializeMethods ??= new InterfaceReference<IInitializeBehaviour>[0];
+        public static void AddAsInitializeBehaviour(Passage passage, IInitializeBehaviour newInitializeBehaviour)
+        {
+            // If the onInitializeMethods array of the passage is null, initialize it as an empty array
+            passage.onInitializeMethods ??= new InterfaceReference<IInitializeBehaviour>[0];
 
-        // Add the new IInitializeBehaviour to the onInitializeMethods array of the passage
-        ArrayUtility.Add(ref passage.onInitializeMethods, InterfaceReference<IInitializeBehaviour>.FromValue(newInitializeBehaviour));
+            // Add the new IInitializeBehaviour to the onInitializeMethods array of the passage
+            ArrayUtility.Add(ref passage.onInitializeMethods, InterfaceReference<IInitializeBehaviour>.FromValue(newInitializeBehaviour));
 
-        // Mark the passage as dirty to save the changes
-        EditorUtility.SetDirty(passage);
-    }
+            // Mark the passage as dirty to save the changes
+            EditorUtility.SetDirty(passage);
+        }
 
-    public static void AddAsActivateBehaviour(Passage passage, IActivateBehaviour newActivateBehaviour)
-    {
-        // If the onActivateMethods array of the passage is null, initialize it as an empty array
-        passage.onActivateMethods ??= new InterfaceReference<IActivateBehaviour>[0];
+        public static void AddAsActivateBehaviour(Passage passage, IActivateBehaviour newActivateBehaviour)
+        {
+            // If the onActivateMethods array of the passage is null, initialize it as an empty array
+            passage.onActivateMethods ??= new InterfaceReference<IActivateBehaviour>[0];
 
-        // Add the new IActivateBehaviour to the onActivateMethods array of the passage
-        ArrayUtility.Add(ref passage.onActivateMethods, InterfaceReference<IActivateBehaviour>.FromValue(newActivateBehaviour));
+            // Add the new IActivateBehaviour to the onActivateMethods array of the passage
+            ArrayUtility.Add(ref passage.onActivateMethods, InterfaceReference<IActivateBehaviour>.FromValue(newActivateBehaviour));
 
-        // Mark the passage as dirty to save the changes
-        EditorUtility.SetDirty(passage);
-    }
+            // Mark the passage as dirty to save the changes
+            EditorUtility.SetDirty(passage);
+        }
 
-    public static void AddAsEnterBehaviour(Passage passage, IEnterBehaviour newEnterBehaviour)
-    {
-        // If the onEnterMethods array of the passage is null, initialize it as an empty array
-        passage.onEnterMethods ??= new InterfaceReference<IEnterBehaviour>[0];
+        public static void AddAsEnterBehaviour(Passage passage, IEnterBehaviour newEnterBehaviour)
+        {
+            // If the onEnterMethods array of the passage is null, initialize it as an empty array
+            passage.onEnterMethods ??= new InterfaceReference<IEnterBehaviour>[0];
 
-        // Add the new IEnterBehaviour to the onEnterMethods array of the passage
-        ArrayUtility.Add(ref passage.onEnterMethods, InterfaceReference<IEnterBehaviour>.FromValue(newEnterBehaviour));
+            // Add the new IEnterBehaviour to the onEnterMethods array of the passage
+            ArrayUtility.Add(ref passage.onEnterMethods, InterfaceReference<IEnterBehaviour>.FromValue(newEnterBehaviour));
 
-        // Mark the passage as dirty to save the changes
-        EditorUtility.SetDirty(passage);
-    }
+            // Mark the passage as dirty to save the changes
+            EditorUtility.SetDirty(passage);
+        }
 
-    public static void AddAsExitBehaviour(Passage passage, IExitBehaviour newExitBehaviour)
-    {
-        // If the onExitMethods array of the passage is null, initialize it as an empty array
-        passage.onExitMethods ??= new InterfaceReference<IExitBehaviour>[0];
+        public static void AddAsExitBehaviour(Passage passage, IExitBehaviour newExitBehaviour)
+        {
+            // If the onExitMethods array of the passage is null, initialize it as an empty array
+            passage.onExitMethods ??= new InterfaceReference<IExitBehaviour>[0];
 
-        // Add the new IExitBehaviour to the onExitMethods array of the passage
-        ArrayUtility.Add(ref passage.onExitMethods, InterfaceReference<IExitBehaviour>.FromValue(newExitBehaviour));
+            // Add the new IExitBehaviour to the onExitMethods array of the passage
+            ArrayUtility.Add(ref passage.onExitMethods, InterfaceReference<IExitBehaviour>.FromValue(newExitBehaviour));
 
-        // Mark the passage as dirty to save the changes
-        EditorUtility.SetDirty(passage);
+            // Mark the passage as dirty to save the changes
+            EditorUtility.SetDirty(passage);
+        }
     }
 }
