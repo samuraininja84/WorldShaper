@@ -10,7 +10,12 @@ namespace WorldShaper.Editor
     [CustomPropertyDrawer(typeof(ConnectionReference))]
     public class ConnectionReferencePropertyDrawer : PropertyDrawer
     {
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label) => EditorGUIUtility.singleLineHeight;
+        private bool isAreaValid;
+        private bool isConnectionValid;
+
+        private readonly float invalidHeight = (EditorGUIUtility.singleLineHeight * 3) + EditorGUIUtility.standardVerticalSpacing;
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label) => isAreaValid ? EditorGUIUtility.singleLineHeight : invalidHeight;
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -26,28 +31,31 @@ namespace WorldShaper.Editor
             // Begin property
             EditorGUI.BeginProperty(position, label, property);
 
-            // Draw label and get position
+            // Save the original position for the label
             Rect labelPosition = position;
+
+            // Adjust the position to account for the label width and height
             position = EditorGUI.PrefixLabel(labelPosition, GUIUtility.GetControlID(FocusType.Passive), label);
 
-            int indent = EditorGUI.indentLevel;
-            EditorGUI.indentLevel = 0;
-
-            // Calculate the width and offset for the area and value properties
+            // Store the button width for the search, load area, and load destination buttons
             float buttonWidth = 20;
+
+            // Calculate the width for the connection selector based on the total position width and the button widths
             float width = position.width - (buttonWidth * 3);
 
             // Draw search, connection, and load button rects
-            Rect searchButtonRect = new Rect(position.x, position.y, buttonWidth, EditorGUIUtility.singleLineHeight);
-            Rect connectionRect = new Rect(position.x + buttonWidth, position.y, width, EditorGUIUtility.singleLineHeight);
-            Rect loadAreaRect = new Rect(position.x + buttonWidth + width, position.y, buttonWidth, EditorGUIUtility.singleLineHeight);
-            Rect loadDestinationRect = new Rect(position.x + buttonWidth + width + buttonWidth, position.y, buttonWidth, EditorGUIUtility.singleLineHeight);
+            Rect searchButtonRect = new(position.x, position.y, buttonWidth, EditorGUIUtility.singleLineHeight);
+            Rect connectionRect = new(position.x + buttonWidth, position.y, width, EditorGUIUtility.singleLineHeight);
+            Rect loadAreaRect = new(position.x + buttonWidth + width, position.y, buttonWidth, EditorGUIUtility.singleLineHeight);
+            Rect loadDestinationRect = new(position.x + buttonWidth + width + buttonWidth, position.y, buttonWidth, EditorGUIUtility.singleLineHeight);
 
             // Get the button style and icon for the search button
-            GUIStyle buttonStyle = new GUIStyle(EditorStyles.miniButton);
-            buttonStyle.padding = new RectOffset(2, 2, 1, 1);
-            buttonStyle.fixedHeight = EditorGUIUtility.singleLineHeight;
-            buttonStyle.fixedWidth = buttonWidth;
+            GUIStyle buttonStyle = new(EditorStyles.miniButton)
+            {
+                padding = new RectOffset(2, 2, 1, 1),
+                fixedHeight = EditorGUIUtility.singleLineHeight,
+                fixedWidth = buttonWidth
+            };
 
             // Create the search button content
             GUIContent searchContent = EditorGUIUtility.IconContent("Animation.FilterBySelection");
@@ -63,6 +71,12 @@ namespace WorldShaper.Editor
 
             // Validate the GUID
             ValidateGUID(areaProperty, connectionIdProperty, connectionNameProperty);
+
+            // Validate the connection name
+            ValidateName(areaProperty, connectionNameProperty, connectionIdProperty);
+
+            // Validate the connection index
+            ValidateIndex(areaProperty, connectionIndexProperty, connectionIdProperty);
 
             // Draw the connection selector
             DrawSelector(connectionRect, areaProperty, connectionIdProperty, connectionNameProperty, connectionIndexProperty);
@@ -88,8 +102,25 @@ namespace WorldShaper.Editor
             // Re-enable GUI if it was disabled
             GUI.enabled = true;
 
-            // Reset indent level
-            EditorGUI.indentLevel = indent;
+            // Check if the area handle is valid
+            isAreaValid = handle != null && handle.IsValid;
+
+            // Check if the connection is valid by checking if the area handle is valid and if the connection exists in the area handle
+            isConnectionValid = isAreaValid && handle.GetConnection(connectionNameProperty.stringValue) != null;
+
+            // If the area handle is null, display a help box warning
+            if (handle == null)
+            {
+                var yOffset = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+                Rect helpBoxRect = new(labelPosition.x, labelPosition.y + yOffset, labelPosition.width, EditorGUIUtility.singleLineHeight * 2);
+                EditorGUI.HelpBox(helpBoxRect, "Area Handle is null. Please assign an Area Handle to the Connection Reference.", MessageType.Warning);
+            }
+            else if (!isConnectionValid)
+            {
+                var yOffset = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
+                Rect helpBoxRect = new(labelPosition.x, labelPosition.y + yOffset, labelPosition.width, EditorGUIUtility.singleLineHeight * 2);
+                EditorGUI.HelpBox(helpBoxRect, "Connection is invalid. Please assign a valid Connection to the Connection Reference.", MessageType.Warning);
+            }
 
             // Check if changes were made
             if (EditorGUI.EndChangeCheck())
@@ -107,7 +138,7 @@ namespace WorldShaper.Editor
             // Check if the guid is valid (not null and not empty)
             bool validGuid = ValidGUID(idProperty.boxedValue as SerializableGuid?, out SerializableGuid value);
 
-            // If the connection name is null, try to get the connection name using the connection ID, index, or name properties in that order of priority
+            // If the connection name is not null or empty and the area is not null, try to get the connection ID from the area using the connection name
             if (!string.IsNullOrEmpty(nameProperty.stringValue) && areaProperty.objectReferenceValue != null)
             {
                 // Try to get the connection ID from the area using the connection name
@@ -123,6 +154,50 @@ namespace WorldShaper.Editor
                     // Apply modified properties
                     idProperty.serializedObject.ApplyModifiedProperties();
                 }
+            }
+        }
+
+        private static void ValidateName(SerializedProperty areaProperty, SerializedProperty nameProperty, SerializedProperty idProperty)
+        {
+            // Check if the guid is valid (not null and not empty)
+            bool validGuid = ValidGUID(idProperty.boxedValue as SerializableGuid?, out SerializableGuid value);
+
+            // If the name property is null or empty, try to get the connection name using the connection ID
+            if (string.IsNullOrEmpty(nameProperty.stringValue) && areaProperty.objectReferenceValue != null && validGuid)
+            {
+                // Get the area handle from the area property
+                AreaHandle area = areaProperty.objectReferenceValue as AreaHandle;
+
+                // Get the connection from the area using the connection ID
+                Connection connection = area.GetConnection(value);
+
+                // If a connection is found with the specified ID, set the connection name from the area using the connection ID
+                if (connection != null) nameProperty.stringValue = connection.Name;
+
+                // Apply modified properties
+                nameProperty.serializedObject.ApplyModifiedProperties();
+            }
+        }
+
+        private static void ValidateIndex(SerializedProperty areaProperty, SerializedProperty indexProperty, SerializedProperty idProperty)
+        {
+            // Check if the guid is valid (not null and not empty)
+            bool validGuid = ValidGUID(idProperty.boxedValue as SerializableGuid?, out SerializableGuid value);
+
+            // If the index property is -1, try to get the connection index using the connection ID
+            if (areaProperty.objectReferenceValue != null && validGuid && indexProperty.intValue == -1)
+            {
+                // Get the area handle from the area property
+                AreaHandle area = areaProperty.objectReferenceValue as AreaHandle;
+
+                // Get the connection index from the area using the connection ID
+                int index = area.GetConnectionIndex(value);
+
+                // If a connection is found with the specified ID, set the connection index from the area using the connection ID
+                if (index != -1) indexProperty.intValue = index;
+
+                // Apply modified properties
+                indexProperty.serializedObject.ApplyModifiedProperties();
             }
         }
 
@@ -146,13 +221,13 @@ namespace WorldShaper.Editor
                 bool validGuid = ValidGUID(idProperty.boxedValue as SerializableGuid?, out SerializableGuid value);
 
                 // Get the connection name at the current index to display in the label
-                var connectionName = validGuid ? WorldMap.Instance.GetConnection(value)?.Name : null;
+                var connectionName = validGuid ? WorldMap.Instance.GetConnection(value).Name : nameProperty.stringValue;
 
                 // If the connection name is null, try to get the connection name using the connection ID or name properties
-                if (string.IsNullOrEmpty(connectionName))
+                if (string.IsNullOrEmpty(connectionName)) connectionName = nameProperty.stringValue;
                 {
                     // Try to get the connection name using the connection ID, index, or name properties in that order of priority
-                    if (indexProperty.intValue != -1) connectionName = area.GetConnection(indexProperty.intValue)?.Name;
+                    if (indexProperty.intValue != -1) connectionName = area.GetConnection(indexProperty.intValue).Name;
                     else if (nameProperty.stringValue != null) connectionName = nameProperty.stringValue;
                 }
 
