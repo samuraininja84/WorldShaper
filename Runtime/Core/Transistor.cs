@@ -42,9 +42,9 @@ namespace WorldShaper
         public static Action OnTransitionCompleted = delegate { };
 
         /// <summary>
-        /// Action invoked when the start point changes.
+        /// Action invoked when the entry point changes.
         /// </summary>
-        public static Action<string> OnEndPointChanged = delegate { };
+        public static Action<string> OnEntryPointChanged = delegate { };
 
         /// <summary>
         /// Gets the singleton instance of the WorldMap class.
@@ -73,13 +73,13 @@ namespace WorldShaper
         /// <summary>
         /// Tries to retrieve a location object by its endpoint.
         /// </summary>
-        /// <param name="endPoint">The endpoint string to search for.</param>
+        /// <param name="entryPoint">The endpoint string to search for.</param>
         /// <param name="location">The output parameter that will hold the found location object if successful; otherwise, null.</param>
         /// <returns>A boolean value indicating whether a matching location object was found.</returns>
-        private static bool TryGetLocation(string endPoint, out ILocationPointer location)
+        private static bool TryGetLocation(string entryPoint, out ILocationPointer location)
         {
             // Try to get the location from the collection, if successful set the out parameter and return true
-            if (locations.TryGetLocation(endPoint, out ILocationPointer reference))
+            if (locations.TryGetLocation(entryPoint, out ILocationPointer reference))
             {
                 // Get the location from the reference
                 location = reference;
@@ -127,19 +127,20 @@ namespace WorldShaper
         }
 
         /// <summary>
-        /// Activates the connection associated with the specified endpoint, disabling interaction during the activation
+        /// Activates the connection associated with the specified entryPoint, disabling interaction during the activation
         /// process.
         /// </summary>
-        /// <remarks>This method retrieves the location object corresponding to the endpoint, disables its interaction, and then performs the activation asynchronously.</remarks>
+        /// <remarks>This method retrieves the location object corresponding to the entryPoint, disables its interaction, and then performs the activation asynchronously.</remarks>
         /// <param name="handle">The <see cref="AreaHandle"/> representing the area being entered. Must contain valid connections.</param>
+        /// <param name="entryPoint">The entry point string to search for.</param>
         /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
-        public static async Task OnActivate(AreaHandle handle, string endPoint)
+        public static async Task OnActivate(AreaHandle handle, string entryPoint)
         {
             // If the area handle for the loaded scene has no connections ignore the scene for player relocation and return
             if (!handle.HasConnections()) return;
 
             // Find the connection in the area handle that matches the end point and disable interaction
-            if (TryGetLocation(endPoint, out ILocationPointer connectable))
+            if (TryGetLocation(entryPoint, out ILocationPointer connectable))
             {
                 // Set the current location to the matching location
                 currentLocation.SetValue(connectable);
@@ -163,14 +164,15 @@ namespace WorldShaper
         /// If no matching location is found, the method completes without performing any action.
         /// </remarks>
         /// <param name="handle">The <see cref="AreaHandle"/> representing the area being entered. Must contain valid connections.</param>
+        /// <param name="entryPoint">The entry point string to search for.</param>
         /// <returns>A <see cref="Task"/> that represents the asynchronous operation.</returns>
-        public static async Task OnEnter(AreaHandle handle, string endPoint)
+        public static async Task OnEnter(AreaHandle handle, string entryPoint)
         {
             // If the area handle for the loaded scene has no connections ignore the scene for player relocation and return
             if (!handle.HasConnections()) return;
 
             // Find the connection in the area handle that matches the end point and disable interaction
-            if (TryGetLocation(endPoint, out ILocationPointer connectable))
+            if (TryGetLocation(entryPoint, out ILocationPointer connectable))
             {
                 // Set the current location to the matching location
                 currentLocation.SetValue(connectable);
@@ -220,6 +222,9 @@ namespace WorldShaper
 
             // Invoke the OnActivate method to handle activation logic
             await OnActivate(handle, transition.Connection.Name);
+
+            // Invoke the EndPointChanged action to signal that the endpoint has changed
+            OnEntryPointChanged.Invoke(transition.Connection.Name);
         }
 
         #endregion
